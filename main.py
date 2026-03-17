@@ -1,17 +1,4 @@
-import telebot
-import google.generativeai as genai
 
-# === ТВОИ КЛЮЧИ ===
-TELEGRAM_TOKEN = '8382508988:AAFw870c6pdk4cNsbqW4zncp9KvpgzD6uGQ'
-
-GEMINI_API_KEYS = [
-    'AIzaSyDfaDJ31u9SVJlSiOc09KIdCSmJFtlpsQU',
-    'AIzaSyC_tP6YNk-LLSbaeMn4zO4UuK1arwKoc-o',
-    'AIzaSyBIe8Yxez4kJK_NxaGeZFyih3VVshW7KoM',
-    'AIzaSyAWZskYR6XlDXMij_QQV3NIsvPNEfqoZ-Q'
-]
-
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
 BOT_ID = bot.get_me().id
 
 system_prompt = """
