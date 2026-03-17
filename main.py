@@ -1,103 +1,75 @@
-import asyncio
-import re
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+import telebot
+import google.generativeai as genai
 
-# 1. НАСТРОЙКИ БОТА
-# Замени на свой токен
-TOKEN = "8650702643:AAEjW4RwItxTHHuKbhUn1IHJ6B-vUfxTzqE" 
-# Впиши сюда свой ID (только цифры, без кавычек)
-ADMIN_ID = 7070204958 
+# ВАЖНО: Вставь сюда НОВЫЕ ключи после их перевыпуска!
+TELEGRAM_TOKEN = '8382508988:AAH35lahmKi3QRqZF2cpmY_Rb9MgbXbnUGo'
+GEMINI_API_KEY = 'AIzaSyAsg2Wki2ZOD2ZImGjhLuvyUAGefW4iH0I'
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
+genai.configure(api_key=GEMINI_API_KEY)
 
-# Регулярное выражение для поиска упоминаний ботов
-BOT_PATTERN = re.compile(r"(@\w+bot)|(t\.me/\w+bot)", re.IGNORECASE)
+# Безопасный системный промпт
+system_prompt = """Тебя зовут Ким Самбоrrrскiй. Ты тупой, очень воняешь, но очень общительй человек. Тебе 16 лет, ты гей, и ты общаешься очень обидными шуточками. Но когда тебе уже говорят обидное что то то ты начинаешь обижаться!
+Ты общаешься с пользователями в Telegram. 
+Твои ответы должны быть краткими, точными и без лишней воды."""
 
-# =====================================================================
-# ПАНЕЛЬ АДМИНИСТРАТОРА (Работает только в личных сообщениях с ботом)
-# =====================================================================
+# Список моделей по приоритету (от самой новой к старым)
+MODELS_TO_TRY = [
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-1.5-flash'
+]
 
-@dp.message(F.chat.type == "private", Command("start"))
-async def cmd_start_admin(message: types.Message):
-    """Обработка команды /start в личке"""
-    if message.from_user.id == ADMIN_ID:
-        # Создаем кнопку
-        kb = [[KeyboardButton(text="Статус работы 🟢")]]
-        keyboard = ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+@bot.message_handler(commands=['start', 'help'])
+def send_welcome(message):
+    bot.reply_to(message, "Привет! Меня зовут Ким. Обращайся ко мне по имени, если что-то нужно.")
+
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    text = message.text
+    
+    if text.lower().startswith("ким"):
+        user_query = text[3:].strip(" .,?!")
         
-        await message.answer(
-            "Привет, Kimpi Dor! Бот на связи. Нажми кнопку ниже, чтобы проверить мой статус.", 
-            reply_markup=keyboard
-        )
-    else:
-        await message.answer("Извините, у вас нет доступа к управлению этим ботом.")
+        if not user_query:
+            bot.reply_to(message, "Да, я слушаю. Что хотел?")
+            return
 
-@dp.message(F.chat.type == "private", F.text == "Статус работы 🟢")
-async def check_bot_status(message: types.Message):
-    """Ответ на нажатие кнопки администратором"""
-    if message.from_user.id == ADMIN_ID:
-        await message.answer("Всё отлично! Я работаю, мониторю чаты и готов удалять рекламу. 🛡")
-
-
-# =====================================================================
-# АНТИСПАМ ФИЛЬТР (Работает только в группах/супергруппах)
-# =====================================================================
-
-@dp.message(F.chat.type.in_({"group", "supergroup"}))
-async def filter_bot_ads(message: types.Message):
-    """Проверка всех сообщений в группе"""
-    
-    # 1. Если пишет другой бот напрямую — сносим сообщение
-    if message.from_user.is_bot:
-        if message.from_user.id != bot.id: # Не удаляем свои же сообщения
+        bot.send_chat_action(message.chat.id, 'typing')
+        
+        # === ЛОГИКА ПЕРЕБОРА МОДЕЛЕЙ ===
+        response_text = None
+        
+        # Проходимся циклом по нашему списку моделей
+        for model_name in MODELS_TO_TRY:
             try:
-                await message.delete()
+                print(f"Пробуем модель {model_name}...")
+                
+                # Инициализируем конкретную модель из списка
+                model = genai.GenerativeModel(
+                    model_name=model_name,
+                    system_instruction=system_prompt 
+                )
+                
+                # Пытаемся получить ответ
+                response = model.generate_content(user_query)
+                response_text = response.text
+                
+                # Если ошибки нет и ответ получен, прерываем цикл
+                break 
+                
             except Exception as e:
-                print(f"Не смог удалить сообщение от бота: {e}")
-        return # Выходим, дальше проверять нет смысла
+                # Если эта модель выдала ошибку (например, 404), выводим ее в консоль и идем к следующей
+                print(f"Ошибка с {model_name}: {e}")
+                continue
+        
+        # === ПРОВЕРКА РЕЗУЛЬТАТА ===
+        if response_text:
+            # Если хотя бы одна модель ответила успешно
+            bot.reply_to(message, response_text)
+        else:
+            # Если цикл прошел по всем моделям, и все выдали ошибку
+            bot.reply_to(message, "Извини, сейчас у меня технические неполадки со всеми нейросетями. Попробуй позже.")
 
-    text_to_check = message.text or message.caption or ""
-    
-    # 2. Игнорируем команды (чтобы не удалялись системные сообщения и твои команды)
-    if text_to_check.startswith("/"):
-        return
-
-    # 3. Проверка текста на прямые ссылки
-    has_bot_link = bool(BOT_PATTERN.search(text_to_check))
-    
-    # 4. Проверка кнопок (ищем ссылки на ботов внутри inline-кнопок)
-    has_button_link = False
-    if message.reply_markup and message.reply_markup.inline_keyboard:
-        for row in message.reply_markup.inline_keyboard:
-            for button in row:
-                if button.url and ("bot" in button.url.lower() or "t.me/" in button.url.lower()):
-                    has_button_link = True
-                    break
-
-    # 5. Проверка пересланных сообщений (от других ботов)
-    is_forwarded_from_bot = False
-    if message.forward_origin:
-        if getattr(message.forward_origin, 'sender_user', None):
-            if message.forward_origin.sender_user.is_bot:
-                is_forwarded_from_bot = True
-
-    # 6. ИТОГ: Если нашли хоть одно нарушение — удаляем
-    if has_bot_link or has_button_link or is_forwarded_from_bot:
-        try:
-            await message.delete()
-        except Exception as e:
-            print(f"Ошибка при удалении спама: {e}")
-
-# =====================================================================
-# ЗАПУСК БОТА
-# =====================================================================
-
-async def main():
-    print("Бот запущен и готов к работе...")
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+print("Бот Ким запущен...")
+bot.infinity_polling()
