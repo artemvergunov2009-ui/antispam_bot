@@ -1,4 +1,4 @@
-
+AIzaSyATgCoQDgZC7SrBCHfM7PErGbktC0KNYDU
 BOT_ID = bot.get_me().id
 
 system_prompt = """
