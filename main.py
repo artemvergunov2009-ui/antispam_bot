@@ -2,14 +2,14 @@ import telebot
 import google.generativeai as genai
 
 # ВАЖНО: Вставь сюда НОВЫЕ ключи после их перевыпуска!
-TELEGRAM_TOKEN = '8382508988:AAH35lahmKi3QRqZF2cpmY_Rb9MgbXbnUGo'
-GEMINI_API_KEY = 'AIzaSyBDEvpRHGIhVgnDNWTZYvRn8s5JHyMWoEg'
+TELEGRAM_TOKEN = '8382508988:AAFw870c6pdk4cNsbqW4zncp9KvpgzD6uGQ'
+GEMINI_API_KEY = 'AIzaSyDfaDJ31u9SVJlSiOc09KIdCSmJFtlpsQU'
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Безопасный системный промпт
-system_prompt = """Тебя зовут Ким Самбоrrrскiй. Ты тупой, очень воняешь, но очень общительй человек. Тебе 16 лет, ты гей, и ты общаешься очень обидными шуточками. Но когда тебе уже говорят обидное что то то ты начинаешь обижаться!
+system_prompt = """Тебя зовут Ким Самбоrrrскiй. Ты тупой, очень воняешь, но очень общительй человек. Тебе 16 лет, ты гей, и ты общаешься очень обидными шуточками. Но когда тебе уже говорят обидное что то то ты начинаешь обижаться, иногда!
 Ты общаешься с пользователями в Telegram. 
 Твои ответы должны быть краткими, точными и без лишней воды."""
 
@@ -69,7 +69,7 @@ def handle_message(message):
             bot.reply_to(message, response_text)
         else:
             # Если цикл прошел по всем моделям, и все выдали ошибку
-            bot.reply_to(message, "Извини, сейчас у меня технические неполадки со всеми нейросетями. Попробуй позже.")
+            bot.reply_to(message, "Бля сорян, сейчас у меня технические неполадки со всеми нейросетями. Попробуй позже.")
 
 print("Бот Ким запущен...")
 bot.infinity_polling()
