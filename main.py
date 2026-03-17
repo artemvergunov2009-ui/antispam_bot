@@ -29,7 +29,8 @@ system_prompt = """
 MODELS_TO_TRY = [
     'gemini-1.5-flash',
     'gemini-1.5-pro',
-    'gemini-pro'
+    'gemini-pro',
+    "gemini-3-flash-preview"
 ]
 
 @bot.message_handler(commands=['ping', 'status'])
