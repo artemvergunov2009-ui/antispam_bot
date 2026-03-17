@@ -1,9 +1,10 @@
 import os
 import telebot
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
-# Загружаем ключи из .env (сработает на твоем ПК, а на сервере проигнорируется)
+# Загружаем ключи из .env (на сервере проигнорируется)
 load_dotenv()
 
 # Вытягиваем переменные окружения
@@ -26,10 +27,11 @@ system_prompt = """
 Твои ответы должны быть краткими, точными и без лишней воды.
 """
 
+# С новой библиотекой мы снова можем использовать мощные модели 2.5
 MODELS_TO_TRY = [
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
     'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-pro',
     "gemini-3-flash-preview"
 ]
 
@@ -66,19 +68,26 @@ def handle_message(message):
         print("\n--- Поступил новый запрос ---")
         
         for api_key in GEMINI_API_KEYS:
-            genai.configure(api_key=api_key)
+            # В новой библиотеке подключение работает через Client
+            client = genai.Client(api_key=api_key)
+            print(f"[🔄] Подключили ключ: {api_key[:10]}...") 
             
             for model_name in MODELS_TO_TRY:
                 try:
-                    model = genai.GenerativeModel(
-                        model_name=model_name,
-                        system_instruction=system_prompt 
+                    print(f"  -> Пробуем модель {model_name}...")
+                    # Новый формат отправки запроса
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=user_query,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_prompt,
+                        )
                     )
-                    response = model.generate_content(user_query)
                     response_text = response.text
+                    print(f"  [✅] Успех! Модель {model_name} ответила.")
                     break
                 except Exception as e:
-                    print(f"[❌] Ошибка модели {model_name}: {e}") 
+                    print(f"  [❌] Ошибка модели {model_name}: {e}") 
                     continue
             
             if response_text:
