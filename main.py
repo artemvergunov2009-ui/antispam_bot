@@ -1,9 +1,27 @@
-AIzaSyATgCoQDgZC7SrBCHfM7PErGbktC0KNYDU
+import os
+import telebot
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Загружаем ключи из .env (сработает на твоем ПК, а на сервере проигнорируется)
+load_dotenv()
+
+# Вытягиваем переменные окружения
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+if not TELEGRAM_TOKEN:
+    raise ValueError("ОШИБКА: TELEGRAM_TOKEN не найден в переменных окружения!")
+
+keys_env = os.getenv('GEMINI_API_KEYS', '')
+GEMINI_API_KEYS = [k.strip() for k in keys_env.split(',') if k.strip()]
+if not GEMINI_API_KEYS:
+    raise ValueError("ОШИБКА: GEMINI_API_KEYS не найдены в переменных окружения!")
+
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
 BOT_ID = bot.get_me().id
 
 system_prompt = """
-Тебя зовут Ким Самбоrrrскiй. Ты тупой, очень воняешь, но очень общительй человек. Тебе 16 лет, ты гей, и ты общаешься очень обидными шуточками. Также ты учишься в колледже информационных технологий "ИТ.Москва"(но в программировании ничего не смыслет), ходишь туда только чтобы сосаться с преподавателем попрограммированию Максимом Маратовичем, про него он говорит редко, но метко!
-Ты ростом примерно 160 см, с микропенисом, но ты про это не говоришь пока не спросят. У тебя тёмный оттенок русых волос. Иногда использует гейские шутки
+Тебя зовут Ким. Ты саркастичный, прямолинейный и очень общительный. 
+Ты учишься в Государственное бюджетное профессиональное образовательное учреждение города Москвы 'Колледж информационных технологий 'ИТ.Москва', но в программировании мало что смыслишь.
 Ты общаешься с пользователями в Telegram. 
 Твои ответы должны быть краткими, точными и без лишней воды.
 """
@@ -27,8 +45,10 @@ def send_welcome(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    if not message.text:
+        return
+
     text = message.text
-    
     is_private = message.chat.type == 'private'
     is_reply = message.reply_to_message and message.reply_to_message.from_user.id == BOT_ID
     starts_with_name = text.lower().startswith("ким")
@@ -45,36 +65,32 @@ def handle_message(message):
         bot.send_chat_action(message.chat.id, 'typing')
         response_text = None
         
-        print(f"\n--- Поступил новый запрос от пользователя ---")
+        print("\n--- Поступил новый запрос ---")
         
-        # === БЫСТРЫЙ ПОИСК ===
         for api_key in GEMINI_API_KEYS:
             genai.configure(api_key=api_key)
-            print(f"[🔄] Подключили ключ: {api_key[:10]}...") 
             
             for model_name in MODELS_TO_TRY:
                 try:
-                    print(f"  -> Пробуем модель {model_name}...")
                     model = genai.GenerativeModel(
                         model_name=model_name,
                         system_instruction=system_prompt 
                     )
                     response = model.generate_content(user_query)
                     response_text = response.text
-                    
-                    print(f"  [✅] Успех! Модель {model_name} ответила.")
-                    break 
+                    break
                 except Exception as e:
-                    print(f"  [❌] Неудача ({model_name}): {e}") 
-                    continue 
+                    print(f"[❌] Ошибка модели {model_name}: {e}") 
+                    continue
             
             if response_text:
-                break 
+                break
                 
         if response_text:
             bot.reply_to(message, response_text)
         else:
             bot.reply_to(message, "❌ Сейчас все нейросети перегружены. Жду следующий запрос!")
 
-print("Бот Ким запущен. Ожидание сообщений...")
-bot.infinity_polling(none_stop=True)
+if __name__ == "__main__":
+    print("Запуск бота...")
+    bot.infinity_polling(none_stop=True)
