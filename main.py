@@ -1,9 +1,3 @@
-import telebot
-import google.generativeai as genai
-
-# ВАЖНО: Вставь сюда НОВЫЕ ключи после их перевыпуска!
-TELEGRAM_TOKEN = '8382508988:AAFw870c6pdk4cNsbqW4zncp9KvpgzD6uGQ'
-GEMINI_API_KEY = 'AIzaSyDfaDJ31u9SVJlSiOc09KIdCSmJFtlpsQU'
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 genai.configure(api_key=GEMINI_API_KEY)
