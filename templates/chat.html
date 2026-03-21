@@ -45,6 +45,17 @@
         .verified-badge { display: inline-block; width: 14px; height: 14px; background-color: #26c6da; border-radius: 50%; margin-left: 5px; position: relative; vertical-align: middle; top: -1px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .verified-badge::after { content: ''; position: absolute; left: 4px; top: 2.5px; width: 3.5px; height: 6px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); border-radius: 1px; }
 
+        /* ИСТОРИИ (STORIES) СТИЛИ */
+        #stories-bar { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: var(--sidebar-bg); border-bottom: 1px solid var(--input-border); transition: max-height 0.3s ease; max-height: 70px; }
+        #stories-bar::-webkit-scrollbar { display: none; }
+        .stories-expanded { max-height: 200px !important; flex-wrap: wrap; overflow-y: auto; }
+        .story-circle { width: 55px; height: 55px; border-radius: 50%; background-color: var(--msg-out-bg); display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; flex-shrink: 0; background-size: cover; background-position: center; cursor: pointer; border: 3px solid var(--main-color); transition: 0.2s; position: relative; }
+        .story-circle.seen { border-color: rgba(150,150,150,0.5); }
+        .story-circle.add-story { border-style: dashed; color: var(--main-color); background: transparent; font-size: 24px; }
+        .story-circle.small { width: 40px; height: 40px; }
+        
+        .story-author-name { position: absolute; bottom: -15px; font-size: 10px; color: var(--text-color-dark); white-space: nowrap; max-width: 60px; overflow: hidden; text-overflow: ellipsis; }
+
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 300px; }
         .gallery-img { width: 100%; height: 100%; max-height: 200px; object-fit: cover; cursor: pointer; transition: 0.2s; background: #eee; }
         .gallery-img:hover { filter: brightness(0.9); }
@@ -63,6 +74,14 @@
         .modal-btn { flex-grow: 1; padding: 10px; border: none; border-radius: var(--border-radius-small); cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-cancel { background: var(--input-bg); color: var(--text-color-dark); border: 1px solid var(--input-border); }
         .btn-create { background: var(--main-color); color: white; }
+
+        /* ИСТОРИИ (ВЬЮВЕР) */
+        #storyViewerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; flex-direction: column; align-items: center; justify-content: center; }
+        #storyViewerContent { max-width: 90%; max-height: 80vh; object-fit: contain; border-radius: 15px; }
+        #storyViewerText { color: white; margin-top: 15px; font-size: 1.2em; font-weight: bold; }
+        #storyViewerAuthor { position: absolute; top: 20px; left: 20px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px;}
+        #storyViewerClose { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; }
+        #storyViewsBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; display: none; }
 
         .custom-audio-player { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.08); padding: 8px 12px; border-radius: 20px; width: 220px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); margin-top: 5px; }
         .theme-dark .custom-audio-player, .theme-cyberpunk .custom-audio-player, .theme-matrix .custom-audio-player, .theme-galaxy .custom-audio-player, .theme-ocean .custom-audio-player, .theme-retro .custom-audio-player, .theme-lava .custom-audio-player { background: rgba(255,255,255,0.15); }
@@ -187,16 +206,6 @@
         .drawer-item { padding: 15px 20px; font-size: 1.1em; color: var(--text-color-dark); cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.2s;}
         .drawer-item:hover { background-color: var(--chat-area-bg); color: var(--main-color); }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-        .modal-content { background: var(--modal-bg); padding: 30px; border-radius: var(--border-radius-large); width: 320px; box-shadow: var(--main-shadow); text-align: center; position: relative; max-height: 85vh; overflow-y: auto; color: var(--text-color-dark); transition: 0.3s;}
-        .modal-content::-webkit-scrollbar { width: 4px; } .modal-content::-webkit-scrollbar-thumb { background-color: rgba(150,150,150,0.3); border-radius: 3px; }
-        .modal-content h3 { color: var(--main-color); margin-top: 0; }
-        .modal-content input[type="text"], .modal-content textarea, .modal-content select { width: 100%; padding: 12px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid var(--input-border); border-radius: var(--border-radius-small); outline: none; font-family: inherit; background: var(--input-bg); color: var(--text-color-dark); transition: 0.3s;}
-        .modal-buttons { display: flex; justify-content: space-between; gap: 10px; }
-        .modal-btn { flex-grow: 1; padding: 10px; border: none; border-radius: var(--border-radius-small); cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-cancel { background: var(--input-bg); color: var(--text-color-dark); border: 1px solid var(--input-border); }
-        .btn-create { background: var(--main-color); color: white; }
-
         .profile-avatar-large { width: 100px; height: 100px; border-radius: 50%; background-color: var(--msg-out-bg); margin: 0 auto 15px; display: flex; justify-content: center; align-items: center; font-size: 2.5em; color: white; overflow: hidden; background-size: cover; background-position: center; position: relative; cursor: pointer; }
         .avatar-edit-overlay { display: none; position: absolute; bottom: 0; background: rgba(0,0,0,0.6); width: 100%; padding: 5px 0; font-size: 0.4em; cursor: pointer; color: white; text-align: center;}
         .profile-avatar-large.editable:hover .avatar-edit-overlay { display: block; }
@@ -263,6 +272,58 @@
         <button id="flipCameraBtn" onclick="flipCamera(event)">🔄</button>
     </div>
 
+    <div id="viewsModal" class="modal" style="z-index: 8500;">
+        <div class="modal-content" style="width: 320px;">
+            <h3>Просмотры</h3>
+            <ul id="viewsList" style="list-style: none; padding: 0; max-height: 250px; overflow-y: auto; text-align: left;"></ul>
+            <div class="modal-buttons" style="margin-top:15px;"><button class="modal-btn btn-cancel" style="width: 100%;" onclick="closeModal('viewsModal')">Закрыть</button></div>
+        </div>
+    </div>
+
+    <div id="storyCreatorModal" class="modal" style="z-index: 9000;">
+        <div class="modal-content" style="width: 350px;">
+            <h3 style="margin-bottom: 10px;">Создать историю</h3>
+            
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="font-size: 0.9em; color: var(--text-color-light);">Опубликовать от лица:</label>
+                <select id="storyAuthorSelect" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark);">
+                    <option value="user">Мой аккаунт ({{ username }})</option>
+                </select>
+            </div>
+
+            <div id="storyMediaPreviewBox" style="width: 100%; height: 200px; background: #000; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                <video id="storyVideoInputPreview" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                <img id="storyImageInputPreview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                <div id="storyPlaceholderText" style="color: white; font-weight: bold;">Выберите медиа</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="file" id="storyFileInput" accept="image/*,video/*" style="display: none;" onchange="handleStoryFileSelect(event)">
+                <button class="modal-btn btn-cancel" onclick="document.getElementById('storyFileInput').click()">📁 Галерея</button>
+                <button class="modal-btn btn-cancel" id="storyCameraBtn" onclick="toggleStoryCamera()">📸 Камера</button>
+            </div>
+
+            <input type="text" id="storyTextInput" placeholder="Добавить подпись..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid var(--input-border); outline: none; background: var(--input-bg); color: var(--text-color-dark);">
+
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeStoryCreator()">Отмена</button>
+                <button class="modal-btn btn-create" id="storySendBtn" onclick="uploadStory()" disabled>Выложить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="storyViewerOverlay">
+        <button id="storyViewerClose" onclick="closeStoryViewer()">✖</button>
+        <div id="storyViewerAuthor">
+            <div id="storyViewerAvatar" class="avatar-circle" style="width: 40px; height: 40px;"></div>
+            <span id="storyViewerName" style="text-shadow: 1px 1px 3px black;"></span>
+        </div>
+        <img id="storyViewerImage" style="display:none; max-width: 90%; max-height: 80vh; border-radius: 15px; object-fit: contain;">
+        <video id="storyViewerVideo" style="display:none; max-width: 90%; max-height: 80vh; border-radius: 15px; object-fit: contain;" playsinline></video>
+        <div id="storyViewerText"></div>
+        <button id="storyViewsBtn" onclick="openStoryViews()">👁 Просмотры</button>
+    </div>
+
     <div id="customConfirmModal" class="modal" style="z-index: 15000;">
         <div class="modal-content" style="width: 280px;">
             <h3 id="confirmTitle" style="color: var(--text-color-dark);">Уверены?</h3>
@@ -322,6 +383,7 @@
             <div class="drawer-status" id="myDrawerStatus">в сети</div>
         </div>
         <ul class="drawer-menu">
+            <li class="drawer-item" onclick="openStoryCreatorModal()">📸 Выложить историю</li>
             <li class="drawer-item" onclick="openSettingsModal()">⚙️ Настройки</li>
             <li class="drawer-item" onclick="openHelpModal()">❓ Помощь</li>
             <li class="drawer-item" onclick="window.location.href='/logout'" style="color: #e57373; margin-top: auto; border-top: 1px solid var(--input-border);">🚪 Выйти</li>
@@ -329,10 +391,17 @@
     </div>
 
     <div id="sidebar">
-        <div class="sidebar-header">
-            <button class="menu-btn" onclick="openDrawer()">☰</button>
-            <h2>Samberrrgram</h2>
+        <div class="sidebar-header" style="flex-direction: column; align-items: stretch; padding: 10px;">
+            <div style="display: flex; align-items: center;">
+                <button class="menu-btn" onclick="openDrawer()">☰</button>
+                <h2 style="margin-left: 5px;">Samberrrgram</h2>
+            </div>
+            
+            <div id="stories-bar">
+                <div class="story-circle add-story" onclick="openStoryCreatorModal()">+</div>
+                </div>
         </div>
+
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Поиск..." oninput="handleSearch()">
             <button class="add-group-btn" onclick="openGroupModal()">👥+</button>
@@ -419,7 +488,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v24.0</b><br><br>Аватарки везде!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v25.0 (Stories Update)</b><br><br>Добавлены истории на 24 часа и просмотры сообщений!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -673,56 +742,241 @@
         }
 
         // ==========================================
-        // МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
+        // ИСТОРИИ (STORIES)
+        // ==========================================
+        let allStories = [];
+        let currentStoryData = null;
+        let storyMediaFile = null;
+        let storyStream = null;
+        let storyRecorder = null;
+        let storyChunks = [];
+
+        // Вытягивание панели историй вниз
+        const sb = document.getElementById('stories-bar');
+        let startY = 0;
+        sb.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive:true});
+        sb.addEventListener('touchmove', e => {
+            if(allStories.length <= 3) return; // Если 3 или меньше, тянуть не нужно
+            let y = e.touches[0].clientY;
+            if(y - startY > 30) sb.classList.add('stories-expanded');
+            else if (startY - y > 30) sb.classList.remove('stories-expanded');
+        }, {passive:true});
+        sb.addEventListener('wheel', e => {
+            if(allStories.length > 3 && e.deltaY > 0) sb.classList.add('stories-expanded');
+            if(e.deltaY < 0) sb.classList.remove('stories-expanded');
+        });
+
+        socket.on('update_stories', (stories) => {
+            allStories = stories;
+            const bar = document.getElementById('stories-bar');
+            bar.innerHTML = '<div class="story-circle add-story" onclick="openStoryCreatorModal()">+</div>';
+            
+            if(stories.length <= 3) bar.classList.remove('stories-expanded');
+
+            stories.forEach(st => {
+                let av = st.author_avatar ? `background-image:url(${st.author_avatar})` : '';
+                let name = st.author_type === 'channel' ? st.author_id : st.author_id; // Для канала нужно получить имя, но пока выводим ID
+                let borderClass = st.is_viewed ? 'seen' : '';
+                let sizeClass = stories.length > 3 && !bar.classList.contains('stories-expanded') ? 'small' : '';
+                
+                bar.innerHTML += `
+                    <div class="story-circle ${borderClass} ${sizeClass}" style="${av}" onclick="viewStory('${st.id}')">
+                        ${!st.author_avatar ? name[0].toUpperCase() : ''}
+                        <div class="story-author-name">${name}</div>
+                    </div>
+                `;
+            });
+        });
+
+        function openStoryCreatorModal() {
+            // Подтягиваем каналы пользователя
+            const sel = document.getElementById('storyAuthorSelect');
+            sel.innerHTML = `<option value="user|${currentUser}">Мой аккаунт (${currentUser})</option>`;
+            myChatsList.forEach(c => {
+                if(c.type === 'channel' && (c.my_role === 'owner' || c.my_role === 'admin')){
+                    sel.innerHTML += `<option value="channel|${c.id}">${c.name}</option>`;
+                }
+            });
+            document.getElementById('storyFileInput').value = '';
+            document.getElementById('storyVideoInputPreview').style.display = 'none';
+            document.getElementById('storyImageInputPreview').style.display = 'none';
+            document.getElementById('storyPlaceholderText').style.display = 'block';
+            document.getElementById('storySendBtn').disabled = true;
+            document.getElementById('storyCameraBtn').innerText = '📸 Камера';
+            storyMediaFile = null;
+            openModal('storyCreatorModal');
+        }
+
+        function closeStoryCreator() {
+            if(storyStream) { storyStream.getTracks().forEach(t=>t.stop()); storyStream=null; }
+            closeModal('storyCreatorModal');
+        }
+
+        function handleStoryFileSelect(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            storyMediaFile = file;
+            document.getElementById('storyPlaceholderText').style.display = 'none';
+            
+            if(file.type.startsWith('image/')) {
+                document.getElementById('storyImageInputPreview').src = URL.createObjectURL(file);
+                document.getElementById('storyImageInputPreview').style.display = 'block';
+                document.getElementById('storyVideoInputPreview').style.display = 'none';
+            } else {
+                document.getElementById('storyVideoInputPreview').src = URL.createObjectURL(file);
+                document.getElementById('storyVideoInputPreview').style.display = 'block';
+                document.getElementById('storyImageInputPreview').style.display = 'none';
+            }
+            document.getElementById('storySendBtn').disabled = false;
+        }
+
+        async function toggleStoryCamera() {
+            const btn = document.getElementById('storyCameraBtn');
+            const vid = document.getElementById('storyVideoInputPreview');
+            
+            if(storyStream && storyRecorder && storyRecorder.state === 'recording') {
+                storyRecorder.stop();
+                btn.innerText = '📸 Переснять';
+                return;
+            }
+
+            try {
+                storyStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+                vid.srcObject = storyStream;
+                vid.style.display = 'block';
+                document.getElementById('storyImageInputPreview').style.display = 'none';
+                document.getElementById('storyPlaceholderText').style.display = 'none';
+                
+                storyRecorder = new MediaRecorder(storyStream);
+                storyChunks = [];
+                storyRecorder.ondataavailable = e => storyChunks.push(e.data);
+                storyRecorder.onstop = () => {
+                    storyMediaFile = new Blob(storyChunks, {type: 'video/webm'});
+                    vid.srcObject = null;
+                    vid.src = URL.createObjectURL(storyMediaFile);
+                    vid.loop = true; vid.play();
+                    storyStream.getTracks().forEach(t=>t.stop()); storyStream = null;
+                    document.getElementById('storySendBtn').disabled = false;
+                };
+                storyRecorder.start();
+                btn.innerText = '⏹ Остановить';
+            } catch(e) { showToast('Нет камеры!', 'error'); }
+        }
+
+        async function uploadStory() {
+            if(!storyMediaFile) return;
+            document.getElementById('storySendBtn').innerText = '⏳';
+            document.getElementById('storySendBtn').disabled = true;
+
+            const fd = new FormData();
+            fd.append('file', storyMediaFile);
+            
+            try {
+                const r = await fetch('/upload', {method:'POST', body:fd});
+                const d = await r.json();
+                if(d.url) {
+                    const authVal = document.getElementById('storyAuthorSelect').value.split('|');
+                    const text = document.getElementById('storyTextInput').value.trim();
+                    socket.emit('create_story', {
+                        author_type: authVal[0],
+                        author_id: authVal[1],
+                        media_url: d.url,
+                        media_type: d.type,
+                        text: text
+                    });
+                    closeStoryCreator();
+                    showToast('История опубликована!');
+                }
+            } catch(e) { showToast('Ошибка загрузки', 'error'); document.getElementById('storySendBtn').innerText = 'Выложить'; document.getElementById('storySendBtn').disabled = false; }
+        }
+
+        socket.on('story_created', () => { socket.emit('get_stories'); });
+
+        function viewStory(id) {
+            currentStoryData = allStories.find(s => s.id === id);
+            if(!currentStoryData) return;
+            
+            document.getElementById('storyViewerOverlay').style.display = 'flex';
+            document.getElementById('storyViewerText').innerText = currentStoryData.text || '';
+            document.getElementById('storyViewerName').innerHTML = renderVerified(currentStoryData.author_id); // В идеале тут имя канала
+            
+            if(currentStoryData.author_avatar) {
+                document.getElementById('storyViewerAvatar').style.backgroundImage = `url(${currentStoryData.author_avatar})`;
+                document.getElementById('storyViewerAvatar').innerText = '';
+            } else {
+                document.getElementById('storyViewerAvatar').style.backgroundImage = 'none';
+                document.getElementById('storyViewerAvatar').innerText = currentStoryData.author_id[0].toUpperCase();
+            }
+
+            const img = document.getElementById('storyViewerImage');
+            const vid = document.getElementById('storyViewerVideo');
+            
+            if(currentStoryData.media_type === 'image') {
+                img.src = currentStoryData.media_url;
+                img.style.display = 'block'; vid.style.display = 'none';
+            } else {
+                vid.src = currentStoryData.media_url;
+                vid.style.display = 'block'; img.style.display = 'none';
+                vid.play();
+            }
+
+            // Кнопка просмотров только для автора
+            const authVal = currentStoryData.author_type === 'user' ? currentUser : currentStoryData.author_id; // Упрощенно
+            if(currentStoryData.author_id === currentUser) {
+                document.getElementById('storyViewsBtn').style.display = 'block';
+            } else {
+                document.getElementById('storyViewsBtn').style.display = 'none';
+            }
+
+            socket.emit('mark_story_seen', {id: id});
+            socket.emit('get_stories');
+        }
+
+        function closeStoryViewer() {
+            document.getElementById('storyViewerOverlay').style.display = 'none';
+            document.getElementById('storyViewerVideo').pause();
+            document.getElementById('storyViewerVideo').src = '';
+            currentStoryData = null;
+        }
+
+        function openStoryViews() {
+            if(!currentStoryData) return;
+            socket.emit('get_story_views', {id: currentStoryData.id});
+        }
+
+        socket.on('story_views_data', data => {
+            const list = document.getElementById('viewsList');
+            list.innerHTML = '';
+            if(data.views.length === 0) list.innerHTML = '<li style="padding:10px; color:#aaa; text-align:center;">Пока нет просмотров</li>';
+            data.views.forEach(v => {
+                list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee; color: var(--text-color-dark);">👁 ${renderVerified(v.viewer_username)} <span style="font-size:0.8em; color:#999; float:right;">${formatTime(v.viewed_at)}</span></li>`;
+            });
+            openModal('viewsModal');
+        });
+
+        // ==========================================
+        // ПРОСМОТРЫ СООБЩЕНИЙ В ГРУППАХ
+        // ==========================================
+        function checkMessageViews(id) { socket.emit('get_message_views', {id: id}); }
+        socket.on('message_views_data', data => {
+            const list = document.getElementById('viewsList');
+            list.innerHTML = '';
+            if(data.views.length === 0) list.innerHTML = '<li style="padding:10px; color:#aaa; text-align:center;">Пока никто не прочитал</li>';
+            data.views.forEach(v => {
+                list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee; color: var(--text-color-dark);">👁 ${renderVerified(v.username)} <span style="font-size:0.8em; color:#999; float:right;">${formatTime(v.read_at)}</span></li>`;
+            });
+            openModal('viewsModal');
+        });
+
+
+        // ==========================================
+        // ИСПРАВЛЕНИЕ МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
         // ==========================================
         let recordingType = null;
         let activeMediaStream = null;
         let mediaRecorder; let mediaChunks = [];
-        let currentCustomAudio = null; let currentCustomAudioBtn = null;
         let currentFacingMode = 'user'; 
         let isFlipping = false; 
-
-        function playCustomAudio(btn, url) {
-            if (currentCustomAudio && currentCustomAudio.src === url) {
-                if (currentCustomAudio.paused) { currentCustomAudio.play(); btn.innerText = '⏸'; btn.classList.add('playing'); }
-                else { currentCustomAudio.pause(); btn.innerText = '▶'; btn.classList.remove('playing'); }
-                return;
-            }
-            if (currentCustomAudio) { currentCustomAudio.pause(); if(currentCustomAudioBtn) { currentCustomAudioBtn.innerText = '▶'; currentCustomAudioBtn.classList.remove('playing'); } }
-            
-            currentCustomAudio = new Audio(url); currentCustomAudioBtn = btn; currentCustomAudio.play();
-            btn.innerText = '⏸'; btn.classList.add('playing');
-            
-            const player = btn.closest('.custom-audio-player');
-            const fill = player.querySelector('.progress-fill'); const timeDisp = player.querySelector('.time-display');
-
-            currentCustomAudio.addEventListener('timeupdate', () => {
-                const percent = (currentCustomAudio.currentTime / currentCustomAudio.duration) * 100;
-                fill.style.width = (isNaN(percent) ? 0 : percent) + '%';
-                timeDisp.innerText = formatDuration(currentCustomAudio.currentTime);
-            });
-            currentCustomAudio.addEventListener('ended', () => {
-                btn.innerText = '▶'; btn.classList.remove('playing'); fill.style.width = '0%';
-                timeDisp.innerText = formatDuration(currentCustomAudio.duration || 0);
-            });
-            currentCustomAudio.addEventListener('loadedmetadata', () => {
-                if(timeDisp.innerText === '0:00' || timeDisp.innerText === '...') timeDisp.innerText = formatDuration(currentCustomAudio.duration);
-            });
-        }
-
-        function seekCustomAudio(e, bar) {
-            if (!currentCustomAudio) return;
-            const player = bar.closest('.custom-audio-player');
-            if (currentCustomAudioBtn && currentCustomAudioBtn.closest('.custom-audio-player') !== player) return;
-            const rect = bar.getBoundingClientRect();
-            currentCustomAudio.currentTime = ((e.clientX - rect.left) / rect.width) * currentCustomAudio.duration;
-        }
-
-        function formatDuration(sec) {
-            if(isNaN(sec) || sec === Infinity) return "0:00";
-            const m = Math.floor(sec/60); const s = Math.floor(sec%60).toString().padStart(2, '0');
-            return `${m}:${s}`;
-        }
 
         function toggleCircleVideo(vid) { 
             if (vid.muted) { vid.muted = false; vid.currentTime = 0; vid.play().catch(e=>{}); } 
@@ -952,6 +1206,11 @@
             if (isMyMessage) html += `<div class="context-menu-item" onclick="prepareEdit('${id}')">✏️ Редактировать</div>`;
             html += `<div class="context-menu-item" onclick="setReply('${id}')">↩️ Ответить</div><div class="context-menu-item" onclick="forwardMsg('${id}')">➡️ Переслать</div><div class="context-menu-item" onclick="togglePinMsg('${id}', ${isPinned})">${isPinned ? '✖ Открепить' : '📌 Закрепить'}</div><div class="context-menu-item has-submenu">🔠 Изменить шрифт 🞂<div class="submenu"><div class="context-menu-item font-default" onclick="changeFont('${id}', 'default')">Обычный</div><div class="context-menu-item font-mono" onclick="changeFont('${id}', 'mono')">Код</div><div class="context-menu-item font-serif" onclick="changeFont('${id}', 'serif')">С засечками</div><div class="context-menu-item font-comic" onclick="changeFont('${id}', 'comic')">Весёлый</div></div></div><div class="context-menu-item" onclick="toggleSelectMode()">☑️ Выбрать несколько</div>`;
             
+            // --- КНОПКА ПРОСМОТРОВ ---
+            if (isMyMessage && currentRoomType !== 'dm' && currentRoomType !== 'saved') {
+                html += `<div class="context-menu-item" onclick="checkMessageViews('${id}')">👁 Просмотры</div>`;
+            }
+
             // ДВОЙНОЕ УДАЛЕНИЕ
             html += `<div class="context-menu-item delete" onclick="deleteMsgLocally('${id}')">🗑 Удалить у меня</div>`;
             if (isMyMessage || myRole === 'admin' || myRole === 'owner') html += `<div class="context-menu-item delete" onclick="deleteSingleMsg('${id}')">🗑 Удалить у всех</div>`;
@@ -1023,7 +1282,7 @@
         socket.on('message_edited', data => { const textDiv = document.querySelector(`[data-id="${data.id}"] .msg-text-content`); if(textDiv) textDiv.innerText = data.text; const metaDiv = document.querySelector(`[data-id="${data.id}"] .msg-meta`); if(metaDiv && !metaDiv.querySelector('.edited-tag')) metaDiv.insertAdjacentHTML('afterbegin', '<span class="edited-tag">(изменено)</span>'); if(messagesStore[data.id]) { messagesStore[data.id].text = data.text; messagesStore[data.id].is_edited = true; } });
 
         // ==========================================
-        // ГРУППЫ И КАНАЛЫ (С АВАТАРКАМИ УЧАСТНИКОВ)
+        // БАЗОВЫЕ НАСТРОЙКИ, ГРУППЫ И КАНАЛЫ
         // ==========================================
         function handleHeaderClick() {
             if (currentRoomId === '') return;
@@ -1069,7 +1328,6 @@
                     }
                     let roleTag = m.role === 'owner' ? ' 👑' : (m.role === 'admin' ? ' 🛡️' : '');
                     
-                    // --- ИСПРАВЛЕНИЕ: Вывод аватарок участников ---
                     let avatarHtml = m.avatar_url ? `<div class="avatar-circle" style="width:35px; height:35px; background-image:url(${m.avatar_url}); margin-right:10px; font-size:1em;"></div>` : `<div class="avatar-circle" style="width:35px; height:35px; margin-right:10px; font-size:1em;">${m.username[0].toUpperCase()}</div>`;
                     
                     const li = document.createElement('li'); li.style = "padding: 8px 0; border-bottom: 1px solid var(--input-border); display:flex; justify-content:space-between; align-items:center;"; 
@@ -1252,7 +1510,12 @@
         function formatLastSeen(iso) { if (!iso || iso.startsWith('1970')) return 'был(а) недавно'; const d = new Date(iso); const now = new Date(); const hh = d.getHours().toString().padStart(2, '0'); const mm = d.getMinutes().toString().padStart(2, '0'); if ((now - d)/(1000*60*60) < 24 && now.getDate() === d.getDate()) return `в сети в ${hh}:${mm}`; return `в сети ${d.getDate().toString().padStart(2, '0')}.${(d.getMonth()+1).toString().padStart(2, '0')} в ${hh}:${mm}`; }
         function formatTime(iso) { if (!iso || iso.startsWith('1970')) return ''; const d = new Date(iso); return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`; }
 
-        socket.on('connect', () => { socket.emit('user_connected'); socket.emit('get_my_chats'); socket.emit('get_profile', {username: currentUser}); });
+        socket.on('connect', () => { 
+            socket.emit('user_connected'); 
+            socket.emit('get_my_chats'); 
+            socket.emit('get_profile', {username: currentUser}); 
+            socket.emit('get_stories'); // Подгружаем истории при коннекте
+        });
         socket.on('status_update', (data) => { if (currentRoomType === 'dm' && currentChatTarget === data.username) { const el = document.getElementById('currentChatStatus'); if (data.status === 'online') { el.innerText = 'в сети'; el.classList.add('status-online'); } else if (data.status === 'offline') { el.innerText = formatLastSeen(data.last_seen); el.classList.remove('status-online'); } } });
         socket.on('receive_user_status', (data) => { if (currentRoomType === 'dm' && currentChatTarget === data.username) { const el = document.getElementById('currentChatStatus'); if (data.custom_status) { el.innerText = data.custom_status; el.classList.remove('status-online'); } else if (data.is_online) { el.innerText = 'в сети'; el.classList.add('status-online'); } else { el.innerText = formatLastSeen(data.last_seen); el.classList.remove('status-online'); } } });
 
@@ -1287,9 +1550,7 @@
                 else if (chat.type === 'group') { displayName = chat.name; avatarChar = '👥'; }
                 else if (chat.type === 'channel') { displayName = chat.name; avatarChar = '📢'; }
 
-                // --- ИСПРАВЛЕНИЕ: Вывод аватарок в списке чатов (включая ЛС) ---
                 let avHtml = (chat.avatar_url) ? `<div class="avatar-circle" style="background-image: url(${chat.avatar_url})"></div>` : `<div class="avatar-circle">${avatarChar}</div>`;
-                
                 let badgeHtml = chat.unread_count > 0 ? `<div class="unread-badge">${chat.unread_count}</div>` : '';
                 let pinHtml = pinned.includes(chat.id) ? `<span style="font-size:0.9em; margin-right:3px;">📌</span>` : '';
                 
@@ -1317,7 +1578,6 @@
             });
         });
 
-        // --- ИСПРАВЛЕНИЕ: ГЛОБАЛЬНЫЙ ПОИСК С АВАТАРКАМИ ---
         socket.on('new_message_notification', (msg) => { socket.emit('get_my_chats'); let notifText = msg.text || "Медиафайл"; if (msg.media_type === 'audio') notifText = "🎤 Голосовое сообщение"; if (msg.media_type === 'video_message') notifText = "📹 Видеосообщение"; if (msg.media_type === 'gallery') notifText = "🖼 Галерея"; if (currentRoomId !== msg.room && pushEnabled && Notification.permission === "granted") new Notification(msg.username, {body: notifText}); });
 
         function handleSearch() { const q = document.getElementById('searchInput').value.trim(); if (q.length > 0) { document.getElementById('search-results').style.display = 'block'; document.getElementById('chat-list').style.display = 'none'; socket.emit('search_users', {query: q}); } else { document.getElementById('search-results').style.display = 'none'; document.getElementById('chat-list').style.display = 'block'; socket.emit('get_my_chats'); } }
