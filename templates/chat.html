@@ -53,7 +53,6 @@
         .story-circle.seen { border-color: rgba(150,150,150,0.5); }
         .story-circle.add-story { border-style: dashed; color: var(--main-color); background: transparent; font-size: 24px; }
         .story-circle.small { width: 40px; height: 40px; }
-        
         .story-author-name { position: absolute; bottom: -15px; font-size: 10px; color: var(--text-color-dark); white-space: nowrap; max-width: 60px; overflow: hidden; text-overflow: ellipsis; }
 
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 300px; }
@@ -98,7 +97,7 @@
         #flipCameraBtn { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: white; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; z-index: 5001; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
         #flipCameraBtn:active { transform: translateX(-50%) scale(0.9); }
 
-        .context-menu { position: fixed; background: var(--modal-bg); border: 1px solid var(--input-border); border-radius: 12px; box-shadow: var(--main-shadow); z-index: 10000; padding: 5px 0; min-width: 170px; }
+        .context-menu { position: fixed; background: var(--modal-bg); border: 1px solid var(--input-border); border-radius: 12px; box-shadow: var(--main-shadow); z-index: 10000; padding: 5px 0; min-width: 170px; visibility: hidden; }
         .context-menu-item { padding: 10px 15px; cursor: pointer; color: var(--text-color-dark); font-size: 14px; display: flex; justify-content: space-between; align-items: center;}
         .context-menu-item:hover { background: var(--chat-area-bg); color: var(--main-color); }
         .context-menu-item.delete { color: var(--error-color, #e57373); font-weight: bold; }
@@ -488,7 +487,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v25.0 (Stories Update)</b><br><br>Добавлены истории на 24 часа и просмотры сообщений!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v26.0 (Stories Fix)</b><br><br>Исправлены вылеты меню, добавлены функции просмотра и копирования!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -742,7 +741,7 @@
         }
 
         // ==========================================
-        // ИСТОРИИ (STORIES)
+        // ИСТОРИИ (STORIES) - ДОБАВЛЕНЫ ФУНКЦИИ
         // ==========================================
         let allStories = [];
         let currentStoryData = null;
@@ -751,12 +750,11 @@
         let storyRecorder = null;
         let storyChunks = [];
 
-        // Вытягивание панели историй вниз
         const sb = document.getElementById('stories-bar');
         let startY = 0;
         sb.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive:true});
         sb.addEventListener('touchmove', e => {
-            if(allStories.length <= 3) return; // Если 3 или меньше, тянуть не нужно
+            if(allStories.length <= 3) return;
             let y = e.touches[0].clientY;
             if(y - startY > 30) sb.classList.add('stories-expanded');
             else if (startY - y > 30) sb.classList.remove('stories-expanded');
@@ -770,12 +768,11 @@
             allStories = stories;
             const bar = document.getElementById('stories-bar');
             bar.innerHTML = '<div class="story-circle add-story" onclick="openStoryCreatorModal()">+</div>';
-            
             if(stories.length <= 3) bar.classList.remove('stories-expanded');
 
             stories.forEach(st => {
                 let av = st.author_avatar ? `background-image:url(${st.author_avatar})` : '';
-                let name = st.author_type === 'channel' ? st.author_id : st.author_id; // Для канала нужно получить имя, но пока выводим ID
+                let name = st.author_id; 
                 let borderClass = st.is_viewed ? 'seen' : '';
                 let sizeClass = stories.length > 3 && !bar.classList.contains('stories-expanded') ? 'small' : '';
                 
@@ -789,7 +786,6 @@
         });
 
         function openStoryCreatorModal() {
-            // Подтягиваем каналы пользователя
             const sel = document.getElementById('storyAuthorSelect');
             sel.innerHTML = `<option value="user|${currentUser}">Мой аккаунт (${currentUser})</option>`;
             myChatsList.forEach(c => {
@@ -877,13 +873,7 @@
                 if(d.url) {
                     const authVal = document.getElementById('storyAuthorSelect').value.split('|');
                     const text = document.getElementById('storyTextInput').value.trim();
-                    socket.emit('create_story', {
-                        author_type: authVal[0],
-                        author_id: authVal[1],
-                        media_url: d.url,
-                        media_type: d.type,
-                        text: text
-                    });
+                    socket.emit('create_story', { author_type: authVal[0], author_id: authVal[1], media_url: d.url, media_type: d.type, text: text });
                     closeStoryCreator();
                     showToast('История опубликована!');
                 }
@@ -898,7 +888,7 @@
             
             document.getElementById('storyViewerOverlay').style.display = 'flex';
             document.getElementById('storyViewerText').innerText = currentStoryData.text || '';
-            document.getElementById('storyViewerName').innerHTML = renderVerified(currentStoryData.author_id); // В идеале тут имя канала
+            document.getElementById('storyViewerName').innerHTML = renderVerified(currentStoryData.author_id);
             
             if(currentStoryData.author_avatar) {
                 document.getElementById('storyViewerAvatar').style.backgroundImage = `url(${currentStoryData.author_avatar})`;
@@ -920,9 +910,7 @@
                 vid.play();
             }
 
-            // Кнопка просмотров только для автора
-            const authVal = currentStoryData.author_type === 'user' ? currentUser : currentStoryData.author_id; // Упрощенно
-            if(currentStoryData.author_id === currentUser) {
+            if(currentStoryData.author_id === currentUser || (currentRoomType === 'channel' && (myRole === 'admin' || myRole === 'owner'))) {
                 document.getElementById('storyViewsBtn').style.display = 'block';
             } else {
                 document.getElementById('storyViewsBtn').style.display = 'none';
@@ -955,7 +943,7 @@
         });
 
         // ==========================================
-        // ПРОСМОТРЫ СООБЩЕНИЙ В ГРУППАХ
+        // ПРОСМОТРЫ СООБЩЕНИЙ В ГРУППАХ (ВОТ ТА САМАЯ ФУНКЦИЯ)
         // ==========================================
         function checkMessageViews(id) { socket.emit('get_message_views', {id: id}); }
         socket.on('message_views_data', data => {
@@ -968,213 +956,8 @@
             openModal('viewsModal');
         });
 
-
         // ==========================================
-        // ИСПРАВЛЕНИЕ МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
-        // ==========================================
-        let recordingType = null;
-        let activeMediaStream = null;
-        let mediaRecorder; let mediaChunks = [];
-        let currentFacingMode = 'user'; 
-        let isFlipping = false; 
-
-        function toggleCircleVideo(vid) { 
-            if (vid.muted) { vid.muted = false; vid.currentTime = 0; vid.play().catch(e=>{}); } 
-            else { vid.muted = true; } 
-        }
-
-        async function flipCamera(e) {
-            if (e) e.stopPropagation();
-            if (!activeMediaStream || recordingType !== 'video') return;
-            isFlipping = true;
-            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-        }
-
-        function appendTempMessage(id, type) {
-            const ul = document.getElementById('messages'); 
-            const wrapper = document.createElement('li'); 
-            wrapper.classList.add('msg-wrapper', 'my-wrapper'); 
-            wrapper.setAttribute('data-temp-id', id);
-            wrapper.style.opacity = '0.6';
-
-            let text = 'Отправка...';
-            if(type === 'audio') text = '🎤 Загрузка голосового...';
-            if(type === 'video_message') text = '📹 Загрузка кружочка...';
-            if(type === 'file') text = '📎 Загрузка файла...';
-
-            wrapper.innerHTML = `<div class="message my-message"><div class="msg-text-content" style="display:flex; align-items:center; gap:8px;"><span class="recording-pulse">⏳</span> ${text}</div></div>`;
-            ul.appendChild(wrapper); scrollToBottom();
-        }
-        function removeTempMessage(id) { const el = document.querySelector(`[data-temp-id="${id}"]`); if(el) el.remove(); }
-
-        const handleMediaStop = async () => {
-            if (isFlipping) {
-                activeMediaStream.getTracks().forEach(track => track.stop());
-                mediaChunks = []; isFlipping = false;
-                try {
-                    const constraints = { audio: true, video: { facingMode: currentFacingMode } };
-                    activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    const preview = document.getElementById('videoPreview'); 
-                    preview.srcObject = activeMediaStream; 
-                    preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
-                    let options = {};
-                    if (MediaRecorder.isTypeSupported('video/mp4')) options.mimeType = 'video/mp4';
-                    else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm';
-                    mediaRecorder = new MediaRecorder(activeMediaStream, options); 
-                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
-                    mediaRecorder.onstop = handleMediaStop; mediaRecorder.start();
-                } catch(e) { showToast("Ошибка камеры", "error"); stopMediaRecord(); }
-                return;
-            }
-
-            const currentRecordType = recordingType; 
-
-            let mime = mediaRecorder.mimeType;
-            if (!mime) mime = currentRecordType === 'video' ? 'video/mp4' : 'audio/mp4';
-            let ext = 'webm';
-            if (mime.includes('mp4')) ext = 'mp4';
-            else if (mime.includes('quicktime') || mime.includes('mov')) ext = 'mov';
-            else if (mime.includes('ogg')) ext = 'ogg';
-            
-            const blob = new Blob(mediaChunks, { type: mime });
-            activeMediaStream.getTracks().forEach(track => track.stop());
-            document.getElementById('videoPreviewContainer').style.display = 'none';
-            
-            const tempId = 'temp_' + Date.now();
-            appendTempMessage(tempId, currentRecordType === 'video' ? 'video_message' : 'audio');
-            socket.emit('typing', {room: currentRoomId, action: 'typing'}); 
-            setTimeout(() => socket.emit('stop_typing', {room: currentRoomId}), 500);
-
-            await uploadMediaMessage(blob, currentRecordType === 'video' ? 'video_message' : 'audio', ext, tempId);
-        };
-
-        async function startMediaRecord(type) {
-            try {
-                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode } } : { audio: true };
-                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                if (type === 'video') { 
-                    const preview = document.getElementById('videoPreview'); 
-                    preview.srcObject = activeMediaStream; 
-                    preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
-                    document.getElementById('videoPreviewContainer').style.display = 'block'; 
-                }
-                
-                let options = {};
-                if (type === 'video') {
-                    if (MediaRecorder.isTypeSupported('video/mp4')) options.mimeType = 'video/mp4';
-                    else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm';
-                } else {
-                    if (MediaRecorder.isTypeSupported('audio/mp4')) options.mimeType = 'audio/mp4';
-                    else if (MediaRecorder.isTypeSupported('audio/webm')) options.mimeType = 'audio/webm';
-                }
-
-                mediaRecorder = new MediaRecorder(activeMediaStream, options); 
-                mediaChunks = [];
-                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
-                
-                mediaRecorder.onstop = handleMediaStop;
-                mediaRecorder.start();
-                
-                document.getElementById('attachBtn').style.display = 'none';
-                document.getElementById('messageInput').style.display = 'none';
-                document.getElementById('sendBtn').style.display = 'none';
-                
-                const recStatus = document.getElementById('recordingStatus');
-                recStatus.style.display = 'flex'; recStatus.innerText = type === 'video' ? '📹 Запись видео...' : '🎤 Запись аудио...';
-                
-                if (type === 'audio') {
-                    const btn = document.getElementById('recordBtn'); btn.classList.add('recording-pulse'); btn.innerHTML = '⏹';
-                    document.getElementById('videoRecordBtn').style.display = 'none';
-                } else {
-                    const btn = document.getElementById('videoRecordBtn'); btn.classList.add('recording-pulse'); btn.innerHTML = '⏹';
-                    document.getElementById('recordBtn').style.display = 'none';
-                }
-                recordingType = type;
-                socket.emit('typing', {room: currentRoomId, action: type === 'video' ? 'recording_video' : 'recording_audio'});
-
-            } catch(e) { showToast("Нет доступа к микрофону/камере!", "error"); }
-        }
-        
-        function stopMediaRecord() {
-            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            document.getElementById('recordingStatus').style.display = 'none';
-            document.getElementById('attachBtn').style.display = 'flex';
-            document.getElementById('messageInput').style.display = 'block';
-            document.getElementById('sendBtn').style.display = 'flex';
-            
-            const rBtn = document.getElementById('recordBtn'); rBtn.classList.remove('recording-pulse'); rBtn.innerHTML = '🎤'; rBtn.style.display = 'flex';
-            const vBtn = document.getElementById('videoRecordBtn'); vBtn.classList.remove('recording-pulse'); vBtn.innerHTML = '📹'; vBtn.style.display = 'flex';
-            
-            document.getElementById('messageInput').disabled = false; document.getElementById('messageInput').focus();
-            recordingType = null;
-            checkSendButton();
-        }
-
-        function toggleVoiceRecord() { if (recordingType === 'audio') stopMediaRecord(); else if (!recordingType) startMediaRecord('audio'); }
-        function toggleVideoRecord() { if (recordingType === 'video') stopMediaRecord(); else if (!recordingType) startMediaRecord('video'); }
-
-        async function uploadMediaMessage(blob, overrideType, ext, tempId) {
-            const formData = new FormData(); formData.append('file', blob, overrideType === 'video_message' ? `video.${ext}` : `voice.${ext}`); 
-            try {
-                const r = await fetch('/upload', { method: 'POST', body: formData }); const d = await r.json();
-                if (d.url) socket.emit('send_message', { room: currentRoomId, text: '', media_url: d.url, media_type: overrideType, reply_to_id: replyingToId });
-                if(replyingToId) cancelReply();
-            } catch (err) { showToast('Ошибка отправки медиа', 'error'); }
-            removeTempMessage(tempId);
-        }
-
-        // ==========================================
-        // ГАЛЕРЕЯ: МУЛЬТИ-ЗАГРУЗКА И ВСТАВКА ИЗ БУФЕРА
-        // ==========================================
-        let stagedFiles = [];
-        
-        function handleFileSelect(e) {
-            const files = Array.from(e.target.files); stagedFiles = stagedFiles.concat(files);
-            renderPreviewBar(); checkSendButton(); e.target.value = '';
-        }
-
-        document.addEventListener('paste', (e) => {
-            if (currentRoomId === '') return;
-            if (e.target.tagName === 'INPUT' && e.target.id !== 'messageInput') return;
-            if (e.target.tagName === 'TEXTAREA') return;
-
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            let added = false;
-            for (let index in items) {
-                const item = items[index];
-                if (item.kind === 'file') {
-                    const blob = item.getAsFile();
-                    if (blob) { stagedFiles.push(blob); added = true; }
-                }
-            }
-            if (added) { e.preventDefault(); renderPreviewBar(); checkSendButton(); }
-        });
-
-        function renderPreviewBar() {
-            const bar = document.getElementById('file-preview-bar'); bar.innerHTML = '';
-            if (stagedFiles.length === 0) { bar.style.display = 'none'; return; }
-            bar.style.display = 'flex';
-            
-            stagedFiles.forEach((file, index) => {
-                const wrapper = document.createElement('div'); wrapper.className = 'preview-item-wrapper';
-                let el;
-                if (file.type.startsWith('image/')) { el = document.createElement('img'); el.src = URL.createObjectURL(file); } 
-                else if (file.type.startsWith('video/')) { el = document.createElement('video'); el.src = URL.createObjectURL(file); } 
-                else { el = document.createElement('div'); el.innerText = '📄'; el.style.width='100%'; el.style.height='100%'; el.style.display='flex'; el.style.alignItems='center'; el.style.justifyContent='center'; }
-                el.className = 'preview-item';
-                
-                const rmBtn = document.createElement('button'); rmBtn.className = 'preview-remove'; rmBtn.innerHTML = '✖';
-                rmBtn.onclick = () => { stagedFiles.splice(index, 1); renderPreviewBar(); checkSendButton(); };
-                
-                wrapper.appendChild(el); wrapper.appendChild(rmBtn); bar.appendChild(wrapper);
-            });
-        }
-
-
-        // ==========================================
-        // ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ (ДОЛГИЙ ТАП)
+        // ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ И КОПИРОВАНИЕ
         // ==========================================
         let confirmCallback = null;
         function showConfirm(title, text, callback) { document.getElementById('confirmTitle').innerText = title; document.getElementById('confirmDesc').innerText = text; confirmCallback = callback; openModal('customConfirmModal'); }
@@ -1184,7 +967,7 @@
         let pressTimer;
         function addMsgListeners(wrapper, id, isMe) {
             wrapper.addEventListener('contextmenu', e => { 
-                e.preventDefault(); if(!isSelectMode) showContextMenu(e.pageX, e.pageY, id, isMe); 
+                e.preventDefault(); if(!isSelectMode) showContextMenu(e.clientX, e.clientY, id, isMe); 
             });
             wrapper.addEventListener('touchstart', e => { 
                 pressTimer = setTimeout(() => { 
@@ -1197,25 +980,53 @@
             wrapper.addEventListener('click', e => { if(isSelectMode) handleMsgClick(e, id); });
         }
 
+        // КОПИРОВАНИЕ ТЕКСТА
+        function copyMessageText(id) {
+            const msg = messagesStore[id];
+            if(msg && msg.text) {
+                navigator.clipboard.writeText(msg.text).then(() => showToast('Текст скопирован!'));
+            } else {
+                showToast('Нет текста для копирования', 'error');
+            }
+        }
+
         function showContextMenu(x, y, id, isMyMessage) {
             const old = document.querySelector('.context-menu'); if (old) old.remove();
-            const menu = document.createElement('div'); menu.className = 'context-menu'; menu.style.left = x + 'px'; menu.style.top = y + 'px';
+            const menu = document.createElement('div'); menu.className = 'context-menu'; 
+            menu.style.visibility = 'hidden'; // Скрываем, чтобы рассчитать размер
+            
             const isPinned = pinnedMsgs.has(id);
             
             let html = '';
             if (isMyMessage) html += `<div class="context-menu-item" onclick="prepareEdit('${id}')">✏️ Редактировать</div>`;
-            html += `<div class="context-menu-item" onclick="setReply('${id}')">↩️ Ответить</div><div class="context-menu-item" onclick="forwardMsg('${id}')">➡️ Переслать</div><div class="context-menu-item" onclick="togglePinMsg('${id}', ${isPinned})">${isPinned ? '✖ Открепить' : '📌 Закрепить'}</div><div class="context-menu-item has-submenu">🔠 Изменить шрифт 🞂<div class="submenu"><div class="context-menu-item font-default" onclick="changeFont('${id}', 'default')">Обычный</div><div class="context-menu-item font-mono" onclick="changeFont('${id}', 'mono')">Код</div><div class="context-menu-item font-serif" onclick="changeFont('${id}', 'serif')">С засечками</div><div class="context-menu-item font-comic" onclick="changeFont('${id}', 'comic')">Весёлый</div></div></div><div class="context-menu-item" onclick="toggleSelectMode()">☑️ Выбрать несколько</div>`;
+            html += `<div class="context-menu-item" onclick="setReply('${id}')">↩️ Ответить</div>`;
+            html += `<div class="context-menu-item" onclick="copyMessageText('${id}')">📋 Скопировать</div>`;
+            html += `<div class="context-menu-item" onclick="forwardMsg('${id}')">➡️ Переслать</div>`;
+            html += `<div class="context-menu-item" onclick="togglePinMsg('${id}', ${isPinned})">${isPinned ? '✖ Открепить' : '📌 Закрепить'}</div>`;
+            html += `<div class="context-menu-item has-submenu">🔠 Изменить шрифт 🞂<div class="submenu"><div class="context-menu-item font-default" onclick="changeFont('${id}', 'default')">Обычный</div><div class="context-menu-item font-mono" onclick="changeFont('${id}', 'mono')">Код</div><div class="context-menu-item font-serif" onclick="changeFont('${id}', 'serif')">С засечками</div><div class="context-menu-item font-comic" onclick="changeFont('${id}', 'comic')">Весёлый</div></div></div>`;
+            html += `<div class="context-menu-item" onclick="toggleSelectMode()">☑️ Выбрать несколько</div>`;
             
             // --- КНОПКА ПРОСМОТРОВ ---
             if (isMyMessage && currentRoomType !== 'dm' && currentRoomType !== 'saved') {
                 html += `<div class="context-menu-item" onclick="checkMessageViews('${id}')">👁 Просмотры</div>`;
             }
 
-            // ДВОЙНОЕ УДАЛЕНИЕ
             html += `<div class="context-menu-item delete" onclick="deleteMsgLocally('${id}')">🗑 Удалить у меня</div>`;
             if (isMyMessage || myRole === 'admin' || myRole === 'owner') html += `<div class="context-menu-item delete" onclick="deleteSingleMsg('${id}')">🗑 Удалить у всех</div>`;
             
             menu.innerHTML = html; document.body.appendChild(menu);
+            
+            // --- ИСПРАВЛЕНИЕ: ЧТОБЫ МЕНЮ НЕ ВЫЛЕЗАЛО ЗА ЭКРАН ---
+            const rect = menu.getBoundingClientRect();
+            let newX = x; let newY = y;
+            
+            if (x + rect.width > window.innerWidth) newX = window.innerWidth - rect.width - 10;
+            if (y + rect.height > window.innerHeight) newY = window.innerHeight - rect.height - 10;
+            
+            menu.style.left = newX + 'px';
+            menu.style.top = newY + 'px';
+            menu.style.visibility = 'visible'; // Показываем
+            
             setTimeout(() => document.addEventListener('click', () => { const m = document.querySelector('.context-menu'); if(m) m.remove(); }, {once:true}), 10);
         }
 
@@ -1514,7 +1325,7 @@
             socket.emit('user_connected'); 
             socket.emit('get_my_chats'); 
             socket.emit('get_profile', {username: currentUser}); 
-            socket.emit('get_stories'); // Подгружаем истории при коннекте
+            socket.emit('get_stories'); 
         });
         socket.on('status_update', (data) => { if (currentRoomType === 'dm' && currentChatTarget === data.username) { const el = document.getElementById('currentChatStatus'); if (data.status === 'online') { el.innerText = 'в сети'; el.classList.add('status-online'); } else if (data.status === 'offline') { el.innerText = formatLastSeen(data.last_seen); el.classList.remove('status-online'); } } });
         socket.on('receive_user_status', (data) => { if (currentRoomType === 'dm' && currentChatTarget === data.username) { const el = document.getElementById('currentChatStatus'); if (data.custom_status) { el.innerText = data.custom_status; el.classList.remove('status-online'); } else if (data.is_online) { el.innerText = 'в сети'; el.classList.add('status-online'); } else { el.innerText = formatLastSeen(data.last_seen); el.classList.remove('status-online'); } } });
