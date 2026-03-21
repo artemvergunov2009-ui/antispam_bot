@@ -7,22 +7,13 @@ from supabase import create_client, Client
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-# Секретный ключ тоже берем из среды, а если его нет — используем запасной
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
+app.config['SECRET_KEY'] = 'samberrrgram-super-secret-key' 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- Настройки Supabase (БЕЗОПАСНЫЕ) ---
-# Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("ВНИМАНИЕ: Ключи Supabase не найдены! Убедитесь, что добавили их в Environment Variables.")
-
-# Создаем клиента только если ключи есть (чтобы локально не падало с ошибкой до настройки)
-if SUPABASE_URL and SUPABASE_KEY:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
+# --- Настройки Supabase ---
+SUPABASE_URL = "https://xydudvxraeijlqxrimoy.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZHVkdnhyYWVpamxxeHJpbW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NTUwMzQsImV4cCI6MjA4OTQzMTAzNH0.1ZNxO5YcBixDehQ613yGj-rdhD2x-3KgTD2wiukXW5I"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -84,22 +75,28 @@ def upload_file():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
+    if file.filename == '': return jsonify({'error': 'Empty file'}), 400
+    
     ext = file.filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
     try:
         file_bytes = file.read()
         supabase.storage.from_('chat_media').upload(path=filename, file=file_bytes, file_options={"content-type": file.content_type})
         url = supabase.storage.from_('chat_media').get_public_url(filename)
+        
         if file.content_type.startswith('audio'): media_type = 'audio'
         elif file.content_type.startswith('video'): media_type = 'video'
         else: media_type = 'image'
+        
         return jsonify({'url': url, 'type': media_type})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/upload_avatar', methods=['POST'])
 def upload_avatar():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
+    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
+    if file.filename == '': return jsonify({'error': 'Empty file'}), 400
     ext = file.filename.split('.')[-1]
     filename = f"avatar_{session['username']}_{uuid.uuid4().hex[:6]}.{ext}"
     try:
@@ -113,6 +110,7 @@ def upload_avatar():
 @app.route('/upload_group_avatar', methods=['POST'])
 def upload_group_avatar():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
+    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     chat_id = request.form.get('chat_id')
     ext = file.filename.split('.')[-1]
@@ -125,7 +123,9 @@ def upload_group_avatar():
         return jsonify({'url': url})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
+# --- WEBSOCKETS ---
 connected_clients = {}
+active_group_calls = {} # chat_id: [usernames]
 
 @socketio.on('user_connected')
 def user_connected():
@@ -144,6 +144,11 @@ def handle_disconnect():
             last_seen_time = datetime.utcnow().isoformat()
             supabase.table('users').update({'last_seen': last_seen_time}).eq('username', username).execute()
             emit('status_update', {'username': username, 'status': 'offline', 'last_seen': last_seen_time}, broadcast=True)
+        # Remove from active calls
+        for room, participants in active_group_calls.items():
+            if username in participants:
+                participants.remove(username)
+                emit('group_call_left', {'username': username, 'room': room}, to=room)
 
 @socketio.on('get_my_chats')
 def get_my_chats():
@@ -178,8 +183,9 @@ def get_my_chats():
 def search_users(data):
     query = data.get('query', '')
     me = session.get('username')
-    users = supabase.table('users').select('username').ilike('username', f'%{query}%').execute()
-    results = [u['username'] for u in users.data if u['username'] != me]
+    # ИСПРАВЛЕНИЕ: Теперь глобальный поиск возвращает и аватарку, и работает через limit(20)
+    users = supabase.table('users').select('username, avatar_url').ilike('username', f'%{query}%').limit(20).execute()
+    results = [u for u in users.data if u['username'] != me]
     emit('search_results', results)
 
 @socketio.on('search_for_group')
@@ -200,19 +206,26 @@ def delete_messages(data):
 
 @socketio.on('edit_message')
 def edit_message(data):
-    supabase.table('messages').update({'text': data.get('text'), 'is_edited': True}).eq('id', data.get('id')).execute()
-    emit('message_edited', {'id': data.get('id'), 'text': data.get('text')}, to=data.get('room'))
+    msg_id = data.get('id')
+    new_text = data.get('text')
+    room = data.get('room')
+    supabase.table('messages').update({'text': new_text, 'is_edited': True}).eq('id', msg_id).execute()
+    emit('message_edited', {'id': msg_id, 'text': new_text}, to=room)
 
 @socketio.on('change_font')
 def change_font(data):
-    supabase.table('messages').update({'font_style': data.get('font')}).eq('id', data.get('id')).execute()
-    emit('message_font_changed', {'id': data.get('id'), 'font_style': data.get('font')}, to=data.get('room'))
+    msg_id = data.get('id')
+    font = data.get('font')
+    room = data.get('room')
+    supabase.table('messages').update({'font_style': font}).eq('id', msg_id).execute()
+    emit('message_font_changed', {'id': msg_id, 'font_style': font}, to=room)
 
 @socketio.on('pin_message')
 def pin_message(data):
     msg_id = data.get('id')
     room = data.get('room')
-    if data.get('action') == 'pin':
+    action = data.get('action')
+    if action == 'pin':
         supabase.table('messages').update({'is_pinned': True}).eq('id', msg_id).execute()
         emit('message_pinned', {'id': msg_id, 'text': data.get('text')}, to=room)
     else:
@@ -245,7 +258,9 @@ def create_group(data):
     
     supabase.table('chats').insert({'id': chat_id, 'name': group_name, 'type': chat_type, 'description': data.get('desc', '')}).execute()
     
+    # Creator is owner
     members_data = [{'chat_id': chat_id, 'username': me, 'role': 'owner'}]
+    
     valid_users = supabase.table('users').select('username').in_('username', members).execute()
     for u in valid_users.data:
         if u['username'] != me:
@@ -266,8 +281,9 @@ def manage_member(data):
     me = session.get('username')
     room = data.get('room')
     target = data.get('target')
-    action = data.get('action') 
+    action = data.get('action') # add, kick, promote, demote
     
+    # Check permissions
     my_mem = supabase.table('chat_members').select('role').eq('chat_id', room).eq('username', me).execute()
     if not my_mem.data or my_mem.data[0]['role'] not in ['owner', 'admin']: return
     
@@ -298,7 +314,7 @@ def update_group_info(data):
     
     if update_data:
         supabase.table('chats').update(update_data).eq('id', room).execute()
-        emit('group_updated', {'room': room, 'name': update_data.get('name')}, broadcast=True)
+        emit('group_updated', {'room': room, 'name': update_data.get('name', '')}, broadcast=True)
 
 @socketio.on('get_group_info')
 def get_group_info(data):
@@ -336,15 +352,19 @@ def mark_read(data):
 
 @socketio.on('leave')
 def on_leave(data):
-    leave_room(data['room'])
+    room = data['room']
+    leave_room(room)
 
 @socketio.on('typing')
 def handle_typing(data):
-    emit('user_typing', {'username': session.get('username'), 'action': data.get('action', 'typing')}, to=data['room'], include_self=False)
+    room = data['room']
+    action = data.get('action', 'typing')
+    emit('user_typing', {'username': session.get('username'), 'action': action}, to=room, include_self=False)
 
 @socketio.on('stop_typing')
 def handle_stop_typing(data):
-    emit('user_stop_typing', {'username': session.get('username')}, to=data['room'], include_self=False)
+    room = data['room']
+    emit('user_stop_typing', {'username': session.get('username')}, to=room, include_self=False)
 
 @socketio.on('send_message')
 def handle_message(data):
@@ -361,6 +381,7 @@ def handle_message(data):
     if chat_info.data and chat_info.data[0].get('type') == 'channel':
         my_role = supabase.table('chat_members').select('role').eq('chat_id', room).eq('username', username).execute()
         if not my_role.data or my_role.data[0].get('role') not in ['owner', 'admin']:
+            emit('server_error', {'message': 'Только администраторы могут публиковать в канал!'}, to=request.sid)
             return # Block message
     
     new_msg = supabase.table('messages').insert({
