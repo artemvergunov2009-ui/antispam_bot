@@ -45,7 +45,6 @@
         .verified-badge { display: inline-block; width: 14px; height: 14px; background-color: #26c6da; border-radius: 50%; margin-left: 5px; position: relative; vertical-align: middle; top: -1px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .verified-badge::after { content: ''; position: absolute; left: 4px; top: 2.5px; width: 3.5px; height: 6px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); border-radius: 1px; }
 
-        /* ИСТОРИИ (STORIES) СТИЛИ - ВЕРНУЛ И УСИЛИЛ */
         #stories-bar { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: var(--sidebar-bg); border-bottom: 1px solid var(--input-border); transition: max-height 0.3s ease; max-height: 75px; }
         #stories-bar::-webkit-scrollbar { display: none; }
         .stories-expanded { max-height: 200px !important; flex-wrap: wrap; overflow-y: auto; }
@@ -55,7 +54,6 @@
         .story-circle.small { width: 40px; height: 40px; }
         .story-author-name { position: absolute; bottom: -18px; font-size: 10px; color: var(--text-color-dark); white-space: nowrap; max-width: 60px; overflow: hidden; text-overflow: ellipsis; background: rgba(255,255,255,0.8); padding: 0 4px; border-radius: 5px; }
 
-        /* ИСТОРИИ (ВЬЮВЕР) - ВОТ ИЗ-ЗА ЭТОГО ПРОПАВШЕГО БЛОКА ЛОМАЛСЯ ЭКРАН */
         #storyViewerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; flex-direction: column; align-items: center; justify-content: center; }
         #storyViewerContent { max-width: 90%; max-height: 80vh; object-fit: contain; border-radius: 15px; }
         #storyViewerText { color: white; margin-top: 15px; font-size: 1.2em; font-weight: bold; }
@@ -63,7 +61,6 @@
         #storyViewerClose { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; }
         #storyViewsBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; display: none; }
 
-        /* ГАЛЕРЕЯ */
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 300px; }
         .gallery-img { width: 100%; height: 100%; max-height: 200px; object-fit: cover; cursor: pointer; transition: 0.2s; background: #eee; }
         .gallery-img:hover { filter: brightness(0.9); }
@@ -144,8 +141,7 @@
         .unread-badge { background-color: var(--badge-bg); color: #fff; border-radius: 12px; padding: 2px 8px; font-size: 0.75em; font-weight: bold; display: flex; align-items: center; justify-content: center; margin-left: 10px; flex-shrink: 0; min-width: 12px;}
         .list-item.active .unread-badge { background-color: white; color: var(--main-color); }
         
-        /* ГАРАНТИЯ ЧТО ЧАТ НЕ БЛОКИРУЕТСЯ */
-        #chat-area { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--chat-area-bg); margin: 15px 15px 15px 0; border-radius: var(--border-radius-large); box-shadow: var(--main-shadow); overflow: hidden; position: relative; transition: 0.3s; z-index: 10;}
+        #chat-area { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--chat-area-bg); margin: 15px 15px 15px 0; border-radius: var(--border-radius-large); box-shadow: var(--main-shadow); overflow: hidden; position: relative; transition: 0.3s;}
 
         .chat-header { padding: 15px 25px; background: var(--sidebar-bg); border-bottom: 1px solid var(--input-border); display: flex; align-items: center; gap: 15px; flex-shrink: 0; cursor: pointer; transition: 0.3s;}
         .chat-header-info { display: flex; flex-direction: column; flex-grow: 1;}
@@ -190,7 +186,6 @@
         @keyframes pulseRecord { 0% { color: var(--call-btn-red); transform: scale(1); } 50% { color: #ff8a80; transform: scale(1.1); } 100% { color: var(--call-btn-red); transform: scale(1); } }
         .recording-pulse { animation: pulseRecord 1s infinite; color: var(--call-btn-red) !important; }
 
-        /* ЗАЩИТА ТОСТОВ ОТ ПЕРЕКРЫТИЯ ЭКРАНА */
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { pointer-events: auto; background: var(--modal-bg); color: var(--text-color-dark); padding: 15px 25px; border-radius: var(--border-radius-small); box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-left: 5px solid var(--main-color); animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards; font-weight: bold; display: flex; align-items: center; gap: 10px; }
         .toast.error { border-left-color: #e57373; }
@@ -248,6 +243,12 @@
         .inc-accept { background-color: var(--main-color); }
         .inc-reject { background-color: #e57373; }
 
+        /* Окно Админки */
+        #adminPanelOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        #adminPanelContent { background: var(--modal-bg); padding: 30px; border-radius: var(--border-radius-large); width: 90%; max-width: 600px; box-shadow: var(--main-shadow); position: relative; max-height: 85vh; display: flex; flex-direction: column; color: var(--text-color-dark); }
+        #adminUsersList { list-style: none; padding: 0; overflow-y: auto; flex-grow: 1; }
+        .admin-user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--input-border); }
+
         @media (max-width: 768px) {
             body { margin: 0; flex-direction: column; background-color: var(--sidebar-bg); }
             #sidebar { width: 100%; height: 100%; margin: 0; border-radius: 0; box-shadow: none; display: flex; }
@@ -279,6 +280,15 @@
             <h3>Просмотры</h3>
             <ul id="viewsList" style="list-style: none; padding: 0; max-height: 250px; overflow-y: auto; text-align: left;"></ul>
             <div class="modal-buttons" style="margin-top:15px;"><button class="modal-btn btn-cancel" style="width: 100%;" onclick="closeModal('viewsModal')">Закрыть</button></div>
+        </div>
+    </div>
+
+    <div id="adminPanelOverlay">
+        <div id="adminPanelContent">
+            <button onclick="document.getElementById('adminPanelOverlay').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✖</button>
+            <h2 style="margin-top:0; color:var(--main-color);">👑 Админ-панель</h2>
+            <input type="text" id="adminSearchInput" placeholder="Поиск пользователей..." style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark);">
+            <ul id="adminUsersList"></ul>
         </div>
     </div>
 
@@ -385,6 +395,7 @@
             <div class="drawer-status" id="myDrawerStatus">в сети</div>
         </div>
         <ul class="drawer-menu">
+            <li class="drawer-item" id="adminPanelBtn" style="display:none; color: var(--main-color);" onclick="openAdminPanel()">👑 Админ-панель</li>
             <li class="drawer-item" onclick="openStoryCreatorModal()">📸 Выложить историю</li>
             <li class="drawer-item" onclick="openSettingsModal()">⚙️ Настройки</li>
             <li class="drawer-item" onclick="openHelpModal()">❓ Помощь</li>
@@ -490,7 +501,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v27.0 (Fix)</b><br><br>Починены клики, границы меню, скопировать текст!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v28.0 (Admin Panel)</b><br><br>Добавлена админка для выдачи галочек!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -529,22 +540,35 @@
         let editingId = null; let replyingToId = null; let forwardingMsgId = null;
         let showingArchive = false;
 
+        // ==========================================
+        // ДИНАМИЧЕСКИЕ ГАЛОЧКИ И АДМИНКА
+        // ==========================================
+        let verifiedUsersList = [];
+        socket.on('update_verified_list', list => { verifiedUsersList = list; document.getElementById('myDrawerName').innerHTML = renderVerified(currentUser); socket.emit('get_my_chats'); });
+        socket.on('client_init_data', data => { if (data.is_verified) { document.getElementById('adminPanelBtn').style.display = 'flex'; } });
+
         function renderVerified(name) {
-            if (name === 'wnsuuu' || name === 'Samberrrgram Official' || name === 'Kostya1063') {
-                return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
-            }
+            if (verifiedUsersList.includes(name)) return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
             return name;
         }
-        document.getElementById('myDrawerName').innerHTML = renderVerified(currentUser);
 
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = type === 'error' ? `❌ ${message}` : `ℹ️ ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
-        }
+        function openAdminPanel() { socket.emit('get_admin_users'); document.getElementById('adminPanelOverlay').style.display = 'flex'; closeDrawer(); }
+        
+        socket.on('admin_users_data', users => {
+            const list = document.getElementById('adminUsersList'); list.innerHTML = '';
+            users.forEach(u => {
+                let btnText = u.is_verified ? 'Забрать галочку' : 'Выдать галочку';
+                let btnColor = u.is_verified ? '#e57373' : 'var(--main-color)';
+                list.innerHTML += `
+                    <li class="admin-user-item">
+                        <span style="font-weight:bold;">${u.username} ${u.is_verified ? '☑️' : ''}</span>
+                        <button style="padding:5px 10px; border:none; border-radius:10px; background:${btnColor}; color:white; cursor:pointer;" onclick="toggleVerification('${u.username}', ${u.is_verified})">${btnText}</button>
+                    </li>
+                `;
+            });
+        });
+
+        function toggleVerification(username, currentStatus) { socket.emit('toggle_verification', {target: username, current_status: currentStatus}); }
 
         // ==========================================
         // ЗВУКИ И РИНГТОНЫ (ТВОЙ КОД)
@@ -553,13 +577,10 @@
             const audio = document.getElementById(id);
             if (audio) { audio.currentTime = 0; audio.play().catch(e => console.log("Звук заблокирован")); }
         }
-
         function playRingtone() { playSound('ringtoneAudio'); }
         function stopRingtone() { 
-            const r = document.getElementById('ringtoneAudio'); 
-            if (r) { r.pause(); r.currentTime = 0; } 
-            const d = document.getElementById('dialingAudio'); 
-            if (d) { d.pause(); d.currentTime = 0; } 
+            const r = document.getElementById('ringtoneAudio'); if (r) { r.pause(); r.currentTime = 0; } 
+            const d = document.getElementById('dialingAudio'); if (d) { d.pause(); d.currentTime = 0; } 
         }
 
         document.body.addEventListener('click', function unlockAudio() {
@@ -575,8 +596,7 @@
         // ЗВОНКИ И ИСТОРИЯ (ТВОЙ КОД)
         // ==========================================
         let localStream; let peerConnection; let activeCallTarget = ''; let iceCandidateQueue = [];
-        let callTimerInterval = null; let callStartTime = null;
-        let isCallAnswered = false;
+        let callTimerInterval = null; let callStartTime = null; let isCallAnswered = false;
 
         const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }] };
 
@@ -638,25 +658,18 @@
         function rejectCall() {
             document.getElementById('incomingCallModal').style.display = 'none';
             socket.emit('reject_call', {caller: activeCallTarget});
-            stopRingtone(); 
-            playSound('rejectAudio'); 
-            endCallLocally();
+            stopRingtone(); playSound('rejectAudio'); endCallLocally();
         }
 
         socket.on('call_rejected', (data) => { 
-            stopRingtone();
-            playSound('rejectAudio'); 
-            showToast(`Собеседник отклонил вызов`, 'error'); 
+            stopRingtone(); playSound('rejectAudio'); showToast(`Собеседник отклонил вызов`, 'error'); 
             socket.emit('send_message', {room: currentRoomId, text: '🚫 Отклонённый вызов'});
             endCallLocally(); 
         });
 
         async function acceptCall() {
             document.getElementById('incomingCallModal').style.display = 'none';
-            stopRingtone();
-            playSound('acceptAudio'); 
-            isCallAnswered = true;
-            
+            stopRingtone(); playSound('acceptAudio'); isCallAnswered = true;
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 document.getElementById('localAudio').srcObject = localStream;
@@ -669,9 +682,7 @@
         }
 
         socket.on('call_accepted', async () => {
-            isCallAnswered = true;
-            stopRingtone(); 
-            playSound('acceptAudio'); 
+            isCallAnswered = true; stopRingtone(); playSound('acceptAudio'); 
             await setupWebRTC();
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
@@ -714,24 +725,15 @@
         }
 
         function endCall() { 
-            if (!isCallAnswered && activeCallTarget) {
-                socket.emit('send_message', {room: currentRoomId, text: '☎️ Пропущенный вызов'});
-            }
+            if (!isCallAnswered && activeCallTarget) { socket.emit('send_message', {room: currentRoomId, text: '☎️ Пропущенный вызов'}); }
             if (activeCallTarget) socket.emit('end_call', {target: activeCallTarget}); 
-            playSound('endAudio'); 
-            endCallLocally(); 
+            playSound('endAudio'); endCallLocally(); 
         }
         
-        socket.on('call_ended', (data) => { 
-            if(data.by === activeCallTarget) {
-                playSound('endAudio'); 
-                endCallLocally(); 
-            }
-        });
+        socket.on('call_ended', (data) => { if(data.by === activeCallTarget) { playSound('endAudio'); endCallLocally(); } });
 
         function endCallLocally() {
-            stopRingtone();
-            stopCallTimer();
+            stopRingtone(); stopCallTimer();
             document.getElementById('activeCallOverlay').style.display = 'none';
             document.getElementById('incomingCallModal').style.display = 'none';
             document.getElementById('forcePlayBtn').style.display = 'none';
@@ -744,7 +746,7 @@
         }
 
         // ==========================================
-        // ИСТОРИИ (STORIES) - ДОБАВЛЕНЫ ФУНКЦИИ
+        // ИСТОРИИ (STORIES)
         // ==========================================
         let allStories = [];
         let currentStoryData = null;
@@ -960,7 +962,7 @@
         });
 
         // ==========================================
-        // ИСПРАВЛЕНИЕ МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
+        // МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
         // ==========================================
         let recordingType = null;
         let activeMediaStream = null;
@@ -1207,7 +1209,7 @@
 
 
         // ==========================================
-        // ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ (ДОЛГИЙ ТАП) И КОПИРОВАНИЕ
+        // ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ И КОПИРОВАНИЕ
         // ==========================================
         let confirmCallback = null;
         function showConfirm(title, text, callback) { document.getElementById('confirmTitle').innerText = title; document.getElementById('confirmDesc').innerText = text; confirmCallback = callback; openModal('customConfirmModal'); }
@@ -1230,14 +1232,10 @@
             wrapper.addEventListener('click', e => { if(isSelectMode) handleMsgClick(e, id); });
         }
 
-        // КОПИРОВАНИЕ ТЕКСТА
         function copyMessageText(id) {
             const msg = messagesStore[id];
-            if(msg && msg.text) {
-                navigator.clipboard.writeText(msg.text).then(() => showToast('Текст скопирован!'));
-            } else {
-                showToast('Нет текста для копирования', 'error');
-            }
+            if(msg && msg.text) { navigator.clipboard.writeText(msg.text).then(() => showToast('Текст скопирован!')); } 
+            else { showToast('Нет текста для копирования', 'error'); }
         }
 
         function showContextMenu(x, y, id, isMyMessage) {
@@ -1256,7 +1254,6 @@
             html += `<div class="context-menu-item has-submenu">🔠 Изменить шрифт 🞂<div class="submenu"><div class="context-menu-item font-default" onclick="changeFont('${id}', 'default')">Обычный</div><div class="context-menu-item font-mono" onclick="changeFont('${id}', 'mono')">Код</div><div class="context-menu-item font-serif" onclick="changeFont('${id}', 'serif')">С засечками</div><div class="context-menu-item font-comic" onclick="changeFont('${id}', 'comic')">Весёлый</div></div></div>`;
             html += `<div class="context-menu-item" onclick="toggleSelectMode()">☑️ Выбрать несколько</div>`;
             
-            // ПРОСМОТРЫ
             if (isMyMessage && currentRoomType !== 'dm' && currentRoomType !== 'saved') {
                 html += `<div class="context-menu-item" onclick="checkMessageViews('${id}')">👁 Просмотры</div>`;
             }
@@ -1266,7 +1263,6 @@
             
             menu.innerHTML = html; document.body.appendChild(menu);
             
-            // УМНЫЕ ГРАНИЦЫ МЕНЮ (ЧТОБЫ НЕ ВЫЛЕЗАЛО)
             const rect = menu.getBoundingClientRect();
             let newX = x; let newY = y;
             if (x + rect.width > window.innerWidth) newX = window.innerWidth - rect.width - 10;
@@ -1635,6 +1631,8 @@
                 list.appendChild(li);
             });
         });
+
+        socket.on('new_message_notification', (msg) => { socket.emit('get_my_chats'); let notifText = msg.text || "Медиафайл"; if (msg.media_type === 'audio') notifText = "🎤 Голосовое сообщение"; if (msg.media_type === 'video_message') notifText = "📹 Видеосообщение"; if (msg.media_type === 'gallery') notifText = "🖼 Галерея"; if (currentRoomId !== msg.room && pushEnabled && Notification.permission === "granted") new Notification(msg.username, {body: notifText}); });
 
         function handleSearch() { const q = document.getElementById('searchInput').value.trim(); if (q.length > 0) { document.getElementById('search-results').style.display = 'block'; document.getElementById('chat-list').style.display = 'none'; socket.emit('search_users', {query: q}); } else { document.getElementById('search-results').style.display = 'none'; document.getElementById('chat-list').style.display = 'block'; socket.emit('get_my_chats'); } }
         
