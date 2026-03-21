@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
@@ -42,7 +42,6 @@ def login():
                 try:
                     official = supabase.table('chats').select('id').eq('name', 'Samberrrgram Official').execute()
                     if official.data:
-                        # Проверяем, не состоит ли уже
                         existing = supabase.table('chat_members').select('*').eq('chat_id', official.data[0]['id']).eq('username', username).execute()
                         if not existing.data:
                             supabase.table('chat_members').insert({'chat_id': official.data[0]['id'], 'username': username, 'role': 'member'}).execute()
@@ -83,21 +82,26 @@ def upload_file():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
+    if file.filename == '': return jsonify({'error': 'Empty file'}), 400
+    
     ext = file.filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
     try:
         file_bytes = file.read()
         supabase.storage.from_('chat_media').upload(path=filename, file=file_bytes, file_options={"content-type": file.content_type})
         url = supabase.storage.from_('chat_media').get_public_url(filename)
+        
         if file.content_type.startswith('audio'): media_type = 'audio'
         elif file.content_type.startswith('video'): media_type = 'video'
         else: media_type = 'image'
+        
         return jsonify({'url': url, 'type': media_type})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/upload_avatar', methods=['POST'])
 def upload_avatar():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
+    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     ext = file.filename.split('.')[-1]
     filename = f"avatar_{session['username']}_{uuid.uuid4().hex[:6]}.{ext}"
@@ -112,6 +116,7 @@ def upload_avatar():
 @app.route('/upload_group_avatar', methods=['POST'])
 def upload_group_avatar():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
+    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     chat_id = request.form.get('chat_id')
     ext = file.filename.split('.')[-1]
@@ -167,8 +172,6 @@ def get_my_chats():
         for chat in chats.data:
             chat['my_role'] = my_roles.get(chat['id'], 'member')
             chat['unread_count'] = unread_counts.get(chat['id'], 0)
-            
-            # --- ПОДГРУЗКА АВАТАРОК ДЛЯ ЛС ---
             if chat.get('type') == 'dm':
                 parts = [p.strip() for p in chat['name'].split('&')]
                 target = parts[0] if len(parts) > 1 and parts[1] == me else (parts[1] if len(parts) > 1 else parts[0])
@@ -213,19 +216,26 @@ def delete_messages(data):
 
 @socketio.on('edit_message')
 def edit_message(data):
-    supabase.table('messages').update({'text': data.get('text'), 'is_edited': True}).eq('id', data.get('id')).execute()
-    emit('message_edited', {'id': data.get('id'), 'text': data.get('text')}, to=data.get('room'))
+    msg_id = data.get('id')
+    new_text = data.get('text')
+    room = data.get('room')
+    supabase.table('messages').update({'text': new_text, 'is_edited': True}).eq('id', msg_id).execute()
+    emit('message_edited', {'id': msg_id, 'text': new_text}, to=room)
 
 @socketio.on('change_font')
 def change_font(data):
-    supabase.table('messages').update({'font_style': data.get('font')}).eq('id', data.get('id')).execute()
-    emit('message_font_changed', {'id': data.get('id'), 'font_style': data.get('font')}, to=data.get('room'))
+    msg_id = data.get('id')
+    font = data.get('font')
+    room = data.get('room')
+    supabase.table('messages').update({'font_style': font}).eq('id', msg_id).execute()
+    emit('message_font_changed', {'id': msg_id, 'font_style': font}, to=room)
 
 @socketio.on('pin_message')
 def pin_message(data):
     msg_id = data.get('id')
     room = data.get('room')
-    if data.get('action') == 'pin':
+    action = data.get('action')
+    if action == 'pin':
         supabase.table('messages').update({'is_pinned': True}).eq('id', msg_id).execute()
         emit('message_pinned', {'id': msg_id, 'text': data.get('text')}, to=room)
     else:
@@ -320,15 +330,12 @@ def get_group_info(data):
     chat_res = supabase.table('chats').select('name, avatar_url, description, type, show_members').eq('id', room).execute()
     
     if chat_res.data:
-        # --- ПОДГРУЖАЕМ АВАТАРКИ ДЛЯ УЧАСТНИКОВ ГРУППЫ ---
         members_with_avatars = []
         for m in res.data:
             u_db = supabase.table('users').select('avatar_url').eq('username', m['username']).execute()
             avatar = u_db.data[0].get('avatar_url') if u_db.data else None
             members_with_avatars.append({
-                'username': m['username'],
-                'role': m['role'],
-                'avatar_url': avatar
+                'username': m['username'], 'role': m['role'], 'avatar_url': avatar
             })
 
         emit('group_info_data', {
@@ -346,8 +353,16 @@ def on_join(data):
     room = data['room']
     me = session.get('username')
     join_room(room)
+    
+    # Отмечаем прочитанным и записываем в просмотры
+    unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
+    for m in unread_msgs.data:
+        try: supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
+        except: pass
+    
     supabase.table('messages').update({'is_read': True}).eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
     emit('messages_read', {'room': room, 'by': me}, to=room)
+    
     history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
     emit('load_history', history.data)
 
@@ -355,8 +370,18 @@ def on_join(data):
 def mark_read(data):
     room = data['room']
     me = session.get('username')
+    unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
+    for m in unread_msgs.data:
+        try: supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
+        except: pass
     supabase.table('messages').update({'is_read': True}).eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
     emit('messages_read', {'room': room, 'by': me}, to=room)
+
+@socketio.on('get_message_views')
+def get_message_views(data):
+    msg_id = data.get('id')
+    views = supabase.table('message_reads').select('username, read_at').eq('message_id', msg_id).execute()
+    emit('message_views_data', {'id': msg_id, 'views': views.data})
 
 @socketio.on('leave')
 def on_leave(data):
@@ -380,13 +405,12 @@ def handle_message(data):
     font = data.get('font_style', 'default')
     username = session.get('username')
     
-    # Check permissions for channels
     chat_info = supabase.table('chats').select('type').eq('id', room).execute()
     if chat_info.data and chat_info.data[0].get('type') == 'channel':
         my_role = supabase.table('chat_members').select('role').eq('chat_id', room).eq('username', username).execute()
         if not my_role.data or my_role.data[0].get('role') not in ['owner', 'admin']:
             emit('server_error', {'message': 'Только администраторы могут публиковать в канал!'}, to=request.sid)
-            return # Block message
+            return 
     
     new_msg = supabase.table('messages').insert({
         'chat_id': room, 'username': username, 'text': text, 
@@ -436,34 +460,82 @@ def check_user_status(data):
             last_seen = user_db.data[0].get('last_seen', '')
             emit('receive_user_status', {'username': target, 'is_online': is_online, 'custom_status': custom_status, 'last_seen': last_seen})
 
+# ================== ИСТОРИИ (STORIES) ==================
+@socketio.on('get_stories')
+def get_stories():
+    me = session.get('username')
+    # Ленивое удаление старых историй (старше 24ч)
+    try: supabase.table('stories').delete().lt('expires_at', datetime.utcnow().isoformat()).execute()
+    except: pass
+    
+    # Получаем все актуальные истории
+    stories_res = supabase.table('stories').select('*').gt('expires_at', datetime.utcnow().isoformat()).order('created_at', desc=False).execute()
+    # Получаем просмотры
+    views_res = supabase.table('story_views').select('story_id').eq('viewer_username', me).execute()
+    viewed_ids = [v['story_id'] for v in views_res.data]
+    
+    # Подтягиваем аватарки авторов
+    authors_avatars = {}
+    for st in stories_res.data:
+        if st['author_type'] == 'user' and st['author_id'] not in authors_avatars:
+            udb = supabase.table('users').select('avatar_url').eq('username', st['author_id']).execute()
+            authors_avatars[st['author_id']] = udb.data[0].get('avatar_url') if udb.data else None
+        elif st['author_type'] == 'channel' and st['author_id'] not in authors_avatars:
+            cdb = supabase.table('chats').select('avatar_url').eq('id', st['author_id']).execute()
+            authors_avatars[st['author_id']] = cdb.data[0].get('avatar_url') if cdb.data else None
+            
+        st['author_avatar'] = authors_avatars.get(st['author_id'])
+        st['is_viewed'] = st['id'] in viewed_ids
+        
+    emit('update_stories', stories_res.data)
+
+@socketio.on('create_story')
+def create_story(data):
+    me = session.get('username')
+    expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+    new_story = supabase.table('stories').insert({
+        'author_id': data.get('author_id', me),
+        'author_type': data.get('author_type', 'user'),
+        'media_url': data.get('media_url'),
+        'media_type': data.get('media_type'),
+        'text': data.get('text', ''),
+        'expires_at': expires
+    }).execute()
+    emit('story_created', broadcast=True)
+
+@socketio.on('mark_story_seen')
+def mark_story_seen(data):
+    me = session.get('username')
+    try: supabase.table('story_views').insert({'story_id': data['id'], 'viewer_username': me}).execute()
+    except: pass
+    
+@socketio.on('get_story_views')
+def get_story_views(data):
+    story_id = data.get('id')
+    views = supabase.table('story_views').select('viewer_username, viewed_at').eq('story_id', story_id).execute()
+    emit('story_views_data', {'id': story_id, 'views': views.data})
+
 # --- ЗВОНКИ (АБСОЛЮТНО ТВОЙ КОД) ---
 @socketio.on('call_user')
-def call_user(data):
-    emit('incoming_call', {'from': session.get('username')}, to=f"user_{data.get('target')}")
+def call_user(data): emit('incoming_call', {'from': session.get('username')}, to=f"user_{data.get('target')}")
 
 @socketio.on('answer_call')
-def answer_call(data):
-    emit('call_accepted', {'by': session.get('username')}, to=f"user_{data.get('caller')}")
+def answer_call(data): emit('call_accepted', {'by': session.get('username')}, to=f"user_{data.get('caller')}")
 
 @socketio.on('reject_call')
-def reject_call(data):
-    emit('call_rejected', {'by': session.get('username')}, to=f"user_{data.get('caller')}")
+def reject_call(data): emit('call_rejected', {'by': session.get('username')}, to=f"user_{data.get('caller')}")
 
 @socketio.on('webrtc_offer')
-def webrtc_offer(data):
-    emit('webrtc_offer', {'offer': data['offer'], 'from': session.get('username')}, to=f"user_{data['target']}")
+def webrtc_offer(data): emit('webrtc_offer', {'offer': data['offer'], 'from': session.get('username')}, to=f"user_{data['target']}")
 
 @socketio.on('webrtc_answer')
-def webrtc_answer(data):
-    emit('webrtc_answer', {'answer': data['answer'], 'from': session.get('username')}, to=f"user_{data['target']}")
+def webrtc_answer(data): emit('webrtc_answer', {'answer': data['answer'], 'from': session.get('username')}, to=f"user_{data['target']}")
 
 @socketio.on('webrtc_ice_candidate')
-def webrtc_ice_candidate(data):
-    emit('webrtc_ice_candidate', {'candidate': data['candidate'], 'from': session.get('username')}, to=f"user_{data['target']}")
+def webrtc_ice_candidate(data): emit('webrtc_ice_candidate', {'candidate': data['candidate'], 'from': session.get('username')}, to=f"user_{data['target']}")
 
 @socketio.on('end_call')
-def end_call(data):
-    emit('call_ended', {'by': session.get('username')}, to=f"user_{data['target']}")
+def end_call(data): emit('call_ended', {'by': session.get('username')}, to=f"user_{data['target']}")
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
