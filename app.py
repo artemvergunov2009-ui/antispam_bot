@@ -7,13 +7,21 @@ from supabase import create_client, Client
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'samberrrgram-super-secret-key' 
+# Секретный ключ тоже берем из среды, а если его нет — используем запасной
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- Настройки Supabase ---
-SUPABASE_URL = "https://xydudvxraeijlqxrimoy.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZHVkdnhyYWVpamxxeHJpbW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NTUwMzQsImV4cCI6MjA4OTQzMTAzNH0.1ZNxO5YcBixDehQ613yGj-rdhD2x-3KgTD2wiukXW5I"
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# --- Настройки Supabase (БЕЗОПАСНЫЕ) ---
+# Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("ВНИМАНИЕ: Ключи Supabase не найдены! Убедитесь, что добавили их в Environment Variables.")
+
+# Создаем клиента только если ключи есть (чтобы локально не падало с ошибкой до настройки)
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
