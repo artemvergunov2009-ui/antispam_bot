@@ -49,8 +49,6 @@ def login():
                 return redirect(url_for('chat'))
             else:
                 user = user_response.data[0]
-                if user.get('is_banned'): return render_template('login.html', error="Ваш аккаунт заблокирован администратором.")
-                
                 if not user.get('password_hash'):
                     hashed_pw = generate_password_hash(password)
                     supabase.table('users').update({'password_hash': hashed_pw, 'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
@@ -133,14 +131,6 @@ def user_connected():
         supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
         join_room(f"user_{username}")
         emit('status_update', {'username': username, 'status': 'online'}, broadcast=True)
-        
-        user_info = supabase.table('users').select('is_verified, role').eq('username', username).execute()
-        if user_info.data:
-            emit('client_init_data', {'is_verified': user_info.data[0].get('is_verified'), 'role': user_info.data[0].get('role')})
-        
-        verified = supabase.table('users').select('username').eq('is_verified', True).execute()
-        v_list = [u['username'] for u in verified.data]
-        emit('update_verified_list', v_list)
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -154,49 +144,6 @@ def handle_disconnect():
             if username in participants:
                 participants.remove(username)
                 emit('group_call_left', {'username': username, 'room': room}, to=room)
-
-# ================= АДМИН ПАНЕЛЬ =================
-@socketio.on('get_admin_users')
-def get_admin_users():
-    me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        users = supabase.table('users').select('username, avatar_url, is_verified, role, is_banned').execute()
-        emit('admin_users_data', users.data)
-
-@socketio.on('toggle_verification')
-def toggle_verification(data):
-    me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        target = data.get('target')
-        current_status = data.get('current_status')
-        supabase.table('users').update({'is_verified': not current_status}).eq('username', target).execute()
-        verified = supabase.table('users').select('username').eq('is_verified', True).execute()
-        v_list = [u['username'] for u in verified.data]
-        emit('update_verified_list', v_list, broadcast=True)
-        get_admin_users()
-
-@socketio.on('toggle_ban')
-def toggle_ban(data):
-    me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        target = data.get('target')
-        current_status = data.get('current_status')
-        supabase.table('users').update({'is_banned': not current_status}).eq('username', target).execute()
-        get_admin_users()
-
-@socketio.on('change_role')
-def change_role(data):
-    me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        target = data.get('target')
-        new_role = data.get('role')
-        supabase.table('users').update({'role': new_role}).eq('username', target).execute()
-        get_admin_users()
-# ================================================
 
 @socketio.on('get_my_chats')
 def get_my_chats():
@@ -322,15 +269,11 @@ def leave_chat_completely(data):
     supabase.table('chat_members').delete().eq('chat_id', room).eq('username', me).execute()
     emit('chat_left_success', {'room': room}, to=request.sid)
 
-# --- УДАЛЕНИЕ ЧАТА У ВСЕХ ---
 @socketio.on('delete_chat_for_everyone')
 def delete_chat_for_everyone(data):
     room = data.get('room')
-    # Сначала удаляем все сообщения и просмотры
     supabase.table('messages').delete().eq('chat_id', room).execute()
-    # Затем удаляем участников
     supabase.table('chat_members').delete().eq('chat_id', room).execute()
-    # Удаляем сам чат
     supabase.table('chats').delete().eq('id', room).execute()
     emit('chat_deleted_for_everyone', {'room': room}, broadcast=True)
 
