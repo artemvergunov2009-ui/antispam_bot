@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         :root {
@@ -185,6 +186,16 @@
         .drawer-menu { list-style: none; padding: 10px 0; margin: 0; flex-grow: 1; }
         .drawer-item { padding: 15px 20px; font-size: 1.1em; color: var(--text-color-dark); cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.2s;}
         .drawer-item:hover { background-color: var(--chat-area-bg); color: var(--main-color); }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-content { background: var(--modal-bg); padding: 30px; border-radius: var(--border-radius-large); width: 320px; box-shadow: var(--main-shadow); text-align: center; position: relative; max-height: 85vh; overflow-y: auto; color: var(--text-color-dark); transition: 0.3s;}
+        .modal-content::-webkit-scrollbar { width: 4px; } .modal-content::-webkit-scrollbar-thumb { background-color: rgba(150,150,150,0.3); border-radius: 3px; }
+        .modal-content h3 { color: var(--main-color); margin-top: 0; }
+        .modal-content input[type="text"], .modal-content textarea, .modal-content select { width: 100%; padding: 12px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid var(--input-border); border-radius: var(--border-radius-small); outline: none; font-family: inherit; background: var(--input-bg); color: var(--text-color-dark); transition: 0.3s;}
+        .modal-buttons { display: flex; justify-content: space-between; gap: 10px; }
+        .modal-btn { flex-grow: 1; padding: 10px; border: none; border-radius: var(--border-radius-small); cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-cancel { background: var(--input-bg); color: var(--text-color-dark); border: 1px solid var(--input-border); }
+        .btn-create { background: var(--main-color); color: white; }
 
         .profile-avatar-large { width: 100px; height: 100px; border-radius: 50%; background-color: var(--msg-out-bg); margin: 0 auto 15px; display: flex; justify-content: center; align-items: center; font-size: 2.5em; color: white; overflow: hidden; background-size: cover; background-position: center; position: relative; cursor: pointer; }
         .avatar-edit-overlay { display: none; position: absolute; bottom: 0; background: rgba(0,0,0,0.6); width: 100%; padding: 5px 0; font-size: 0.4em; cursor: pointer; color: white; text-align: center;}
@@ -408,7 +419,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v24.0 (Search Fix)</b><br><br>Поиск людей починен!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v24.0</b><br><br>Аватарки везде!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -662,7 +673,7 @@
         }
 
         // ==========================================
-        // ИСПРАВЛЕНИЕ МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
+        // МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
         // ==========================================
         let recordingType = null;
         let activeMediaStream = null;
@@ -1012,7 +1023,7 @@
         socket.on('message_edited', data => { const textDiv = document.querySelector(`[data-id="${data.id}"] .msg-text-content`); if(textDiv) textDiv.innerText = data.text; const metaDiv = document.querySelector(`[data-id="${data.id}"] .msg-meta`); if(metaDiv && !metaDiv.querySelector('.edited-tag')) metaDiv.insertAdjacentHTML('afterbegin', '<span class="edited-tag">(изменено)</span>'); if(messagesStore[data.id]) { messagesStore[data.id].text = data.text; messagesStore[data.id].is_edited = true; } });
 
         // ==========================================
-        // ГРУППЫ И КАНАЛЫ
+        // ГРУППЫ И КАНАЛЫ (С АВАТАРКАМИ УЧАСТНИКОВ)
         // ==========================================
         function handleHeaderClick() {
             if (currentRoomId === '') return;
@@ -1058,8 +1069,11 @@
                     }
                     let roleTag = m.role === 'owner' ? ' 👑' : (m.role === 'admin' ? ' 🛡️' : '');
                     
+                    // --- ИСПРАВЛЕНИЕ: Вывод аватарок участников ---
+                    let avatarHtml = m.avatar_url ? `<div class="avatar-circle" style="width:35px; height:35px; background-image:url(${m.avatar_url}); margin-right:10px; font-size:1em;"></div>` : `<div class="avatar-circle" style="width:35px; height:35px; margin-right:10px; font-size:1em;">${m.username[0].toUpperCase()}</div>`;
+                    
                     const li = document.createElement('li'); li.style = "padding: 8px 0; border-bottom: 1px solid var(--input-border); display:flex; justify-content:space-between; align-items:center;"; 
-                    li.innerHTML = `<span style="cursor:pointer; font-weight:bold; color:var(--main-color);" onclick="closeModal('groupInfoModal'); openProfileModal('${m.username}')">👤 ${renderVerified(m.username)}${roleTag}</span> ${controls}`; 
+                    li.innerHTML = `<div style="display:flex; align-items:center; cursor:pointer; font-weight:bold; color:var(--main-color);" onclick="closeModal('groupInfoModal'); openProfileModal('${m.username}')">${avatarHtml} <span>${renderVerified(m.username)}${roleTag}</span></div> ${controls}`; 
                     list.appendChild(li); 
                 });
             }
@@ -1183,7 +1197,10 @@
                     try {
                         const response = await fetch('/upload', { method: 'POST', body: formData });
                         const data = await response.json();
-                        if (data.url) { uploadedUrls.push(data.url); if (data.type === 'video') isVideo = true; }
+                        if (data.url) {
+                            uploadedUrls.push(data.url);
+                            if (data.type === 'video') isVideo = true;
+                        }
                     } catch (e) { showToast('Ошибка загрузки файла', 'error'); }
                     removeTempMessage(tempId);
                 }
@@ -1192,6 +1209,7 @@
                     let mType = 'image';
                     if (uploadedUrls.length > 1) mType = 'gallery';
                     else if (isVideo) mType = 'video';
+                    
                     socket.emit('send_message', { room: currentRoomId, text: text, media_url: uploadedUrls.join(','), media_type: mType, reply_to_id: replyingToId });
                 }
                 if(replyingToId) cancelReply();
@@ -1269,7 +1287,9 @@
                 else if (chat.type === 'group') { displayName = chat.name; avatarChar = '👥'; }
                 else if (chat.type === 'channel') { displayName = chat.name; avatarChar = '📢'; }
 
+                // --- ИСПРАВЛЕНИЕ: Вывод аватарок в списке чатов (включая ЛС) ---
                 let avHtml = (chat.avatar_url) ? `<div class="avatar-circle" style="background-image: url(${chat.avatar_url})"></div>` : `<div class="avatar-circle">${avatarChar}</div>`;
+                
                 let badgeHtml = chat.unread_count > 0 ? `<div class="unread-badge">${chat.unread_count}</div>` : '';
                 let pinHtml = pinned.includes(chat.id) ? `<span style="font-size:0.9em; margin-right:3px;">📌</span>` : '';
                 
@@ -1296,6 +1316,9 @@
                 list.appendChild(li);
             });
         });
+
+        // --- ИСПРАВЛЕНИЕ: ГЛОБАЛЬНЫЙ ПОИСК С АВАТАРКАМИ ---
+        socket.on('new_message_notification', (msg) => { socket.emit('get_my_chats'); let notifText = msg.text || "Медиафайл"; if (msg.media_type === 'audio') notifText = "🎤 Голосовое сообщение"; if (msg.media_type === 'video_message') notifText = "📹 Видеосообщение"; if (msg.media_type === 'gallery') notifText = "🖼 Галерея"; if (currentRoomId !== msg.room && pushEnabled && Notification.permission === "granted") new Notification(msg.username, {body: notifText}); });
 
         function handleSearch() { const q = document.getElementById('searchInput').value.trim(); if (q.length > 0) { document.getElementById('search-results').style.display = 'block'; document.getElementById('chat-list').style.display = 'none'; socket.emit('search_users', {query: q}); } else { document.getElementById('search-results').style.display = 'none'; document.getElementById('chat-list').style.display = 'block'; socket.emit('get_my_chats'); } }
         
