@@ -134,13 +134,17 @@ def user_connected():
         join_room(f"user_{username}")
         emit('status_update', {'username': username, 'status': 'online'}, broadcast=True)
         
-        user_info = supabase.table('users').select('is_verified, role').eq('username', username).execute()
-        if user_info.data:
-            emit('client_init_data', {'is_verified': user_info.data[0].get('is_verified'), 'role': user_info.data[0].get('role')})
-        
-        verified = supabase.table('users').select('username').eq('is_verified', True).execute()
-        v_list = [u['username'] for u in verified.data]
-        emit('update_verified_list', v_list)
+        # Броня: ловим ошибку, если колонок админки нет в базе
+        try:
+            user_info = supabase.table('users').select('is_verified, role').eq('username', username).execute()
+            if user_info.data:
+                emit('client_init_data', {'is_verified': user_info.data[0].get('is_verified'), 'role': user_info.data[0].get('role')})
+            
+            verified = supabase.table('users').select('username').eq('is_verified', True).execute()
+            v_list = [u['username'] for u in verified.data]
+            emit('update_verified_list', v_list)
+        except Exception:
+            pass
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -159,43 +163,51 @@ def handle_disconnect():
 @socketio.on('get_admin_users')
 def get_admin_users():
     me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        users = supabase.table('users').select('username, avatar_url, is_verified, role, is_banned').execute()
-        emit('admin_users_data', users.data)
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            users = supabase.table('users').select('username, avatar_url, is_verified, role, is_banned').execute()
+            emit('admin_users_data', users.data)
+    except Exception: pass
 
 @socketio.on('toggle_verification')
 def toggle_verification(data):
     me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        target = data.get('target')
-        current_status = data.get('current_status')
-        supabase.table('users').update({'is_verified': not current_status}).eq('username', target).execute()
-        verified = supabase.table('users').select('username').eq('is_verified', True).execute()
-        v_list = [u['username'] for u in verified.data]
-        emit('update_verified_list', v_list, broadcast=True)
-        get_admin_users()
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            target = data.get('target')
+            current_status = data.get('current_status')
+            supabase.table('users').update({'is_verified': not current_status}).eq('username', target).execute()
+            verified = supabase.table('users').select('username').eq('is_verified', True).execute()
+            v_list = [u['username'] for u in verified.data]
+            emit('update_verified_list', v_list, broadcast=True)
+            get_admin_users()
+    except Exception: pass
 
 @socketio.on('toggle_ban')
 def toggle_ban(data):
     me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        target = data.get('target')
-        current_status = data.get('current_status')
-        supabase.table('users').update({'is_banned': not current_status}).eq('username', target).execute()
-        get_admin_users()
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            target = data.get('target')
+            current_status = data.get('current_status')
+            supabase.table('users').update({'is_banned': not current_status}).eq('username', target).execute()
+            get_admin_users()
+    except Exception: pass
 
 @socketio.on('change_role')
 def change_role(data):
     me = session.get('username')
-    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-    if my_info.data and my_info.data[0].get('is_verified'):
-        target = data.get('target')
-        new_role = data.get('role')
-        supabase.table('users').update({'role': new_role}).eq('username', target).execute()
-        get_admin_users()
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            target = data.get('target')
+            new_role = data.get('role')
+            supabase.table('users').update({'role': new_role}).eq('username', target).execute()
+            get_admin_users()
+    except Exception: pass
 # ================================================
 
 @socketio.on('get_my_chats')
@@ -322,15 +334,11 @@ def leave_chat_completely(data):
     supabase.table('chat_members').delete().eq('chat_id', room).eq('username', me).execute()
     emit('chat_left_success', {'room': room}, to=request.sid)
 
-# --- УДАЛЕНИЕ ЧАТА У ВСЕХ ---
 @socketio.on('delete_chat_for_everyone')
 def delete_chat_for_everyone(data):
     room = data.get('room')
-    # Сначала удаляем все сообщения и просмотры
     supabase.table('messages').delete().eq('chat_id', room).execute()
-    # Затем удаляем участников
     supabase.table('chat_members').delete().eq('chat_id', room).execute()
-    # Удаляем сам чат
     supabase.table('chats').delete().eq('id', room).execute()
     emit('chat_deleted_for_everyone', {'room': room}, broadcast=True)
 
@@ -386,31 +394,46 @@ def on_join(data):
     room = data['room']
     me = session.get('username')
     join_room(room)
-    unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
-    for m in unread_msgs.data:
-        try: supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
-        except: pass
-    supabase.table('messages').update({'is_read': True}).eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
+    
+    # Броня от ошибок с БД
+    try:
+        unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
+        if unread_msgs.data:
+            for m in unread_msgs.data:
+                supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
+    except Exception: pass
+
+    try:
+        supabase.table('messages').update({'is_read': True}).eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
+    except Exception: pass
+    
     emit('messages_read', {'room': room, 'by': me}, to=room)
-    history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
-    emit('load_history', history.data)
+    
+    try:
+        history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
+        emit('load_history', history.data)
+    except Exception as e:
+        emit('load_history', [])
 
 @socketio.on('mark_read')
 def mark_read(data):
     room = data['room']
     me = session.get('username')
-    unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
-    for m in unread_msgs.data:
-        try: supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
-        except: pass
+    try:
+        unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
+        for m in unread_msgs.data:
+            supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
+    except Exception: pass
     supabase.table('messages').update({'is_read': True}).eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
     emit('messages_read', {'room': room, 'by': me}, to=room)
 
 @socketio.on('get_message_views')
 def get_message_views(data):
     msg_id = data.get('id')
-    views = supabase.table('message_reads').select('username, read_at').eq('message_id', msg_id).execute()
-    emit('message_views_data', {'id': msg_id, 'views': views.data})
+    try:
+        views = supabase.table('message_reads').select('username, read_at').eq('message_id', msg_id).execute()
+        emit('message_views_data', {'id': msg_id, 'views': views.data})
+    except Exception: pass
 
 @socketio.on('leave')
 def on_leave(data): leave_room(data['room'])
@@ -483,33 +506,36 @@ def check_user_status(data):
 @socketio.on('get_stories')
 def get_stories():
     me = session.get('username')
-    try: supabase.table('stories').delete().lt('expires_at', datetime.utcnow().isoformat()).execute()
-    except: pass
-    stories_res = supabase.table('stories').select('*').gt('expires_at', datetime.utcnow().isoformat()).order('created_at', desc=False).execute()
-    views_res = supabase.table('story_views').select('story_id').eq('viewer_username', me).execute()
-    viewed_ids = [v['story_id'] for v in views_res.data]
-    authors_avatars = {}
-    for st in stories_res.data:
-        if st['author_type'] == 'user' and st['author_id'] not in authors_avatars:
-            udb = supabase.table('users').select('avatar_url').eq('username', st['author_id']).execute()
-            authors_avatars[st['author_id']] = udb.data[0].get('avatar_url') if udb.data else None
-        elif st['author_type'] == 'channel' and st['author_id'] not in authors_avatars:
-            cdb = supabase.table('chats').select('avatar_url').eq('id', st['author_id']).execute()
-            authors_avatars[st['author_id']] = cdb.data[0].get('avatar_url') if cdb.data else None
-        st['author_avatar'] = authors_avatars.get(st['author_id'])
-        st['is_viewed'] = st['id'] in viewed_ids
-    emit('update_stories', stories_res.data)
+    try: 
+        supabase.table('stories').delete().lt('expires_at', datetime.utcnow().isoformat()).execute()
+        stories_res = supabase.table('stories').select('*').gt('expires_at', datetime.utcnow().isoformat()).order('created_at', desc=False).execute()
+        views_res = supabase.table('story_views').select('story_id').eq('viewer_username', me).execute()
+        viewed_ids = [v['story_id'] for v in views_res.data]
+        authors_avatars = {}
+        for st in stories_res.data:
+            if st['author_type'] == 'user' and st['author_id'] not in authors_avatars:
+                udb = supabase.table('users').select('avatar_url').eq('username', st['author_id']).execute()
+                authors_avatars[st['author_id']] = udb.data[0].get('avatar_url') if udb.data else None
+            elif st['author_type'] == 'channel' and st['author_id'] not in authors_avatars:
+                cdb = supabase.table('chats').select('avatar_url').eq('id', st['author_id']).execute()
+                authors_avatars[st['author_id']] = cdb.data[0].get('avatar_url') if cdb.data else None
+            st['author_avatar'] = authors_avatars.get(st['author_id'])
+            st['is_viewed'] = st['id'] in viewed_ids
+        emit('update_stories', stories_res.data)
+    except Exception: pass
 
 @socketio.on('create_story')
 def create_story(data):
     me = session.get('username')
     expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
-    new_story = supabase.table('stories').insert({
-        'author_id': data.get('author_id', me), 'author_type': data.get('author_type', 'user'),
-        'media_url': data.get('media_url'), 'media_type': data.get('media_type'),
-        'text': data.get('text', ''), 'expires_at': expires
-    }).execute()
-    emit('story_created', broadcast=True)
+    try:
+        new_story = supabase.table('stories').insert({
+            'author_id': data.get('author_id', me), 'author_type': data.get('author_type', 'user'),
+            'media_url': data.get('media_url'), 'media_type': data.get('media_type'),
+            'text': data.get('text', ''), 'expires_at': expires
+        }).execute()
+        emit('story_created', broadcast=True)
+    except Exception: pass
 
 @socketio.on('mark_story_seen')
 def mark_story_seen(data):
@@ -520,8 +546,10 @@ def mark_story_seen(data):
 @socketio.on('get_story_views')
 def get_story_views(data):
     story_id = data.get('id')
-    views = supabase.table('story_views').select('viewer_username, viewed_at').eq('story_id', story_id).execute()
-    emit('story_views_data', {'id': story_id, 'views': views.data})
+    try:
+        views = supabase.table('story_views').select('viewer_username, viewed_at').eq('story_id', story_id).execute()
+        emit('story_views_data', {'id': story_id, 'views': views.data})
+    except Exception: pass
 
 # --- ЗВОНКИ (АБСОЛЮТНО ТВОЙ КОД) ---
 @socketio.on('call_user')
