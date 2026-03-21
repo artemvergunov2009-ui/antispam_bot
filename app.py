@@ -38,20 +38,20 @@ def login():
                 supabase.table('chats').insert({'id': saved_id, 'name': 'Избранные', 'type': 'saved'}).execute()
                 supabase.table('chat_members').insert({'chat_id': saved_id, 'username': username, 'role': 'owner'}).execute()
                 
-                # --- АВТОПОДПИСКА НА КАНАЛ ПРИ РЕГИСТРАЦИИ ---
                 try:
                     official = supabase.table('chats').select('id').eq('name', 'Samberrrgram Official').execute()
                     if official.data:
                         existing = supabase.table('chat_members').select('*').eq('chat_id', official.data[0]['id']).eq('username', username).execute()
                         if not existing.data:
                             supabase.table('chat_members').insert({'chat_id': official.data[0]['id'], 'username': username, 'role': 'member'}).execute()
-                except Exception:
-                    pass
+                except Exception: pass
 
                 session['username'] = username
                 return redirect(url_for('chat'))
             else:
                 user = user_response.data[0]
+                if user.get('is_banned'): return render_template('login.html', error="Ваш аккаунт заблокирован.")
+                
                 if not user.get('password_hash'):
                     hashed_pw = generate_password_hash(password)
                     supabase.table('users').update({'password_hash': hashed_pw, 'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
@@ -82,26 +82,21 @@ def upload_file():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
-    if file.filename == '': return jsonify({'error': 'Empty file'}), 400
-    
     ext = file.filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
     try:
         file_bytes = file.read()
         supabase.storage.from_('chat_media').upload(path=filename, file=file_bytes, file_options={"content-type": file.content_type})
         url = supabase.storage.from_('chat_media').get_public_url(filename)
-        
         if file.content_type.startswith('audio'): media_type = 'audio'
         elif file.content_type.startswith('video'): media_type = 'video'
         else: media_type = 'image'
-        
         return jsonify({'url': url, 'type': media_type})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/upload_avatar', methods=['POST'])
 def upload_avatar():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
-    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     ext = file.filename.split('.')[-1]
     filename = f"avatar_{session['username']}_{uuid.uuid4().hex[:6]}.{ext}"
@@ -116,7 +111,6 @@ def upload_avatar():
 @app.route('/upload_group_avatar', methods=['POST'])
 def upload_group_avatar():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
-    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     chat_id = request.form.get('chat_id')
     ext = file.filename.split('.')[-1]
@@ -140,6 +134,16 @@ def user_connected():
         supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
         join_room(f"user_{username}")
         emit('status_update', {'username': username, 'status': 'online'}, broadcast=True)
+        
+        # Отправляем инфу о пользователе (для админки и галочек)
+        user_info = supabase.table('users').select('is_verified, role').eq('username', username).execute()
+        if user_info.data:
+            emit('client_init_data', {'is_verified': user_info.data[0].get('is_verified'), 'role': user_info.data[0].get('role')})
+        
+        # Отправляем список всех верифицированных, чтобы галочки рисовались динамически
+        verified = supabase.table('users').select('username').eq('is_verified', True).execute()
+        v_list = [u['username'] for u in verified.data]
+        emit('update_verified_list', v_list)
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -154,13 +158,36 @@ def handle_disconnect():
                 participants.remove(username)
                 emit('group_call_left', {'username': username, 'room': room}, to=room)
 
+# ================= АДМИН ПАНЕЛЬ =================
+@socketio.on('get_admin_users')
+def get_admin_users():
+    me = session.get('username')
+    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+    if my_info.data and my_info.data[0].get('is_verified'):
+        users = supabase.table('users').select('username, avatar_url, is_verified, role, is_banned').execute()
+        emit('admin_users_data', users.data)
+
+@socketio.on('toggle_verification')
+def toggle_verification(data):
+    me = session.get('username')
+    my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+    if my_info.data and my_info.data[0].get('is_verified'):
+        target = data.get('target')
+        current_status = data.get('current_status')
+        supabase.table('users').update({'is_verified': not current_status}).eq('username', target).execute()
+        
+        verified = supabase.table('users').select('username').eq('is_verified', True).execute()
+        v_list = [u['username'] for u in verified.data]
+        emit('update_verified_list', v_list, broadcast=True)
+        get_admin_users() # Обновляем список в админке
+# ================================================
+
 @socketio.on('get_my_chats')
 def get_my_chats():
     me = session.get('username')
     memberships = supabase.table('chat_members').select('chat_id, role').eq('username', me).execute()
     my_roles = {m['chat_id']: m['role'] for m in memberships.data}
     chat_ids = list(my_roles.keys())
-    
     if chat_ids:
         chats = supabase.table('chats').select('*').in_('id', chat_ids).execute()
         unread_res = supabase.table('messages').select('chat_id').in_('chat_id', chat_ids).neq('username', me).eq('is_read', False).execute()
@@ -186,7 +213,6 @@ def get_my_chats():
             else:
                 chat['last_message'] = None
                 chat['last_msg_time'] = '1970-01-01T00:00:00Z'
-                
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
 
@@ -262,18 +288,14 @@ def create_group(data):
     members = data.get('members', []) 
     me = session.get('username')
     if not group_name: return
-    
     chat_type = 'channel' if is_channel else 'group'
     chat_id = f"{chat_type}_{uuid.uuid4().hex[:8]}"
-    
     supabase.table('chats').insert({'id': chat_id, 'name': group_name, 'type': chat_type, 'description': data.get('desc', '')}).execute()
-    
     members_data = [{'chat_id': chat_id, 'username': me, 'role': 'owner'}]
     valid_users = supabase.table('users').select('username').in_('username', members).execute()
     for u in valid_users.data:
         if u['username'] != me:
             members_data.append({'chat_id': chat_id, 'username': u['username'], 'role': 'member'})
-            
     supabase.table('chat_members').insert(members_data).execute()
     emit('chat_created')
 
@@ -290,21 +312,14 @@ def manage_member(data):
     room = data.get('room')
     target = data.get('target')
     action = data.get('action') 
-    
     my_mem = supabase.table('chat_members').select('role').eq('chat_id', room).eq('username', me).execute()
     if not my_mem.data or my_mem.data[0]['role'] not in ['owner', 'admin']: return
-    
-    if action == 'kick':
-        supabase.table('chat_members').delete().eq('chat_id', room).eq('username', target).execute()
-    elif action == 'promote':
-        supabase.table('chat_members').update({'role': 'admin'}).eq('chat_id', room).eq('username', target).execute()
-    elif action == 'demote':
-        supabase.table('chat_members').update({'role': 'member'}).eq('chat_id', room).eq('username', target).execute()
+    if action == 'kick': supabase.table('chat_members').delete().eq('chat_id', room).eq('username', target).execute()
+    elif action == 'promote': supabase.table('chat_members').update({'role': 'admin'}).eq('chat_id', room).eq('username', target).execute()
+    elif action == 'demote': supabase.table('chat_members').update({'role': 'member'}).eq('chat_id', room).eq('username', target).execute()
     elif action == 'add':
         exists = supabase.table('chat_members').select('*').eq('chat_id', room).eq('username', target).execute()
-        if not exists.data:
-            supabase.table('chat_members').insert({'chat_id': room, 'username': target, 'role': 'member'}).execute()
-            
+        if not exists.data: supabase.table('chat_members').insert({'chat_id': room, 'username': target, 'role': 'member'}).execute()
     emit('group_members_updated', {'room': room}, broadcast=True)
 
 @socketio.on('update_group_info')
@@ -313,12 +328,10 @@ def update_group_info(data):
     room = data.get('room')
     my_mem = supabase.table('chat_members').select('role').eq('chat_id', room).eq('username', me).execute()
     if not my_mem.data or my_mem.data[0]['role'] not in ['owner', 'admin']: return
-
     update_data = {}
     if data.get('name'): update_data['name'] = data.get('name')
     if data.get('desc') is not None: update_data['description'] = data.get('desc')
     if data.get('show_members') is not None: update_data['show_members'] = data.get('show_members')
-    
     if update_data:
         supabase.table('chats').update(update_data).eq('id', room).execute()
         emit('group_updated', {'room': room, 'name': update_data.get('name')}, broadcast=True)
@@ -328,24 +341,16 @@ def get_group_info(data):
     room = data.get('room')
     res = supabase.table('chat_members').select('username, role').eq('chat_id', room).execute()
     chat_res = supabase.table('chats').select('name, avatar_url, description, type, show_members').eq('id', room).execute()
-    
     if chat_res.data:
         members_with_avatars = []
         for m in res.data:
             u_db = supabase.table('users').select('avatar_url').eq('username', m['username']).execute()
             avatar = u_db.data[0].get('avatar_url') if u_db.data else None
-            members_with_avatars.append({
-                'username': m['username'], 'role': m['role'], 'avatar_url': avatar
-            })
-
+            members_with_avatars.append({'username': m['username'], 'role': m['role'], 'avatar_url': avatar})
         emit('group_info_data', {
-            'room': room,
-            'members': members_with_avatars, 
-            'name': chat_res.data[0].get('name'),
-            'desc': chat_res.data[0].get('description', ''),
-            'type': chat_res.data[0].get('type'),
-            'show_members': chat_res.data[0].get('show_members', True),
-            'avatar_url': chat_res.data[0].get('avatar_url')
+            'room': room, 'members': members_with_avatars, 'name': chat_res.data[0].get('name'),
+            'desc': chat_res.data[0].get('description', ''), 'type': chat_res.data[0].get('type'),
+            'show_members': chat_res.data[0].get('show_members', True), 'avatar_url': chat_res.data[0].get('avatar_url')
         })
 
 @socketio.on('join')
@@ -353,16 +358,12 @@ def on_join(data):
     room = data['room']
     me = session.get('username')
     join_room(room)
-    
-    # Отмечаем прочитанным и записываем в просмотры
     unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
     for m in unread_msgs.data:
         try: supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
         except: pass
-    
     supabase.table('messages').update({'is_read': True}).eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
     emit('messages_read', {'room': room, 'by': me}, to=room)
-    
     history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
     emit('load_history', history.data)
 
@@ -384,16 +385,13 @@ def get_message_views(data):
     emit('message_views_data', {'id': msg_id, 'views': views.data})
 
 @socketio.on('leave')
-def on_leave(data):
-    leave_room(data['room'])
+def on_leave(data): leave_room(data['room'])
 
 @socketio.on('typing')
-def handle_typing(data):
-    emit('user_typing', {'username': session.get('username'), 'action': data.get('action', 'typing')}, to=data['room'], include_self=False)
+def handle_typing(data): emit('user_typing', {'username': session.get('username'), 'action': data.get('action', 'typing')}, to=data['room'], include_self=False)
 
 @socketio.on('stop_typing')
-def handle_stop_typing(data):
-    emit('user_stop_typing', {'username': session.get('username')}, to=data['room'], include_self=False)
+def handle_stop_typing(data): emit('user_stop_typing', {'username': session.get('username')}, to=data['room'], include_self=False)
 
 @socketio.on('send_message')
 def handle_message(data):
@@ -411,26 +409,20 @@ def handle_message(data):
         if not my_role.data or my_role.data[0].get('role') not in ['owner', 'admin']:
             emit('server_error', {'message': 'Только администраторы могут публиковать в канал!'}, to=request.sid)
             return 
-    
+            
     new_msg = supabase.table('messages').insert({
-        'chat_id': room, 'username': username, 'text': text, 
-        'media_url': media_url, 'media_type': media_type, 
-        'reply_to_id': reply_to, 'font_style': font, 'is_read': False
+        'chat_id': room, 'username': username, 'text': text, 'media_url': media_url, 'media_type': media_type, 'reply_to_id': reply_to, 'font_style': font, 'is_read': False
     }).execute()
-    
     user_data = supabase.table('users').select('avatar_url').eq('username', username).execute()
     avatar_url = user_data.data[0].get('avatar_url') if user_data.data else None
-    
     msg_data = new_msg.data[0]
     msg_data['users'] = {'avatar_url': avatar_url}
-    
     emit('receive_message', msg_data, to=room)
     
     members_res = supabase.table('chat_members').select('username').eq('chat_id', room).execute()
     for m in members_res.data:
         target_user = m['username']
-        if target_user != username:
-            emit('new_message_notification', msg_data, to=f"user_{target_user}")
+        if target_user != username: emit('new_message_notification', msg_data, to=f"user_{target_user}")
 
 @socketio.on('get_profile')
 def get_profile(data):
@@ -460,17 +452,14 @@ def check_user_status(data):
             last_seen = user_db.data[0].get('last_seen', '')
             emit('receive_user_status', {'username': target, 'is_online': is_online, 'custom_status': custom_status, 'last_seen': last_seen})
 
-# ================== ИСТОРИИ (STORIES) ==================
 @socketio.on('get_stories')
 def get_stories():
     me = session.get('username')
     try: supabase.table('stories').delete().lt('expires_at', datetime.utcnow().isoformat()).execute()
     except: pass
-    
     stories_res = supabase.table('stories').select('*').gt('expires_at', datetime.utcnow().isoformat()).order('created_at', desc=False).execute()
     views_res = supabase.table('story_views').select('story_id').eq('viewer_username', me).execute()
     viewed_ids = [v['story_id'] for v in views_res.data]
-    
     authors_avatars = {}
     for st in stories_res.data:
         if st['author_type'] == 'user' and st['author_id'] not in authors_avatars:
@@ -479,10 +468,8 @@ def get_stories():
         elif st['author_type'] == 'channel' and st['author_id'] not in authors_avatars:
             cdb = supabase.table('chats').select('avatar_url').eq('id', st['author_id']).execute()
             authors_avatars[st['author_id']] = cdb.data[0].get('avatar_url') if cdb.data else None
-            
         st['author_avatar'] = authors_avatars.get(st['author_id'])
         st['is_viewed'] = st['id'] in viewed_ids
-        
     emit('update_stories', stories_res.data)
 
 @socketio.on('create_story')
@@ -490,12 +477,9 @@ def create_story(data):
     me = session.get('username')
     expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
     new_story = supabase.table('stories').insert({
-        'author_id': data.get('author_id', me),
-        'author_type': data.get('author_type', 'user'),
-        'media_url': data.get('media_url'),
-        'media_type': data.get('media_type'),
-        'text': data.get('text', ''),
-        'expires_at': expires
+        'author_id': data.get('author_id', me), 'author_type': data.get('author_type', 'user'),
+        'media_url': data.get('media_url'), 'media_type': data.get('media_type'),
+        'text': data.get('text', ''), 'expires_at': expires
     }).execute()
     emit('story_created', broadcast=True)
 
