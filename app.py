@@ -464,17 +464,13 @@ def check_user_status(data):
 @socketio.on('get_stories')
 def get_stories():
     me = session.get('username')
-    # Ленивое удаление старых историй (старше 24ч)
     try: supabase.table('stories').delete().lt('expires_at', datetime.utcnow().isoformat()).execute()
     except: pass
     
-    # Получаем все актуальные истории
     stories_res = supabase.table('stories').select('*').gt('expires_at', datetime.utcnow().isoformat()).order('created_at', desc=False).execute()
-    # Получаем просмотры
     views_res = supabase.table('story_views').select('story_id').eq('viewer_username', me).execute()
     viewed_ids = [v['story_id'] for v in views_res.data]
     
-    # Подтягиваем аватарки авторов
     authors_avatars = {}
     for st in stories_res.data:
         if st['author_type'] == 'user' and st['author_id'] not in authors_avatars:
