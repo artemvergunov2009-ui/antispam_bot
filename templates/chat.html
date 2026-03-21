@@ -45,16 +45,25 @@
         .verified-badge { display: inline-block; width: 14px; height: 14px; background-color: #26c6da; border-radius: 50%; margin-left: 5px; position: relative; vertical-align: middle; top: -1px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .verified-badge::after { content: ''; position: absolute; left: 4px; top: 2.5px; width: 3.5px; height: 6px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); border-radius: 1px; }
 
-        /* ИСТОРИИ (STORIES) СТИЛИ */
-        #stories-bar { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: var(--sidebar-bg); border-bottom: 1px solid var(--input-border); transition: max-height 0.3s ease; max-height: 70px; }
+        /* ИСТОРИИ (STORIES) СТИЛИ - ВЕРНУЛ И УСИЛИЛ */
+        #stories-bar { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: var(--sidebar-bg); border-bottom: 1px solid var(--input-border); transition: max-height 0.3s ease; max-height: 75px; }
         #stories-bar::-webkit-scrollbar { display: none; }
         .stories-expanded { max-height: 200px !important; flex-wrap: wrap; overflow-y: auto; }
         .story-circle { width: 55px; height: 55px; border-radius: 50%; background-color: var(--msg-out-bg); display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; flex-shrink: 0; background-size: cover; background-position: center; cursor: pointer; border: 3px solid var(--main-color); transition: 0.2s; position: relative; }
         .story-circle.seen { border-color: rgba(150,150,150,0.5); }
         .story-circle.add-story { border-style: dashed; color: var(--main-color); background: transparent; font-size: 24px; }
         .story-circle.small { width: 40px; height: 40px; }
-        .story-author-name { position: absolute; bottom: -15px; font-size: 10px; color: var(--text-color-dark); white-space: nowrap; max-width: 60px; overflow: hidden; text-overflow: ellipsis; }
+        .story-author-name { position: absolute; bottom: -18px; font-size: 10px; color: var(--text-color-dark); white-space: nowrap; max-width: 60px; overflow: hidden; text-overflow: ellipsis; background: rgba(255,255,255,0.8); padding: 0 4px; border-radius: 5px; }
 
+        /* ИСТОРИИ (ВЬЮВЕР) - ВОТ ИЗ-ЗА ЭТОГО ПРОПАВШЕГО БЛОКА ЛОМАЛСЯ ЭКРАН */
+        #storyViewerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; flex-direction: column; align-items: center; justify-content: center; }
+        #storyViewerContent { max-width: 90%; max-height: 80vh; object-fit: contain; border-radius: 15px; }
+        #storyViewerText { color: white; margin-top: 15px; font-size: 1.2em; font-weight: bold; }
+        #storyViewerAuthor { position: absolute; top: 20px; left: 20px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px;}
+        #storyViewerClose { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; }
+        #storyViewsBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; display: none; }
+
+        /* ГАЛЕРЕЯ */
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 300px; }
         .gallery-img { width: 100%; height: 100%; max-height: 200px; object-fit: cover; cursor: pointer; transition: 0.2s; background: #eee; }
         .gallery-img:hover { filter: brightness(0.9); }
@@ -73,14 +82,6 @@
         .modal-btn { flex-grow: 1; padding: 10px; border: none; border-radius: var(--border-radius-small); cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-cancel { background: var(--input-bg); color: var(--text-color-dark); border: 1px solid var(--input-border); }
         .btn-create { background: var(--main-color); color: white; }
-
-        /* ИСТОРИИ (ВЬЮВЕР) */
-        #storyViewerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; flex-direction: column; align-items: center; justify-content: center; }
-        #storyViewerContent { max-width: 90%; max-height: 80vh; object-fit: contain; border-radius: 15px; }
-        #storyViewerText { color: white; margin-top: 15px; font-size: 1.2em; font-weight: bold; }
-        #storyViewerAuthor { position: absolute; top: 20px; left: 20px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px;}
-        #storyViewerClose { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; }
-        #storyViewsBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; display: none; }
 
         .custom-audio-player { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.08); padding: 8px 12px; border-radius: 20px; width: 220px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); margin-top: 5px; }
         .theme-dark .custom-audio-player, .theme-cyberpunk .custom-audio-player, .theme-matrix .custom-audio-player, .theme-galaxy .custom-audio-player, .theme-ocean .custom-audio-player, .theme-retro .custom-audio-player, .theme-lava .custom-audio-player { background: rgba(255,255,255,0.15); }
@@ -143,7 +144,8 @@
         .unread-badge { background-color: var(--badge-bg); color: #fff; border-radius: 12px; padding: 2px 8px; font-size: 0.75em; font-weight: bold; display: flex; align-items: center; justify-content: center; margin-left: 10px; flex-shrink: 0; min-width: 12px;}
         .list-item.active .unread-badge { background-color: white; color: var(--main-color); }
         
-        #chat-area { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--chat-area-bg); margin: 15px 15px 15px 0; border-radius: var(--border-radius-large); box-shadow: var(--main-shadow); overflow: hidden; position: relative; transition: 0.3s;}
+        /* ГАРАНТИЯ ЧТО ЧАТ НЕ БЛОКИРУЕТСЯ */
+        #chat-area { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--chat-area-bg); margin: 15px 15px 15px 0; border-radius: var(--border-radius-large); box-shadow: var(--main-shadow); overflow: hidden; position: relative; transition: 0.3s; z-index: 10;}
 
         .chat-header { padding: 15px 25px; background: var(--sidebar-bg); border-bottom: 1px solid var(--input-border); display: flex; align-items: center; gap: 15px; flex-shrink: 0; cursor: pointer; transition: 0.3s;}
         .chat-header-info { display: flex; flex-direction: column; flex-grow: 1;}
@@ -188,8 +190,9 @@
         @keyframes pulseRecord { 0% { color: var(--call-btn-red); transform: scale(1); } 50% { color: #ff8a80; transform: scale(1.1); } 100% { color: var(--call-btn-red); transform: scale(1); } }
         .recording-pulse { animation: pulseRecord 1s infinite; color: var(--call-btn-red) !important; }
 
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--modal-bg); color: var(--text-color-dark); padding: 15px 25px; border-radius: var(--border-radius-small); box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-left: 5px solid var(--main-color); animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        /* ЗАЩИТА ТОСТОВ ОТ ПЕРЕКРЫТИЯ ЭКРАНА */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; background: var(--modal-bg); color: var(--text-color-dark); padding: 15px 25px; border-radius: var(--border-radius-small); box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-left: 5px solid var(--main-color); animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards; font-weight: bold; display: flex; align-items: center; gap: 10px; }
         .toast.error { border-left-color: #e57373; }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
@@ -487,7 +490,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v26.0 (Stories Fix)</b><br><br>Исправлены вылеты меню, добавлены функции просмотра и копирования!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v27.0 (Fix)</b><br><br>Починены клики, границы меню, скопировать текст!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -943,7 +946,7 @@
         });
 
         // ==========================================
-        // ПРОСМОТРЫ СООБЩЕНИЙ В ГРУППАХ (ВОТ ТА САМАЯ ФУНКЦИЯ)
+        // ПРОСМОТРЫ СООБЩЕНИЙ В ГРУППАХ
         // ==========================================
         function checkMessageViews(id) { socket.emit('get_message_views', {id: id}); }
         socket.on('message_views_data', data => {
@@ -957,7 +960,254 @@
         });
 
         // ==========================================
-        // ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ И КОПИРОВАНИЕ
+        // ИСПРАВЛЕНИЕ МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
+        // ==========================================
+        let recordingType = null;
+        let activeMediaStream = null;
+        let mediaRecorder; let mediaChunks = [];
+        let currentCustomAudio = null; let currentCustomAudioBtn = null;
+        let currentFacingMode = 'user'; 
+        let isFlipping = false; 
+
+        function playCustomAudio(btn, url) {
+            if (currentCustomAudio && currentCustomAudio.src === url) {
+                if (currentCustomAudio.paused) { currentCustomAudio.play(); btn.innerText = '⏸'; btn.classList.add('playing'); }
+                else { currentCustomAudio.pause(); btn.innerText = '▶'; btn.classList.remove('playing'); }
+                return;
+            }
+            if (currentCustomAudio) { currentCustomAudio.pause(); if(currentCustomAudioBtn) { currentCustomAudioBtn.innerText = '▶'; currentCustomAudioBtn.classList.remove('playing'); } }
+            
+            currentCustomAudio = new Audio(url); currentCustomAudioBtn = btn; currentCustomAudio.play();
+            btn.innerText = '⏸'; btn.classList.add('playing');
+            
+            const player = btn.closest('.custom-audio-player');
+            const fill = player.querySelector('.progress-fill'); const timeDisp = player.querySelector('.time-display');
+
+            currentCustomAudio.addEventListener('timeupdate', () => {
+                const percent = (currentCustomAudio.currentTime / currentCustomAudio.duration) * 100;
+                fill.style.width = (isNaN(percent) ? 0 : percent) + '%';
+                timeDisp.innerText = formatDuration(currentCustomAudio.currentTime);
+            });
+            currentCustomAudio.addEventListener('ended', () => {
+                btn.innerText = '▶'; btn.classList.remove('playing'); fill.style.width = '0%';
+                timeDisp.innerText = formatDuration(currentCustomAudio.duration || 0);
+            });
+            currentCustomAudio.addEventListener('loadedmetadata', () => {
+                if(timeDisp.innerText === '0:00' || timeDisp.innerText === '...') timeDisp.innerText = formatDuration(currentCustomAudio.duration);
+            });
+        }
+
+        function seekCustomAudio(e, bar) {
+            if (!currentCustomAudio) return;
+            const player = bar.closest('.custom-audio-player');
+            if (currentCustomAudioBtn && currentCustomAudioBtn.closest('.custom-audio-player') !== player) return;
+            const rect = bar.getBoundingClientRect();
+            currentCustomAudio.currentTime = ((e.clientX - rect.left) / rect.width) * currentCustomAudio.duration;
+        }
+
+        function formatDuration(sec) {
+            if(isNaN(sec) || sec === Infinity) return "0:00";
+            const m = Math.floor(sec/60); const s = Math.floor(sec%60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function toggleCircleVideo(vid) { 
+            if (vid.muted) { vid.muted = false; vid.currentTime = 0; vid.play().catch(e=>{}); } 
+            else { vid.muted = true; } 
+        }
+
+        async function flipCamera(e) {
+            if (e) e.stopPropagation();
+            if (!activeMediaStream || recordingType !== 'video') return;
+            isFlipping = true;
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+        }
+
+        function appendTempMessage(id, type) {
+            const ul = document.getElementById('messages'); 
+            const wrapper = document.createElement('li'); 
+            wrapper.classList.add('msg-wrapper', 'my-wrapper'); 
+            wrapper.setAttribute('data-temp-id', id);
+            wrapper.style.opacity = '0.6';
+
+            let text = 'Отправка...';
+            if(type === 'audio') text = '🎤 Загрузка голосового...';
+            if(type === 'video_message') text = '📹 Загрузка кружочка...';
+            if(type === 'file') text = '📎 Загрузка файла...';
+
+            wrapper.innerHTML = `<div class="message my-message"><div class="msg-text-content" style="display:flex; align-items:center; gap:8px;"><span class="recording-pulse">⏳</span> ${text}</div></div>`;
+            ul.appendChild(wrapper); scrollToBottom();
+        }
+        function removeTempMessage(id) { const el = document.querySelector(`[data-temp-id="${id}"]`); if(el) el.remove(); }
+
+        const handleMediaStop = async () => {
+            if (isFlipping) {
+                activeMediaStream.getTracks().forEach(track => track.stop());
+                mediaChunks = []; isFlipping = false;
+                try {
+                    const constraints = { audio: true, video: { facingMode: currentFacingMode } };
+                    activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    const preview = document.getElementById('videoPreview'); 
+                    preview.srcObject = activeMediaStream; 
+                    preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+                    let options = {};
+                    if (MediaRecorder.isTypeSupported('video/mp4')) options.mimeType = 'video/mp4';
+                    else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm';
+                    mediaRecorder = new MediaRecorder(activeMediaStream, options); 
+                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
+                    mediaRecorder.onstop = handleMediaStop; mediaRecorder.start();
+                } catch(e) { showToast("Ошибка камеры", "error"); stopMediaRecord(); }
+                return;
+            }
+
+            const currentRecordType = recordingType; 
+
+            let mime = mediaRecorder.mimeType;
+            if (!mime) mime = currentRecordType === 'video' ? 'video/mp4' : 'audio/mp4';
+            let ext = 'webm';
+            if (mime.includes('mp4')) ext = 'mp4';
+            else if (mime.includes('quicktime') || mime.includes('mov')) ext = 'mov';
+            else if (mime.includes('ogg')) ext = 'ogg';
+            
+            const blob = new Blob(mediaChunks, { type: mime });
+            activeMediaStream.getTracks().forEach(track => track.stop());
+            document.getElementById('videoPreviewContainer').style.display = 'none';
+            
+            const tempId = 'temp_' + Date.now();
+            appendTempMessage(tempId, currentRecordType === 'video' ? 'video_message' : 'audio');
+            socket.emit('typing', {room: currentRoomId, action: 'typing'}); 
+            setTimeout(() => socket.emit('stop_typing', {room: currentRoomId}), 500);
+
+            await uploadMediaMessage(blob, currentRecordType === 'video' ? 'video_message' : 'audio', ext, tempId);
+        };
+
+        async function startMediaRecord(type) {
+            try {
+                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode } } : { audio: true };
+                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                if (type === 'video') { 
+                    const preview = document.getElementById('videoPreview'); 
+                    preview.srcObject = activeMediaStream; 
+                    preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+                    document.getElementById('videoPreviewContainer').style.display = 'block'; 
+                }
+                
+                let options = {};
+                if (type === 'video') {
+                    if (MediaRecorder.isTypeSupported('video/mp4')) options.mimeType = 'video/mp4';
+                    else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm';
+                } else {
+                    if (MediaRecorder.isTypeSupported('audio/mp4')) options.mimeType = 'audio/mp4';
+                    else if (MediaRecorder.isTypeSupported('audio/webm')) options.mimeType = 'audio/webm';
+                }
+
+                mediaRecorder = new MediaRecorder(activeMediaStream, options); 
+                mediaChunks = [];
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
+                
+                mediaRecorder.onstop = handleMediaStop;
+                mediaRecorder.start();
+                
+                document.getElementById('attachBtn').style.display = 'none';
+                document.getElementById('messageInput').style.display = 'none';
+                document.getElementById('sendBtn').style.display = 'none';
+                
+                const recStatus = document.getElementById('recordingStatus');
+                recStatus.style.display = 'flex'; recStatus.innerText = type === 'video' ? '📹 Запись видео...' : '🎤 Запись аудио...';
+                
+                if (type === 'audio') {
+                    const btn = document.getElementById('recordBtn'); btn.classList.add('recording-pulse'); btn.innerHTML = '⏹';
+                    document.getElementById('videoRecordBtn').style.display = 'none';
+                } else {
+                    const btn = document.getElementById('videoRecordBtn'); btn.classList.add('recording-pulse'); btn.innerHTML = '⏹';
+                    document.getElementById('recordBtn').style.display = 'none';
+                }
+                recordingType = type;
+                socket.emit('typing', {room: currentRoomId, action: type === 'video' ? 'recording_video' : 'recording_audio'});
+
+            } catch(e) { showToast("Нет доступа к микрофону/камере!", "error"); }
+        }
+        
+        function stopMediaRecord() {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            document.getElementById('recordingStatus').style.display = 'none';
+            document.getElementById('attachBtn').style.display = 'flex';
+            document.getElementById('messageInput').style.display = 'block';
+            document.getElementById('sendBtn').style.display = 'flex';
+            
+            const rBtn = document.getElementById('recordBtn'); rBtn.classList.remove('recording-pulse'); rBtn.innerHTML = '🎤'; rBtn.style.display = 'flex';
+            const vBtn = document.getElementById('videoRecordBtn'); vBtn.classList.remove('recording-pulse'); vBtn.innerHTML = '📹'; vBtn.style.display = 'flex';
+            
+            document.getElementById('messageInput').disabled = false; document.getElementById('messageInput').focus();
+            recordingType = null;
+            checkSendButton();
+        }
+
+        function toggleVoiceRecord() { if (recordingType === 'audio') stopMediaRecord(); else if (!recordingType) startMediaRecord('audio'); }
+        function toggleVideoRecord() { if (recordingType === 'video') stopMediaRecord(); else if (!recordingType) startMediaRecord('video'); }
+
+        async function uploadMediaMessage(blob, overrideType, ext, tempId) {
+            const formData = new FormData(); formData.append('file', blob, overrideType === 'video_message' ? `video.${ext}` : `voice.${ext}`); 
+            try {
+                const r = await fetch('/upload', { method: 'POST', body: formData }); const d = await r.json();
+                if (d.url) socket.emit('send_message', { room: currentRoomId, text: '', media_url: d.url, media_type: overrideType, reply_to_id: replyingToId });
+                if(replyingToId) cancelReply();
+            } catch (err) { showToast('Ошибка отправки медиа', 'error'); }
+            removeTempMessage(tempId);
+        }
+
+        // ==========================================
+        // ГАЛЕРЕЯ: МУЛЬТИ-ЗАГРУЗКА И ВСТАВКА ИЗ БУФЕРА
+        // ==========================================
+        let stagedFiles = [];
+        
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files); stagedFiles = stagedFiles.concat(files);
+            renderPreviewBar(); checkSendButton(); e.target.value = '';
+        }
+
+        document.addEventListener('paste', (e) => {
+            if (currentRoomId === '') return;
+            if (e.target.tagName === 'INPUT' && e.target.id !== 'messageInput') return;
+            if (e.target.tagName === 'TEXTAREA') return;
+
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            let added = false;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file') {
+                    const blob = item.getAsFile();
+                    if (blob) { stagedFiles.push(blob); added = true; }
+                }
+            }
+            if (added) { e.preventDefault(); renderPreviewBar(); checkSendButton(); }
+        });
+
+        function renderPreviewBar() {
+            const bar = document.getElementById('file-preview-bar'); bar.innerHTML = '';
+            if (stagedFiles.length === 0) { bar.style.display = 'none'; return; }
+            bar.style.display = 'flex';
+            
+            stagedFiles.forEach((file, index) => {
+                const wrapper = document.createElement('div'); wrapper.className = 'preview-item-wrapper';
+                let el;
+                if (file.type.startsWith('image/')) { el = document.createElement('img'); el.src = URL.createObjectURL(file); } 
+                else if (file.type.startsWith('video/')) { el = document.createElement('video'); el.src = URL.createObjectURL(file); } 
+                else { el = document.createElement('div'); el.innerText = '📄'; el.style.width='100%'; el.style.height='100%'; el.style.display='flex'; el.style.alignItems='center'; el.style.justifyContent='center'; }
+                el.className = 'preview-item';
+                
+                const rmBtn = document.createElement('button'); rmBtn.className = 'preview-remove'; rmBtn.innerHTML = '✖';
+                rmBtn.onclick = () => { stagedFiles.splice(index, 1); renderPreviewBar(); checkSendButton(); };
+                
+                wrapper.appendChild(el); wrapper.appendChild(rmBtn); bar.appendChild(wrapper);
+            });
+        }
+
+
+        // ==========================================
+        // ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ (ДОЛГИЙ ТАП) И КОПИРОВАНИЕ
         // ==========================================
         let confirmCallback = null;
         function showConfirm(title, text, callback) { document.getElementById('confirmTitle').innerText = title; document.getElementById('confirmDesc').innerText = text; confirmCallback = callback; openModal('customConfirmModal'); }
@@ -993,7 +1243,7 @@
         function showContextMenu(x, y, id, isMyMessage) {
             const old = document.querySelector('.context-menu'); if (old) old.remove();
             const menu = document.createElement('div'); menu.className = 'context-menu'; 
-            menu.style.visibility = 'hidden'; // Скрываем, чтобы рассчитать размер
+            menu.style.visibility = 'hidden'; 
             
             const isPinned = pinnedMsgs.has(id);
             
@@ -1006,7 +1256,7 @@
             html += `<div class="context-menu-item has-submenu">🔠 Изменить шрифт 🞂<div class="submenu"><div class="context-menu-item font-default" onclick="changeFont('${id}', 'default')">Обычный</div><div class="context-menu-item font-mono" onclick="changeFont('${id}', 'mono')">Код</div><div class="context-menu-item font-serif" onclick="changeFont('${id}', 'serif')">С засечками</div><div class="context-menu-item font-comic" onclick="changeFont('${id}', 'comic')">Весёлый</div></div></div>`;
             html += `<div class="context-menu-item" onclick="toggleSelectMode()">☑️ Выбрать несколько</div>`;
             
-            // --- КНОПКА ПРОСМОТРОВ ---
+            // ПРОСМОТРЫ
             if (isMyMessage && currentRoomType !== 'dm' && currentRoomType !== 'saved') {
                 html += `<div class="context-menu-item" onclick="checkMessageViews('${id}')">👁 Просмотры</div>`;
             }
@@ -1016,16 +1266,13 @@
             
             menu.innerHTML = html; document.body.appendChild(menu);
             
-            // --- ИСПРАВЛЕНИЕ: ЧТОБЫ МЕНЮ НЕ ВЫЛЕЗАЛО ЗА ЭКРАН ---
+            // УМНЫЕ ГРАНИЦЫ МЕНЮ (ЧТОБЫ НЕ ВЫЛЕЗАЛО)
             const rect = menu.getBoundingClientRect();
             let newX = x; let newY = y;
-            
             if (x + rect.width > window.innerWidth) newX = window.innerWidth - rect.width - 10;
             if (y + rect.height > window.innerHeight) newY = window.innerHeight - rect.height - 10;
-            
-            menu.style.left = newX + 'px';
-            menu.style.top = newY + 'px';
-            menu.style.visibility = 'visible'; // Показываем
+            menu.style.left = newX + 'px'; menu.style.top = newY + 'px';
+            menu.style.visibility = 'visible';
             
             setTimeout(() => document.addEventListener('click', () => { const m = document.querySelector('.context-menu'); if(m) m.remove(); }, {once:true}), 10);
         }
@@ -1388,8 +1635,6 @@
                 list.appendChild(li);
             });
         });
-
-        socket.on('new_message_notification', (msg) => { socket.emit('get_my_chats'); let notifText = msg.text || "Медиафайл"; if (msg.media_type === 'audio') notifText = "🎤 Голосовое сообщение"; if (msg.media_type === 'video_message') notifText = "📹 Видеосообщение"; if (msg.media_type === 'gallery') notifText = "🖼 Галерея"; if (currentRoomId !== msg.room && pushEnabled && Notification.permission === "granted") new Notification(msg.username, {body: notifText}); });
 
         function handleSearch() { const q = document.getElementById('searchInput').value.trim(); if (q.length > 0) { document.getElementById('search-results').style.display = 'block'; document.getElementById('chat-list').style.display = 'none'; socket.emit('search_users', {query: q}); } else { document.getElementById('search-results').style.display = 'none'; document.getElementById('chat-list').style.display = 'block'; socket.emit('get_my_chats'); } }
         
