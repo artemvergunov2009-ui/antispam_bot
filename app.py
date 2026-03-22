@@ -90,6 +90,7 @@ def upload_file():
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     
+    # Сохраняем оригинальное имя файла для скачивания
     safe_name = urllib.parse.quote(file.filename)
     filename = f"{uuid.uuid4().hex[:8]}_{safe_name}"
     
@@ -101,7 +102,7 @@ def upload_file():
         if file.content_type.startswith('audio'): media_type = 'audio'
         elif file.content_type.startswith('video'): media_type = 'video'
         elif file.content_type.startswith('image'): media_type = 'image'
-        else: media_type = 'file' 
+        else: media_type = 'file'
         
         return jsonify({'url': url, 'type': media_type})
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -268,8 +269,6 @@ def get_my_chats():
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
     except Exception as e:
-        print("Ошибка в get_my_chats:", e)
-        traceback.print_exc()
         emit('update_chat_list', [])
 
 @socketio.on('search_users')
@@ -467,9 +466,9 @@ def on_join(data):
         try:
             history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
             emit('load_history', history.data)
-        except Exception as query_err:
+        except Exception:
             emit('load_history', [])
-    except Exception as e:
+    except Exception:
         emit('load_history', [])
 
 @socketio.on('mark_read')
@@ -619,6 +618,7 @@ def get_story_views(data):
         emit('story_views_data', {'id': story_id, 'views': views.data})
     except Exception: pass
 
+# --- ЗВОНКИ И ДЕЙСТВИЯ ВО ВРЕМЯ ЗВОНКА ---
 @socketio.on('call_user')
 def call_user(data): emit('incoming_call', {'from': session.get('username')}, to=f"user_{data.get('target')}")
 
