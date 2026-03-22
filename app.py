@@ -2,6 +2,7 @@ import os
 import uuid
 import traceback
 from datetime import datetime, timedelta
+import urllib.parse
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
@@ -12,7 +13,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- Настройки Supabase (БЕЗОПАСНЫЕ) ---
+# --- Настройки Supabase (БЕЗОПАСНЫЕ) -
 # Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -93,29 +94,23 @@ def upload_file():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
-    ext = file.filename.split('.')[-1]
     
-    # Сохраняем оригинальное имя файла, чтобы было красиво при скачивании
-    safe_filename = file.filename.replace(" ", "_")
-    filename = f"{uuid.uuid4()}_{safe_filename}"
+    # === ИСПРАВЛЕНИЕ: ПРАВИЛЬНОЕ СОХРАНЕНИЕ ИМЕН ФАЙЛОВ ===
+    safe_name = urllib.parse.quote(file.filename)
+    filename = f"{uuid.uuid4().hex[:8]}_{safe_name}"
     
     try:
         file_bytes = file.read()
+        # Всё сохраняем в chat_media, чтобы базу не трогать!
+        supabase.storage.from_('chat_media').upload(path=filename, file=file_bytes, file_options={"content-type": file.content_type})
+        url = supabase.storage.from_('chat_media').get_public_url(filename)
         
-        # Разделяем загрузку медиа и обычных файлов (создай корзину chat_files в Supabase!)
-        if file.content_type.startswith('audio') or file.content_type.startswith('video') or file.content_type.startswith('image'):
-            bucket = 'chat_media'
-            if file.content_type.startswith('audio'): media_type = 'audio'
-            elif file.content_type.startswith('video'): media_type = 'video'
-            else: media_type = 'image'
-        else:
-            bucket = 'chat_files' # Папка для остальных файлов
-            media_type = 'file'
-            
-        supabase.storage.from_(bucket).upload(path=filename, file=file_bytes, file_options={"content-type": file.content_type})
-        url = supabase.storage.from_(bucket).get_public_url(filename)
+        if file.content_type.startswith('audio'): media_type = 'audio'
+        elif file.content_type.startswith('video'): media_type = 'video'
+        elif file.content_type.startswith('image'): media_type = 'image'
+        else: media_type = 'file' # Для apk, pdf, docx и т.д.
         
-        return jsonify({'url': url, 'type': media_type, 'filename': file.filename})
+        return jsonify({'url': url, 'type': media_type})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/upload_avatar', methods=['POST'])
