@@ -45,7 +45,7 @@
         .verified-badge { display: inline-block; width: 14px; height: 14px; background-color: #26c6da; border-radius: 50%; margin-left: 5px; position: relative; vertical-align: middle; top: -1px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .verified-badge::after { content: ''; position: absolute; left: 4px; top: 2.5px; width: 3.5px; height: 6px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); border-radius: 1px; }
 
-        /* ИСТОРИИ */
+        /* ИСТОРИИ (STORIES) СТИЛИ */
         #stories-bar { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: var(--sidebar-bg); border-bottom: 1px solid var(--input-border); transition: max-height 0.3s ease; max-height: 75px; }
         #stories-bar::-webkit-scrollbar { display: none; }
         .stories-expanded { max-height: 200px !important; flex-wrap: wrap; overflow-y: auto; }
@@ -63,6 +63,7 @@
         #storyViewerClose { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; }
         #storyViewsBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; display: none; }
 
+        /* ГАЛЕРЕЯ */
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 300px; }
         .gallery-img { width: 100%; height: 100%; max-height: 200px; object-fit: cover; cursor: pointer; transition: 0.2s; background: #eee; }
         .gallery-img:hover { filter: brightness(0.9); }
@@ -176,13 +177,10 @@
 
         #input-area { background: var(--sidebar-bg); flex-shrink: 0; display: flex; flex-direction: column; border-top: 1px solid var(--input-border); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .input-controls { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; width: 100%; flex-wrap: nowrap; padding: 10px 15px; box-sizing: border-box; }
-        
-        /* КНОПКА ЗАПИСИ (TELEGRAM СТИЛЬ) */
-        .attach-btn { background: transparent; color: var(--text-color-light); width: 40px; height: 40px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; font-size: 20px; transition: 0.2s; padding: 0; }
+        .attach-btn, #sendBtn { width: 40px; height: 40px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; font-size: 20px; transition: 0.2s; padding: 0; }
+        .attach-btn { background: transparent; color: var(--text-color-light); }
         .attach-btn:hover { background: rgba(0,0,0,0.05); color: var(--main-color); }
-        #tgRecordBtn { transition: transform 0.2s, background-color 0.2s, color 0.2s; user-select: none; -webkit-user-select: none; font-size: 22px; cursor: pointer; }
-
-        #sendBtn { background: var(--main-color); color: white; font-size: 16px; font-weight: bold; width: 40px; height: 40px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; transition: 0.2s; padding: 0; }
+        #sendBtn { background: var(--main-color); color: white; font-size: 16px; font-weight: bold; }
         #sendBtn:hover { background: var(--main-color-hover); transform: scale(1.05); }
         #messageInput { flex-grow: 1; height: 40px; padding: 0 15px; border: 1px solid var(--input-border); border-radius: 20px; background-color: var(--input-bg); color: var(--text-color-dark); outline: none; font-size: 15px; box-sizing: border-box; min-width: 0; }
         input:disabled, button:disabled { opacity: 0.5; cursor: not-allowed !important; }
@@ -227,93 +225,31 @@
         /* ЗВОНКИ 1-НА-1 (АБСОЛЮТНО ТВОЙ КОД) -> НОВЫЙ ДИЗАЙН В СТИЛЕ ТЕЛЕГРАМ! */
         #activeCallOverlay { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(30, 30, 30, 0.95); /* Темный прозрачный фон */
-            z-index: 5000; flex-direction: column; align-items: center; justify-content: space-between; 
-            padding: 50px 0; box-sizing: border-box; backdrop-filter: blur(10px);
+            background: rgba(30, 30, 30, 0.95); z-index: 5000; flex-direction: column; 
+            align-items: center; justify-content: space-between; padding: 50px 0; 
+            box-sizing: border-box; backdrop-filter: blur(10px);
         }
-        
-        /* Блок с аватарками сверху */
-        .call-participants {
-            display: flex; gap: 20px; align-items: center; justify-content: center;
-            width: 100%; margin-top: 20px;
-        }
-        
-        /* Аватарка собеседника (Большая) */
-        .call-avatar-pulse {
-            width: 150px; height: 150px; border-radius: 50%; background-color: var(--main-color);
-            display: flex; justify-content: center; align-items: center; color: white; font-size: 4em; font-weight: bold;
-            box-shadow: 0 0 0 0 rgba(209, 169, 130, 0.5); animation: pulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
-            background-size: cover; background-position: center; border: 4px solid rgba(255,255,255,0.1);
-        }
-        
-        /* Моя аватарка (Маленькая) */
-        .call-my-avatar {
-            width: 80px; height: 80px; border-radius: 50%; background-color: #555;
-            display: flex; justify-content: center; align-items: center; color: white; font-size: 2em; font-weight: bold;
-            background-size: cover; background-position: center; border: 3px solid rgba(255,255,255,0.1);
-        }
-
+        .call-participants { display: flex; gap: 20px; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
+        .call-avatar-pulse { width: 150px; height: 150px; border-radius: 50%; background-color: var(--main-color); display: flex; justify-content: center; align-items: center; color: white; font-size: 4em; font-weight: bold; box-shadow: 0 0 0 0 rgba(209, 169, 130, 0.5); animation: pulse 2s infinite cubic-bezier(0.66, 0, 0, 1); background-size: cover; background-position: center; border: 4px solid rgba(255,255,255,0.1); }
+        .call-my-avatar { width: 80px; height: 80px; border-radius: 50%; background-color: #555; display: flex; justify-content: center; align-items: center; color: white; font-size: 2em; font-weight: bold; background-size: cover; background-position: center; border: 3px solid rgba(255,255,255,0.1); }
         @keyframes pulse { to { box-shadow: 0 0 0 45px rgba(209, 169, 130, 0); } }
-        
-        /* Текстовый блок звонка */
-        .call-info-block {
-            text-align: center; margin-top: 20px; flex-grow: 1;
-        }
-
-        /* Панель управления внизу */
-        .call-controls { 
-            display: flex; gap: 15px; z-index: 5002; background: rgba(0,0,0,0.4);
-            padding: 15px 25px; border-radius: 40px; margin-bottom: 20px;
-        }
-        .call-action-btn { 
-            width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; 
-            font-size: 1.5em; color: white; display: flex; justify-content: center; align-items: center; 
-            transition: 0.2s; background-color: rgba(255,255,255,0.15);
-        }
+        .call-info-block { text-align: center; margin-top: 20px; flex-grow: 1; }
+        .call-controls { display: flex; gap: 15px; z-index: 5002; background: rgba(0,0,0,0.4); padding: 15px 25px; border-radius: 40px; margin-bottom: 20px; }
+        .call-action-btn { width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.5em; color: white; display: flex; justify-content: center; align-items: center; transition: 0.2s; background-color: rgba(255,255,255,0.15); }
         .call-action-btn:hover { background-color: rgba(255,255,255,0.3); transform: scale(1.05); }
         .btn-end-call { background-color: #ff3b30 !important; }
         .btn-end-call:hover { background-color: #d32f2f !important; }
-
-        /* Кнопка свайпа вверх */
-        .call-swipe-up {
-            color: rgba(255,255,255,0.5); font-size: 30px; cursor: pointer; 
-            background: none; border: none; padding: 10px; margin-bottom: 10px;
-            transition: 0.2s;
-        }
+        .call-swipe-up { color: rgba(255,255,255,0.5); font-size: 30px; cursor: pointer; background: none; border: none; padding: 10px; margin-bottom: 10px; transition: 0.2s; }
         .call-swipe-up:hover { color: white; transform: translateY(-5px); }
-
-        /* Дополнительное меню звонка (Скрыто по умолчанию) */
-        #callExtraMenu {
-            display: none; position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
-            background: rgba(30, 30, 30, 0.95); border-radius: 20px; padding: 10px;
-            width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
-        }
-        .call-menu-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;
-        }
-        .call-menu-icon {
-            display: flex; flex-direction: column; align-items: center; gap: 5px; color: white; 
-            font-size: 0.7em; text-align: center; cursor: pointer; opacity: 0.8; transition: 0.2s;
-        }
+        #callExtraMenu { display: none; position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); background: rgba(30, 30, 30, 0.95); border-radius: 20px; padding: 10px; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .call-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .call-menu-icon { display: flex; flex-direction: column; align-items: center; gap: 5px; color: white; font-size: 0.7em; text-align: center; cursor: pointer; opacity: 0.8; transition: 0.2s; }
         .call-menu-icon:hover { opacity: 1; }
-        .call-menu-icon div {
-            width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%;
-            display: flex; justify-content: center; align-items: center; font-size: 20px; margin-bottom: 3px;
-        }
-        
+        .call-menu-icon div { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; margin-bottom: 3px; }
         .call-menu-list { list-style: none; padding: 0; margin: 0; }
-        .call-menu-list li {
-            padding: 12px 15px; color: white; border-top: 1px solid rgba(255,255,255,0.05);
-            display: flex; align-items: center; gap: 15px; cursor: pointer; font-size: 0.9em;
-        }
+        .call-menu-list li { padding: 12px 15px; color: white; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px; cursor: pointer; font-size: 0.9em; }
         .call-menu-list li:hover { background: rgba(255,255,255,0.05); }
-
-        /* Окно участников звонка */
-        #callParticipantsModal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #1e1e1e; width: 90%; max-width: 350px; border-radius: 20px;
-            z-index: 5010; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); color: white;
-        }
+        #callParticipantsModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; width: 90%; max-width: 350px; border-radius: 20px; z-index: 5010; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); color: white; }
         .part-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .part-list { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
         .part-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -355,6 +291,15 @@
             <h3>Просмотры</h3>
             <ul id="viewsList" style="list-style: none; padding: 0; max-height: 250px; overflow-y: auto; text-align: left;"></ul>
             <div class="modal-buttons" style="margin-top:15px;"><button class="modal-btn btn-cancel" style="width: 100%;" onclick="closeModal('viewsModal')">Закрыть</button></div>
+        </div>
+    </div>
+
+    <div id="adminPanelOverlay">
+        <div id="adminPanelContent">
+            <button onclick="document.getElementById('adminPanelOverlay').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✖</button>
+            <h2 style="margin-top:0; color:var(--main-color);">👑 Админ-панель</h2>
+            <input type="text" id="adminSearchInput" placeholder="Поиск пользователей..." style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark);">
+            <ul id="adminUsersList"></ul>
         </div>
     </div>
 
@@ -460,7 +405,6 @@
                 <div class="call-menu-icon"><div>▶️</div> Смотреть Видео</div>
                 <div class="call-menu-icon"><div>⏺</div> Записать звонок</div>
                 <div class="call-menu-icon"><div>◎</div> Запустить эфир</div>
-                
                 <div class="call-menu-icon"><div>✨</div> vmoji</div>
                 <div class="call-menu-icon"><div>🙂</div> Маска</div>
                 <div class="call-menu-icon"><div>🖼</div> Фон</div>
@@ -519,6 +463,7 @@
             <div class="drawer-status" id="myDrawerStatus">в сети</div>
         </div>
         <ul class="drawer-menu">
+            <li class="drawer-item" id="adminPanelBtn" style="display:none; color: var(--main-color);" onclick="openAdminPanel()">👑 Админ-панель</li>
             <li class="drawer-item" onclick="openStoryCreatorModal()">📸 Выложить историю</li>
             <li class="drawer-item" onclick="openSettingsModal()">⚙️ Настройки</li>
             <li class="drawer-item" onclick="openHelpModal()">❓ Помощь</li>
@@ -629,7 +574,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v34.0 (Design UI)</b><br><br>Новый дизайн звонков по фотографиям, новые меню!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v35.0 (Call UI)</b><br><br>Обновлен интерфейс видеозвонков (свайп-меню, участники, дизайн)!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -679,15 +624,49 @@
         }
 
         // ==========================================
-        // ДИНАМИЧЕСКИЕ ГАЛОЧКИ
+        // ДИНАМИЧЕСКИЕ ГАЛОЧКИ И АДМИНКА
         // ==========================================
         let verifiedUsersList = [];
         socket.on('update_verified_list', list => { verifiedUsersList = list; document.getElementById('myDrawerName').innerHTML = renderVerified(currentUser); socket.emit('get_my_chats'); });
+        socket.on('client_init_data', data => { if (data.is_verified) { document.getElementById('adminPanelBtn').style.display = 'flex'; } });
 
         function renderVerified(name) {
             if (verifiedUsersList.includes(name)) return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
             return name;
         }
+
+        function openAdminPanel() { socket.emit('get_admin_users'); document.getElementById('adminPanelOverlay').style.display = 'flex'; closeDrawer(); }
+        
+        socket.on('admin_users_data', users => {
+            const list = document.getElementById('adminUsersList'); list.innerHTML = '';
+            users.forEach(u => {
+                let vBtnText = u.is_verified ? 'Забрать ☑️' : 'Выдать ☑️';
+                let vBtnColor = u.is_verified ? '#e57373' : 'var(--main-color)';
+                let bBtnText = u.is_banned ? 'Разбанить' : 'Забанить';
+                let bBtnColor = u.is_banned ? '#4CAF50' : '#e57373';
+                let roleHtml = `
+                    <select onchange="changeRole('${u.username}', this.value)" style="padding:5px; border-radius:5px; border:1px solid #ccc; outline:none;">
+                        <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
+                        <option value="moderator" ${u.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                    </select>
+                `;
+                list.innerHTML += `
+                    <li class="admin-user-item">
+                        <div style="font-weight:bold; margin-bottom:5px;">${u.username} ${u.is_verified ? '☑️' : ''} ${u.is_banned ? '(БАН)' : ''}</div>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                            ${roleHtml}
+                            <button style="padding:5px; border:none; border-radius:5px; background:${vBtnColor}; color:white; cursor:pointer;" onclick="toggleVerification('${u.username}', ${u.is_verified})">${vBtnText}</button>
+                            <button style="padding:5px; border:none; border-radius:5px; background:${bBtnColor}; color:white; cursor:pointer;" onclick="toggleBan('${u.username}', ${u.is_banned})">${bBtnText}</button>
+                        </div>
+                    </li>
+                `;
+            });
+        });
+
+        function toggleVerification(username, currentStatus) { socket.emit('toggle_verification', {target: username, current_status: currentStatus}); }
+        function toggleBan(username, currentStatus) { socket.emit('toggle_ban', {target: username, current_status: currentStatus}); }
+        function changeRole(username, newRole) { socket.emit('change_role', {target: username, role: newRole}); }
 
         // ==========================================
         // ЗВУКИ И РИНГТОНЫ (ТВОЙ КОД)
@@ -712,14 +691,13 @@
         }, { once: true });
 
         // ==========================================
-        // ЗВОНКИ И ИСТОРИЯ (ТВОЙ КОД + НОВАЯ ВЕРСТКА)
+        // ЗВОНКИ И ИСТОРИЯ (ТВОЙ КОД + НОВЫЙ ДИЗАЙН)
         // ==========================================
         let localStream; let peerConnection; let activeCallTarget = ''; let iceCandidateQueue = [];
         let callTimerInterval = null; let callStartTime = null; let isCallAnswered = false;
 
         const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }] };
 
-        // Управление доп меню звонка
         function toggleCallMenu() {
             const menu = document.getElementById('callExtraMenu');
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
@@ -764,21 +742,12 @@
                 document.getElementById('localAudio').srcObject = localStream;
                 activeCallTarget = currentChatTarget;
                 
-                // Настраиваем верстку
+                // Настраиваем новый дизайн
                 document.getElementById('callTargetName').innerHTML = renderVerified(activeCallTarget);
                 document.getElementById('callAvatarIcon').innerText = activeCallTarget.charAt(0).toUpperCase();
                 document.getElementById('callModalTargetName').innerText = activeCallTarget;
                 document.getElementById('myCallAvatarIcon').innerText = currentUser.charAt(0).toUpperCase();
                 
-                // Пробуем подтянуть аватарки из кэша чатов
-                const chatData = myChatsList.find(c => c.id === currentRoomId);
-                if(chatData && chatData.avatar_url) {
-                    document.getElementById('callAvatarIcon').style.backgroundImage = `url(${chatData.avatar_url})`;
-                    document.getElementById('callAvatarIcon').innerText = '';
-                } else {
-                    document.getElementById('callAvatarIcon').style.backgroundImage = 'none';
-                }
-
                 document.getElementById('activeCallOverlay').style.display = 'flex';
                 document.getElementById('callStatusText').innerText = "Звоним...";
                 isCallAnswered = false;
@@ -813,21 +782,12 @@
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 document.getElementById('localAudio').srcObject = localStream;
                 
-                // Настраиваем верстку
+                // Настраиваем новый дизайн
                 document.getElementById('callTargetName').innerHTML = renderVerified(activeCallTarget);
                 document.getElementById('callAvatarIcon').innerText = activeCallTarget.charAt(0).toUpperCase();
                 document.getElementById('callModalTargetName').innerText = activeCallTarget;
                 document.getElementById('myCallAvatarIcon').innerText = currentUser.charAt(0).toUpperCase();
                 
-                // Пробуем подтянуть аватарки из кэша чатов
-                const chatData = myChatsList.find(c => c.name.includes(activeCallTarget) && c.type === 'dm');
-                if(chatData && chatData.avatar_url) {
-                    document.getElementById('callAvatarIcon').style.backgroundImage = `url(${chatData.avatar_url})`;
-                    document.getElementById('callAvatarIcon').innerText = '';
-                } else {
-                    document.getElementById('callAvatarIcon').style.backgroundImage = 'none';
-                }
-
                 document.getElementById('activeCallOverlay').style.display = 'flex';
                 document.getElementById('callStatusText').innerText = "Соединение...";
                 socket.emit('answer_call', {caller: activeCallTarget});
