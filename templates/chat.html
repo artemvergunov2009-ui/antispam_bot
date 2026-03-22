@@ -484,7 +484,7 @@
                 <button onclick="document.getElementById('callParticipantsModal').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.5); font-size:20px; cursor: pointer;">✖</button>
             </div>
             <ul class="participants-list" id="callParticipantsListUI">
-                </ul>
+            </ul>
         </div>
     </div>
 
@@ -614,7 +614,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v40.0 (Ultimate Call UI)</b><br><br>Исправлены чаты, добавлено сворачивание звонков, функции видео, поднятия руки и отправки любых файлов!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v41.0 (Final Fix)</b><br><br>Исправлена критическая ошибка загрузки. Новые звонки и файлы работают отлично!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -653,7 +653,7 @@
         let editingId = null; let replyingToId = null; let forwardingMsgId = null;
         let showingArchive = false;
 
-        // MISSING FUNCTION ADDED HERE:
+        // ВЕРНУЛ ПРОПАВШУЮ ФУНКЦИЮ:
         let verifiedUsersList = [];
         function renderVerified(name) {
             if (verifiedUsersList.includes(name)) return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
@@ -1095,12 +1095,6 @@
         }
 
         // ==========================================
-        // ДИНАМИЧЕСКИЕ ГАЛОЧКИ И АДМИНКА
-        // ==========================================
-        socket.on('update_verified_list', list => { verifiedUsersList = list; document.getElementById('myDrawerName').innerHTML = renderVerified(currentUser); socket.emit('get_my_chats'); });
-        socket.on('client_init_data', data => { if (data.is_verified) { document.getElementById('adminPanelBtn').style.display = 'flex'; } });
-
-        // ==========================================
         // ИСТОРИИ (STORIES) И ПРОСМОТРЫ
         // ==========================================
         let allStories = []; let currentStoryData = null; let storyMediaFile = null; let storyStream = null; let storyRecorder = null; let storyChunks = [];
@@ -1190,6 +1184,16 @@
         function checkMessageViews(id) { socket.emit('get_message_views', {id: id}); }
         socket.on('message_views_data', data => { const list = document.getElementById('viewsList'); list.innerHTML = ''; if(data.views.length === 0) list.innerHTML = '<li style="padding:10px; color:#aaa; text-align:center;">Пока никто не прочитал</li>'; data.views.forEach(v => { list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee; color: var(--text-color-dark);">👁 ${renderVerified(v.username)} <span style="font-size:0.8em; color:#999; float:right;">${formatTime(v.read_at)}</span></li>`; }); openModal('viewsModal'); });
 
+        function scrollToMsg(id) {
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if(el) { 
+                el.scrollIntoView({behavior: 'smooth', block: 'center'}); 
+                el.style.backgroundColor = 'rgba(209, 169, 130, 0.3)'; 
+                el.style.transition = 'background-color 0.5s';
+                setTimeout(() => { el.style.backgroundColor = 'transparent'; }, 1500); 
+            }
+        }
+
         // ==========================================
         // ПЛЕЕР И ИДЕАЛЬНАЯ ЗАПИСЬ КАК В TELEGRAM
         // ==========================================
@@ -1210,7 +1214,7 @@
         async function flipCamera(e) { if (e) e.stopPropagation(); if (!activeMediaStream || tgMode !== 'video') return; isFlipping = true; currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }
 
         let tgMode = 'audio'; let holdTimer; let isHolding = false; let startX = 0; let isCancelled = false;
-        let activeMediaStream = null; let mediaRecorder; let mediaChunks = []; let currentFacingMode = 'user'; let isFlipping = false; 
+        let mediaRecorder; let mediaChunks = []; let currentFacingMode = 'user'; let isFlipping = false; 
 
         function startHold(e) {
             if(e.cancelable) e.preventDefault();
@@ -1453,7 +1457,6 @@
             if (msg.text) { content += `<div class="msg-text-content">${msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`; }
             
             if (msg.media_url) {
-                // === ИСПРАВЛЕНИЕ: ОТОБРАЖЕНИЕ ЛЮБЫХ ФАЙЛОВ ===
                 if (msg.media_type === 'file') {
                     const urls = msg.media_url.split(',');
                     content += `<div style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">`;
@@ -1546,10 +1549,93 @@
             checkSendButton();
         }
 
+        function handleHeaderClick() {
+            if (currentRoomId === '') return;
+            if (['group', 'channel'].includes(currentRoomType)) { 
+                document.getElementById('editGroupNameInput').value = document.getElementById('currentChatName').innerText.replace('☑️', '').trim(); 
+                document.getElementById('groupAvatarEditOverlay').style.display = (myRole==='owner'||myRole==='admin') ? 'block' : 'none';
+                document.getElementById('editGroupNameInput').style.display = (myRole==='owner'||myRole==='admin') ? 'block' : 'none';
+                document.getElementById('editGroupDescInput').style.display = (myRole==='owner'||myRole==='admin') ? 'block' : 'none';
+                document.getElementById('saveGroupBtn').style.display = (myRole==='owner'||myRole==='admin') ? 'block' : 'none';
+                document.getElementById('addMemberBlock').style.display = (myRole==='owner'||myRole==='admin') ? 'flex' : 'none';
+                socket.emit('get_group_info', {room: currentRoomId}); 
+                openModal('groupInfoModal'); 
+            } else if (currentRoomType === 'dm') { openProfileModal(currentChatTarget); }
+        }
+        
+        socket.on('group_info_data', (data) => {
+            if (data.desc) document.getElementById('editGroupDescInput').value = data.desc; else document.getElementById('editGroupDescInput').value = '';
+            
+            if (data.type === 'channel' && (myRole === 'owner' || myRole === 'admin')) { document.getElementById('channelSettingsBlock').style.display = 'block'; document.getElementById('showMembersToggle').checked = data.show_members !== false; } else { document.getElementById('channelSettingsBlock').style.display = 'none'; }
+
+            const list = document.getElementById('groupMemberList'); list.innerHTML = '';
+            
+            if (data.type === 'channel' && data.show_members === false && myRole === 'member') {
+                list.innerHTML = '<li style="padding:10px; color:var(--text-color-light); text-align:center;">Список подписчиков скрыт администратором</li>';
+                document.getElementById('membersTitle').style.display = 'none';
+            } else {
+                document.getElementById('membersTitle').style.display = 'block';
+                data.members.forEach(m => { 
+                    const isMe = m.username === currentUser;
+                    const canManage = (myRole === 'owner') || (myRole === 'admin' && m.role === 'member');
+                    
+                    let controls = '';
+                    if(canManage && !isMe) {
+                        controls = `<div style="display:flex; gap:5px;">`;
+                        if(myRole === 'owner') {
+                            if(m.role === 'admin') controls += `<button onclick="manageMember('demote', '${m.username}')" style="background:#e6dabf; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">Снять админа</button>`;
+                            else controls += `<button onclick="manageMember('promote', '${m.username}')" style="background:var(--main-color); color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">Сделать админом</button>`;
+                        }
+                        controls += `<button onclick="manageMember('kick', '${m.username}')" style="background:#e57373; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">Выгнать</button></div>`;
+                    }
+                    let roleTag = m.role === 'owner' ? ' 👑' : (m.role === 'admin' ? ' 🛡️' : '');
+                    let avatarHtml = m.avatar_url ? `<div class="avatar-circle" style="width:35px; height:35px; background-image:url(${m.avatar_url}); margin-right:10px; font-size:1em;"></div>` : `<div class="avatar-circle" style="width:35px; height:35px; margin-right:10px; font-size:1em;">${m.username[0].toUpperCase()}</div>`;
+                    
+                    const li = document.createElement('li'); li.style = "padding: 8px 0; border-bottom: 1px solid var(--input-border); display:flex; justify-content:space-between; align-items:center;"; 
+                    li.innerHTML = `<div style="display:flex; align-items:center; cursor:pointer; font-weight:bold; color:var(--main-color);" onclick="closeModal('groupInfoModal'); openProfileModal('${m.username}')">${avatarHtml} <span>${renderVerified(m.username)}${roleTag}</span></div> ${controls}`; 
+                    list.appendChild(li); 
+                });
+            }
+        });
+        
+        function savePrivacy() { const show = document.getElementById('showMembersToggle').checked; socket.emit('update_group_info', {room: currentRoomId, show_members: show}); }
+        function manageMember(action, target='') { if(action === 'add') target = document.getElementById('newMemberInput').value.trim(); if(!target) return; socket.emit('manage_member', {room: currentRoomId, target: target, action: action}); document.getElementById('newMemberInput').value = ''; }
+        socket.on('group_members_updated', data => { if(data.room === currentRoomId) socket.emit('get_group_info', {room: currentRoomId}); });
+        function saveGroupSettings() { const newName = document.getElementById('editGroupNameInput').value.trim(); const desc = document.getElementById('editGroupDescInput').value.trim(); if(newName) socket.emit('update_group_info', {room: currentRoomId, name: newName, desc: desc}); closeModal('groupInfoModal'); }
+        socket.on('group_updated', data => { if(currentRoomId === data.room) document.getElementById('currentChatName').innerHTML = renderVerified(data.name); socket.emit('get_my_chats'); });
+        async function uploadGroupAvatar() { const f = document.getElementById('groupAvatarInput').files[0]; if (!f) return; document.getElementById('groupAvatarInitials').innerText = '⏳'; const fd = new FormData(); fd.append('file', f); fd.append('chat_id', currentRoomId); try { const r = await fetch('/upload_group_avatar', { method: 'POST', body: fd }); const d = await r.json(); if (d.url) { document.getElementById('groupAvatarEdit').style.backgroundImage = `url(${d.url})`; document.getElementById('groupAvatarInitials').innerText = ''; socket.emit('get_my_chats'); } } catch (err) {} f.value = ''; }
+
+        let selectedGroupMembers = new Set();
+        function openGroupModal() { selectedGroupMembers.clear(); document.getElementById('groupName').value = ''; document.getElementById('groupDescInput').value = ''; document.getElementById('groupSearchInput').value = ''; document.getElementById('groupUserList').innerHTML = '<div style="color:var(--text-color-light); font-size:0.9em; padding: 10px; text-align:center;">Начните вводить никнейм...</div>'; openModal('groupModal'); }
+        function searchUsersForGroup() { const q = document.getElementById('groupSearchInput').value.trim(); if (q.length > 0) socket.emit('search_for_group', {query: q}); else document.getElementById('groupUserList').innerHTML = '<div style="color:var(--text-color-light); font-size:0.9em; padding: 10px; text-align:center;">Начните вводить никнейм...</div>'; }
+        socket.on('group_search_results', (users) => { const list = document.getElementById('groupUserList'); list.innerHTML = ''; if (users.length === 0) { list.innerHTML = '<div style="color:var(--text-color-light); padding: 10px; text-align:center;">Никого не нашли</div>'; return; } users.forEach(u => { const div = document.createElement('div'); div.className = 'user-check-item'; const isChecked = selectedGroupMembers.has(u.username) ? 'checked' : ''; let avatar = u.avatar_url ? `<div class="avatar-circle" style="width:30px; height:30px; background-image:url(${u.avatar_url})"></div>` : `<div class="avatar-circle" style="width:30px; height:30px;">${u.username[0].toUpperCase()}</div>`; div.innerHTML = `<input type="checkbox" id="chk_${u.username}" value="${u.username}" ${isChecked} onchange="toggleGroupMember('${u.username}')"> ${avatar} <label for="chk_${u.username}" style="flex-grow:1; cursor:pointer;">${renderVerified(u.username)}</label>`; list.appendChild(div); }); });
+        function toggleGroupMember(username) { const chk = document.getElementById('chk_' + username); if (chk.checked) selectedGroupMembers.add(username); else selectedGroupMembers.delete(username); }
+        function submitGroup() { const name = document.getElementById('groupName').value.trim(); const desc = document.getElementById('groupDescInput').value.trim(); const is_channel = document.getElementById('groupTypeSelect').value === 'channel'; if (name === '') { showToast('Введи название!', 'error'); return; } socket.emit('create_group', { name: name, desc: desc, is_channel: is_channel, members: Array.from(selectedGroupMembers) }); closeModal('groupModal'); }
+
+        function openProfileModal(username) { document.getElementById('profileUsername').innerHTML = "Профиль: " + renderVerified(username); document.getElementById('profileAvatar').style.backgroundImage = 'none'; document.getElementById('profileInitials').innerText = username.charAt(0).toUpperCase(); document.getElementById('profileBio').value = ''; document.getElementById('profileCustomStatus').innerText = ''; document.getElementById('profileOnlineBadge').innerText = ''; socket.emit('get_profile', {username: username}); openModal('profileModal'); }
+        socket.on('profile_data', (data) => {
+            if (data.username === currentUser) {
+                if (data.avatar_url) { document.getElementById('settingsAvatar').style.backgroundImage = `url(${data.avatar_url})`; document.getElementById('settingsInitials').innerText = ''; document.getElementById('myDrawerAvatar').style.backgroundImage = `url(${data.avatar_url})`; document.getElementById('myDrawerInitials').innerText = ''; }
+                if (data.bio) document.getElementById('settingsBio').value = data.bio;
+                if (data.custom_status) { document.getElementById('settingsCustomStatus').value = data.custom_status; document.getElementById('myDrawerStatus').innerText = data.custom_status; }
+            } else {
+                if (data.avatar_url) { document.getElementById('profileAvatar').style.backgroundImage = `url(${data.avatar_url})`; document.getElementById('profileInitials').innerText = ''; }
+                if (data.bio) document.getElementById('profileBio').value = data.bio;
+                if (data.custom_status) document.getElementById('profileCustomStatus').innerText = data.custom_status;
+                const badge = document.getElementById('profileOnlineBadge');
+                if (data.is_online) { badge.innerText = 'В сети'; badge.style.color = 'var(--online-color)'; } else { badge.innerText = formatLastSeen(data.last_seen); badge.style.color = 'var(--text-color-light)'; }
+            }
+        });
+
+        function saveSettings() { const bio = document.getElementById('settingsBio').value; const customStatus = document.getElementById('settingsCustomStatus').value; socket.emit('update_settings', {bio: bio, custom_status: customStatus}); if (customStatus) document.getElementById('myDrawerStatus').innerText = customStatus; else document.getElementById('myDrawerStatus').innerText = 'в сети'; closeModal('settingsModal'); }
+        async function uploadAvatar() { const fileInput = document.getElementById('avatarInput'); const file = fileInput.files[0]; if (!file) return; document.getElementById('settingsInitials').innerText = '⏳'; const formData = new FormData(); formData.append('file', file); try { const response = await fetch('/upload_avatar', { method: 'POST', body: formData }); const data = await response.json(); if (data.url) { document.getElementById('settingsAvatar').style.backgroundImage = `url(${data.url})`; document.getElementById('settingsInitials').innerText = ''; document.getElementById('myDrawerAvatar').style.backgroundImage = `url(${data.url})`; document.getElementById('myDrawerInitials').innerText = ''; } } catch (err) { showToast('Ошибка сети', 'error'); } fileInput.value = ''; }
+
+        function closeMobileChat(e) { e.stopPropagation(); document.getElementById('sidebar').style.display = 'flex'; document.getElementById('chat-area').style.display = 'none'; document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active')); currentRoomId = ''; }
+        
         socket.on('load_history', (history) => { document.getElementById('messages').innerHTML = ''; pinnedMsgs.clear(); history.forEach(msg => appendMessage(msg)); updatePinnedUI(); setTimeout(scrollToBottom, 200); });
         socket.on('receive_message', (msg) => { appendMessage(msg); setTimeout(scrollToBottom, 50); if (msg.username !== currentUser) { socket.emit('mark_read', {room: currentRoomId}); playSound('msgSound'); } socket.emit('get_my_chats'); });
         socket.on('messages_read', (data) => { if (data.by !== currentUser && currentRoomId === data.room) { document.querySelectorAll('.my-message .msg-status').forEach(el => { el.innerText = '✓✓'; el.classList.add('read'); }); } });
-
+        
         document.getElementById('messageInput').addEventListener('input', () => { handleTyping(); checkSendButton(); });
         document.getElementById('messageInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') sendMessage(); });
         
@@ -1691,8 +1777,6 @@
                 showToast("Сбой отрисовки интерфейса. Очистите кэш.", "error");
             }
         }
-
-        function closeMobileChat(e) { e.stopPropagation(); document.getElementById('sidebar').style.display = 'flex'; document.getElementById('chat-area').style.display = 'none'; document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active')); currentRoomId = ''; }
     </script>
 </body>
 </html>
