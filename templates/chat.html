@@ -63,12 +63,6 @@
         #storyViewerClose { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; }
         #storyViewsBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; display: none; }
 
-        /* АДМИН ПАНЕЛЬ */
-        #adminPanelOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-        #adminPanelContent { background: var(--modal-bg); padding: 30px; border-radius: var(--border-radius-large); width: 90%; max-width: 600px; box-shadow: var(--main-shadow); position: relative; max-height: 85vh; display: flex; flex-direction: column; color: var(--text-color-dark); }
-        #adminUsersList { list-style: none; padding: 0; overflow-y: auto; flex-grow: 1; }
-        .admin-user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--input-border); gap: 10px; flex-wrap: wrap;}
-
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 300px; }
         .gallery-img { width: 100%; height: 100%; max-height: 200px; object-fit: cover; cursor: pointer; transition: 0.2s; background: #eee; }
         .gallery-img:hover { filter: brightness(0.9); }
@@ -288,15 +282,6 @@
         </div>
     </div>
 
-    <div id="adminPanelOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
-        <div id="adminPanelContent">
-            <button onclick="document.getElementById('adminPanelOverlay').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✖</button>
-            <h2 style="margin-top:0; color:var(--main-color);">👑 Админ-панель</h2>
-            <input type="text" id="adminSearchInput" placeholder="Поиск пользователей..." style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark);">
-            <ul id="adminUsersList"></ul>
-        </div>
-    </div>
-
     <div id="storyCreatorModal" class="modal" style="z-index: 9000;">
         <div class="modal-content" style="width: 350px;">
             <h3 style="margin-bottom: 10px;">Создать историю</h3>
@@ -400,7 +385,6 @@
             <div class="drawer-status" id="myDrawerStatus">в сети</div>
         </div>
         <ul class="drawer-menu">
-            <li class="drawer-item" id="adminPanelBtn" style="display:none; color: var(--main-color);" onclick="openAdminPanel()">👑 Админ-панель</li>
             <li class="drawer-item" onclick="openStoryCreatorModal()">📸 Выложить историю</li>
             <li class="drawer-item" onclick="openSettingsModal()">⚙️ Настройки</li>
             <li class="drawer-item" onclick="openHelpModal()">❓ Помощь</li>
@@ -511,7 +495,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v32.0 (Armor Update)</b><br><br>Железобетонная броня от сбоев БД. Восстановлена загрузка чатов!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v33.0</b><br><br>Идеальное меню без вылетов за экран. Бесперебойная работа чатов!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -572,42 +556,6 @@
             if (verifiedUsersList.includes(name)) return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
             return name;
         }
-
-        function openAdminPanel() { socket.emit('get_admin_users'); document.getElementById('adminPanelOverlay').style.display = 'flex'; closeDrawer(); }
-        
-        socket.on('admin_users_data', users => {
-            const list = document.getElementById('adminUsersList'); list.innerHTML = '';
-            users.forEach(u => {
-                let vBtnText = u.is_verified ? 'Забрать ☑️' : 'Выдать ☑️';
-                let vBtnColor = u.is_verified ? '#e57373' : 'var(--main-color)';
-                
-                let bBtnText = u.is_banned ? 'Разбанить' : 'Забанить';
-                let bBtnColor = u.is_banned ? '#4CAF50' : '#e57373';
-                
-                let roleHtml = `
-                    <select onchange="changeRole('${u.username}', this.value)" style="padding:5px; border-radius:5px; border:1px solid #ccc; outline:none;">
-                        <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
-                        <option value="moderator" ${u.role === 'moderator' ? 'selected' : ''}>Moderator</option>
-                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
-                    </select>
-                `;
-
-                list.innerHTML += `
-                    <li class="admin-user-item">
-                        <div style="font-weight:bold; margin-bottom:5px;">${u.username} ${u.is_verified ? '☑️' : ''} ${u.is_banned ? '(БАН)' : ''}</div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                            ${roleHtml}
-                            <button style="padding:5px; border:none; border-radius:5px; background:${vBtnColor}; color:white; cursor:pointer;" onclick="toggleVerification('${u.username}', ${u.is_verified})">${vBtnText}</button>
-                            <button style="padding:5px; border:none; border-radius:5px; background:${bBtnColor}; color:white; cursor:pointer;" onclick="toggleBan('${u.username}', ${u.is_banned})">${bBtnText}</button>
-                        </div>
-                    </li>
-                `;
-            });
-        });
-
-        function toggleVerification(username, currentStatus) { socket.emit('toggle_verification', {target: username, current_status: currentStatus}); }
-        function toggleBan(username, currentStatus) { socket.emit('toggle_ban', {target: username, current_status: currentStatus}); }
-        function changeRole(username, newRole) { socket.emit('change_role', {target: username, role: newRole}); }
 
         // ==========================================
         // ЗВУКИ И РИНГТОНЫ (ТВОЙ КОД)
@@ -917,13 +865,13 @@
 
         async function startMediaRecord(type) {
             try {
-                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode, width:{ideal:320}, height:{ideal:320} } } : { audio: true };
+                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode } } : { audio: true };
                 activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 if (type === 'video') { const preview = document.getElementById('videoPreview'); preview.srcObject = activeMediaStream; preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)'; document.getElementById('videoPreviewContainer').style.display = 'block'; }
-                let options = {};
-                if (type === 'video') { if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) options.mimeType = 'video/webm;codecs=vp9'; else if (MediaRecorder.isTypeSupported('video/mp4')) options.mimeType = 'video/mp4'; else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm'; } 
-                else { if (MediaRecorder.isTypeSupported('audio/webm')) options.mimeType = 'audio/webm'; else if (MediaRecorder.isTypeSupported('audio/mp4')) options.mimeType = 'audio/mp4'; }
-                mediaRecorder = new MediaRecorder(activeMediaStream, options); mediaChunks = [];
+                
+                // БЕЗ УКАЗАНИЯ ФОРМАТА - ТЕЛЕФОН САМ ВЫБЕРЕТ ЛУЧШИЙ (Чтобы на iOS писалось видео, а не только голос)
+                mediaRecorder = new MediaRecorder(activeMediaStream); 
+                mediaChunks = [];
                 mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
                 mediaRecorder.onstop = handleMediaStop; mediaRecorder.start();
                 socket.emit('typing', {room: currentRoomId, action: type === 'video' ? 'recording_video' : 'recording_audio'});
@@ -938,9 +886,14 @@
         const handleMediaStop = async function(e) {
             const send = e.target ? e.target.sendOnStop : true; 
             if (isFlipping) { activeMediaStream.getTracks().forEach(track => track.stop()); mediaChunks = []; isFlipping = false; startMediaRecord('video'); return; }
+            
             const currentRecordType = tgMode;
-            let mime = e.target.mimeType || (currentRecordType === 'video' ? 'video/webm' : 'audio/webm'); let ext = mime.includes('mp4') ? 'mp4' : 'webm';
-            const blob = new Blob(mediaChunks, { type: mime }); activeMediaStream.getTracks().forEach(track => track.stop()); document.getElementById('videoPreviewContainer').style.display = 'none'; socket.emit('stop_typing', {room: currentRoomId});
+            let mime = e.target.mimeType || (currentRecordType === 'video' ? 'video/webm' : 'audio/webm'); 
+            let ext = mime.includes('mp4') ? 'mp4' : 'webm';
+            
+            const blob = new Blob(mediaChunks, { type: mime }); 
+            activeMediaStream.getTracks().forEach(track => track.stop()); document.getElementById('videoPreviewContainer').style.display = 'none'; socket.emit('stop_typing', {room: currentRoomId});
+            
             if (!send) return;
             const tempId = 'temp_' + Date.now(); appendTempMessage(tempId, currentRecordType === 'video' ? 'video_message' : 'audio');
             await uploadMediaMessage(blob, currentRecordType === 'video' ? 'video_message' : 'audio', ext, tempId);
@@ -1059,7 +1012,12 @@
         function formatLastSeen(iso) { if (!iso || iso.startsWith('1970')) return 'был(а) недавно'; const d = new Date(iso); const now = new Date(); const hh = d.getHours().toString().padStart(2, '0'); const mm = d.getMinutes().toString().padStart(2, '0'); if ((now - d)/(1000*60*60) < 24 && now.getDate() === d.getDate()) return `в сети в ${hh}:${mm}`; return `в сети ${d.getDate().toString().padStart(2, '0')}.${(d.getMonth()+1).toString().padStart(2, '0')} в ${hh}:${mm}`; }
         function formatTime(iso) { if (!iso || iso.startsWith('1970')) return ''; const d = new Date(iso); return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`; }
 
-        socket.on('connect', () => { socket.emit('user_connected'); socket.emit('get_my_chats'); socket.emit('get_profile', {username: currentUser}); socket.emit('get_stories'); });
+        socket.on('connect', () => { 
+            socket.emit('user_connected'); 
+            socket.emit('get_my_chats'); 
+            socket.emit('get_profile', {username: currentUser}); 
+            socket.emit('get_stories'); 
+        });
         socket.on('status_update', (data) => { if (currentRoomType === 'dm' && currentChatTarget === data.username) { const el = document.getElementById('currentChatStatus'); if (data.status === 'online') { el.innerText = 'в сети'; el.classList.add('status-online'); } else if (data.status === 'offline') { el.innerText = formatLastSeen(data.last_seen); el.classList.remove('status-online'); } } });
         socket.on('receive_user_status', (data) => { if (currentRoomType === 'dm' && currentChatTarget === data.username) { const el = document.getElementById('currentChatStatus'); if (data.custom_status) { el.innerText = data.custom_status; el.classList.remove('status-online'); } else if (data.is_online) { el.innerText = 'в сети'; el.classList.add('status-online'); } else { el.innerText = formatLastSeen(data.last_seen); el.classList.remove('status-online'); } } });
 
@@ -1093,7 +1051,7 @@
                 if (chat.last_message) { timeStr = formatTime(chat.last_msg_time); if (chat.last_message.text) lastMsgText = chat.last_message.text; else if (chat.last_message.media_type === 'audio') lastMsgText = '🎤 Голосовое сообщение'; else if (chat.last_message.media_type === 'video_message') lastMsgText = '📹 Видеосообщение'; else if (chat.last_message.media_type === 'gallery') lastMsgText = '🖼 Галерея'; else if (chat.last_message.media_url) lastMsgText = '📷 Медиафайл'; if (chat.type === 'group' && chat.last_message.username !== currentUser) lastMsgText = `${chat.last_message.username}: ${lastMsgText}`; else if (chat.last_message.username === currentUser) lastMsgText = `Вы: ${lastMsgText}`; }
                 li.innerHTML = `${avHtml}<div class="chat-list-info"><div class="chat-list-header"><span class="chat-list-name">${pinHtml}${renderVerified(displayName)}</span><span class="chat-list-time">${timeStr}</span></div><div class="chat-list-last-msg-container"><span class="chat-list-last-msg">${lastMsgText}</span>${badgeHtml}</div></div>`;
                 li.onclick = (e) => openChat(chat.id, displayName, chat.type, chat.my_role, e);
-                li.addEventListener('contextmenu', (e) => { e.preventDefault(); showChatContextMenu(e.pageX, e.pageY, chat.id, chat.type, displayName); });
+                li.addEventListener('contextmenu', (e) => { e.preventDefault(); showChatContextMenu(e.clientX, e.clientY, chat.id, chat.type, displayName); });
                 let pt; li.addEventListener('touchstart', e => { pt = setTimeout(() => { const t = e.touches[0]; showChatContextMenu(t.clientX, t.clientY, chat.id, chat.type, displayName); }, 500); }, {passive: true}); li.addEventListener('touchend', () => clearTimeout(pt)); li.addEventListener('touchmove', () => clearTimeout(pt));
                 list.appendChild(li);
             });
