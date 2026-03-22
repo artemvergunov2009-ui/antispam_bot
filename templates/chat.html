@@ -296,12 +296,6 @@
         .tg-call-overlay.floating #callExtraMenuWrapper { display: none !important; }
         .tg-call-overlay.floating .tg-call-center { padding-bottom: 0; transform: scale(0.6); }
 
-        #incomingCallModal { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--modal-bg); padding: 20px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 6000; text-align: center; border: 2px solid var(--main-color); }
-        .incoming-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 15px; }
-        .inc-btn { padding: 10px 20px; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer;}
-        .inc-accept { background-color: var(--main-color); }
-        .inc-reject { background-color: #e57373; }
-
         @media (max-width: 768px) {
             body { margin: 0; flex-direction: column; background-color: var(--sidebar-bg); }
             #sidebar { width: 100%; height: 100%; margin: 0; border-radius: 0; box-shadow: none; display: flex; }
@@ -349,23 +343,28 @@
     <div id="storyCreatorModal" class="modal" style="z-index: 9000;">
         <div class="modal-content" style="width: 350px;">
             <h3 style="margin-bottom: 10px;">Создать историю</h3>
+            
             <div style="margin-bottom: 15px; text-align: left;">
                 <label style="font-size: 0.9em; color: var(--text-color-light);">Опубликовать от лица:</label>
                 <select id="storyAuthorSelect" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark);">
                     <option value="user">Мой аккаунт ({{ username }})</option>
                 </select>
             </div>
+
             <div id="storyMediaPreviewBox" style="width: 100%; height: 200px; background: #000; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
                 <video id="storyVideoInputPreview" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
                 <img id="storyImageInputPreview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                 <div id="storyPlaceholderText" style="color: white; font-weight: bold;">Выберите медиа</div>
             </div>
+
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <input type="file" id="storyFileInput" accept="image/*,video/*" style="display: none;" onchange="handleStoryFileSelect(event)">
                 <button class="modal-btn btn-cancel" onclick="document.getElementById('storyFileInput').click()">📁 Галерея</button>
                 <button class="modal-btn btn-cancel" id="storyCameraBtn" onclick="toggleStoryCamera()">📸 Камера</button>
             </div>
+
             <input type="text" id="storyTextInput" placeholder="Добавить подпись..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid var(--input-border); outline: none; background: var(--input-bg); color: var(--text-color-dark);">
+
             <div class="modal-buttons">
                 <button class="modal-btn btn-cancel" onclick="closeStoryCreator()">Отмена</button>
                 <button class="modal-btn btn-create" id="storySendBtn" onclick="uploadStory()" disabled>Выложить</button>
@@ -493,6 +492,7 @@
             <div class="modal-buttons" style="margin-top:15px;"><button class="modal-btn" style="background:rgba(255,255,255,0.1); color:white;" onclick="document.getElementById('callAddUserModal').style.display='none'">Отмена</button></div>
         </div>
     </div>
+
     <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
     <div class="drawer" id="drawerMenu">
         <div class="drawer-header">
@@ -612,7 +612,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v38.0 (Call UI)</b><br><br>Идеальные звонки: видео, громкая связь, поднятие руки и фоновый режим!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v39.0 (Final Complete)</b><br><br>Исправлена дубликация кода, добавлена функция поднятия руки и правильные видеозвонки!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -651,75 +651,17 @@
         let editingId = null; let replyingToId = null; let forwardingMsgId = null;
         let showingArchive = false;
 
-        // ==========================================
-        // ДИНАМИЧЕСКИЕ ГАЛОЧКИ И АДМИНКА
-        // ==========================================
-        let verifiedUsersList = [];
-        socket.on('update_verified_list', list => { verifiedUsersList = list; document.getElementById('myDrawerName').innerHTML = renderVerified(currentUser); socket.emit('get_my_chats'); });
-        socket.on('client_init_data', data => { if (data.is_verified) { document.getElementById('adminPanelBtn').style.display = 'flex'; } });
-
-        function renderVerified(name) {
-            if (verifiedUsersList.includes(name)) return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
-            return name;
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
 
-        function openAdminPanel() { socket.emit('get_admin_users'); document.getElementById('adminPanelOverlay').style.display = 'flex'; closeDrawer(); }
-        
-        socket.on('admin_users_data', users => {
-            const list = document.getElementById('adminUsersList'); list.innerHTML = '';
-            users.forEach(u => {
-                let vBtnText = u.is_verified ? 'Забрать ☑️' : 'Выдать ☑️';
-                let vBtnColor = u.is_verified ? '#e57373' : 'var(--main-color)';
-                let bBtnText = u.is_banned ? 'Разбанить' : 'Забанить';
-                let bBtnColor = u.is_banned ? '#4CAF50' : '#e57373';
-                let roleHtml = `
-                    <select onchange="changeRole('${u.username}', this.value)" style="padding:5px; border-radius:5px; border:1px solid #ccc; outline:none;">
-                        <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
-                        <option value="moderator" ${u.role === 'moderator' ? 'selected' : ''}>Moderator</option>
-                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
-                    </select>
-                `;
-                list.innerHTML += `
-                    <li class="admin-user-item">
-                        <div style="font-weight:bold; margin-bottom:5px;">${u.username} ${u.is_verified ? '☑️' : ''} ${u.is_banned ? '(БАН)' : ''}</div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                            ${roleHtml}
-                            <button style="padding:5px; border:none; border-radius:5px; background:${vBtnColor}; color:white; cursor:pointer;" onclick="toggleVerification('${u.username}', ${u.is_verified})">${vBtnText}</button>
-                            <button style="padding:5px; border:none; border-radius:5px; background:${bBtnColor}; color:white; cursor:pointer;" onclick="toggleBan('${u.username}', ${u.is_banned})">${bBtnText}</button>
-                        </div>
-                    </li>
-                `;
-            });
-        });
-
-        function toggleVerification(username, currentStatus) { socket.emit('toggle_verification', {target: username, current_status: currentStatus}); }
-        function toggleBan(username, currentStatus) { socket.emit('toggle_ban', {target: username, current_status: currentStatus}); }
-        function changeRole(username, newRole) { socket.emit('change_role', {target: username, role: newRole}); }
-
         // ==========================================
-        // ЗВУКИ И РИНГТОНЫ (ТВОЙ КОД)
-        // ==========================================
-        function playSound(id) {
-            const audio = document.getElementById(id);
-            if (audio) { audio.currentTime = 0; audio.play().catch(e => console.log("Звук заблокирован")); }
-        }
-        function playRingtone() { playSound('ringtoneAudio'); }
-        function stopRingtone() { 
-            const r = document.getElementById('ringtoneAudio'); if (r) { r.pause(); r.currentTime = 0; } 
-            const d = document.getElementById('dialingAudio'); if (d) { d.pause(); d.currentTime = 0; } 
-        }
-
-        document.body.addEventListener('click', function unlockAudio() {
-            const audios = ['msgSound', 'ringtoneAudio', 'dialingAudio', 'acceptAudio', 'rejectAudio', 'endAudio'];
-            audios.forEach(id => {
-                const a = document.getElementById(id);
-                if(a) a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(e => {});
-            });
-            document.body.removeEventListener('click', unlockAudio);
-        }, { once: true });
-
-        // ==========================================
-        // НОВЫЕ ФУНКЦИИ ЗВОНКА (ГРОМКОСТЬ, ВИДЕО, РУКА, PIP)
+        // ЗВОНКИ, РУКИ И СВОРАЧИВАНИЕ (В СТИЛЕ ТЕЛЕГРАМ)
         // ==========================================
         let localStream; let peerConnection; let activeCallTarget = ''; let iceCandidateQueue = [];
         let callTimerInterval = null; let callStartTime = null; let isCallAnswered = false;
@@ -728,11 +670,10 @@
         let isVideoEnabled = false;
         let isHandRaised = false;
         let isCallFloating = false;
-        let groupCallUsers = []; // Фейковый массив для визуализации группового звонка
+        let groupCallUsers = []; 
 
         const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }] };
 
-        // 1. Динамик
         function toggleSpeaker() {
             isSpeaker = !isSpeaker;
             const btn = document.getElementById('btnToggleSpeaker');
@@ -741,7 +682,6 @@
             showToast(isSpeaker ? 'Громкая связь включена' : 'Динамик (тихо)');
         }
 
-        // 2. Видео камера
         async function toggleVideoCall() {
             const btn = document.getElementById('btnToggleVideoCall');
             const avIcon = document.getElementById('callAvatarIcon');
@@ -762,12 +702,11 @@
                     btn.style.backgroundColor = 'white';
                     btn.style.color = 'black';
                     
-                    // Показываем себя без отзеркаливания
                     const v = document.createElement('video');
                     v.id = 'localRealVideo';
                     v.autoplay = true; v.playsInline = true; v.muted = true;
                     v.style.width = '100%'; v.style.height = '100%'; v.style.objectFit = 'cover'; 
-                    v.style.transform = 'scaleX(1)'; // БЕЗ ОТЗЕРКАЛИВАНИЯ!
+                    v.style.transform = 'scaleX(1)'; // Без отзеркаливания
                     v.srcObject = vidStream;
                     
                     avIcon.innerHTML = '';
@@ -776,10 +715,7 @@
                 } catch(e) { showToast("Нет камеры", "error"); }
             } else {
                 const vTrack = localStream ? localStream.getVideoTracks()[0] : null;
-                if(vTrack) {
-                    vTrack.stop();
-                    localStream.removeTrack(vTrack);
-                }
+                if(vTrack) { vTrack.stop(); localStream.removeTrack(vTrack); }
                 isVideoEnabled = false;
                 btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
                 btn.style.color = 'white';
@@ -790,17 +726,15 @@
             }
         }
 
-        // 4. Поднять руку
         function toggleHand() {
             isHandRaised = !isHandRaised;
             const btn = document.getElementById('btnRaiseHand');
             btn.style.backgroundColor = isHandRaised ? 'white' : 'rgba(255,255,255,0.15)';
-            
+            btn.style.color = isHandRaised ? 'black' : 'white';
             socket.emit('call_action', {target: activeCallTarget, action: isHandRaised ? 'raise_hand' : 'lower_hand'});
             showToast(isHandRaised ? 'Вы подняли руку' : 'Рука опущена');
         }
 
-        // Прием сигнала поднятой руки
         socket.on('call_action_received', (data) => {
             if (data.from === activeCallTarget) {
                 if (data.action === 'raise_hand') {
@@ -812,7 +746,6 @@
             }
         });
 
-        // 6 & 9. Свернуть в фоновое окно (PiP)
         function toggleCallExtraMenu() {
             const menu = document.getElementById('callExtraMenuWrapper');
             menu.style.transform = menu.style.transform === 'translateY(0%)' ? 'translateY(100%)' : 'translateY(0%)';
@@ -865,7 +798,6 @@
             }
         }
 
-        // Возврат из фона по клику
         document.getElementById('activeCallOverlay').addEventListener('click', function(e) {
             if(isCallFloating && e.target === this || e.target.classList.contains('tg-call-bg') || e.target.classList.contains('tg-call-avatar')) {
                 this.classList.remove('floating');
@@ -875,7 +807,6 @@
             }
         });
 
-        // 7. Групповые звонки (Визуал участников)
         function renderCallParticipants() {
             const list = document.getElementById('callParticipantsListUI');
             document.getElementById('callPartTitle').innerText = `${groupCallUsers.length + 1} участника`;
@@ -942,7 +873,6 @@
                 exitBtn.className = 'modal-btn btn-cancel'; exitBtn.innerText = "Выйти";
                 exitBtn.onclick = () => { closeConfirm(); endCall(); };
                 document.querySelector('#customConfirmModal .modal-buttons').appendChild(exitBtn);
-                // очистка лишней кнопки при закрытии
                 const oldClose = closeConfirm;
                 closeConfirm = function() { oldClose(); if(exitBtn.parentNode) exitBtn.remove(); closeConfirm = oldClose; }
             } else {
@@ -975,7 +905,6 @@
                         remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
                     }
                 }
-                // Если прилетело удаленное видео
                 if (event.track.kind === 'video') {
                     let rv = document.getElementById('remoteRealVideo');
                     if(!rv) {
@@ -1012,6 +941,7 @@
                 document.getElementById('callModalTargetName').innerText = activeCallTarget;
                 document.getElementById('callAvatarIcon').innerText = activeCallTarget.charAt(0).toUpperCase();
                 document.getElementById('callTargetHand').style.display = 'none';
+                document.getElementById('myDrawerInitials').innerText = currentUser.charAt(0).toUpperCase();
                 
                 const chatData = myChatsList.find(c => c.id === currentRoomId);
                 if(chatData && chatData.avatar_url) {
@@ -1155,13 +1085,13 @@
             const btnVid = document.getElementById('btnToggleVideoCall');
             btnVid.style.backgroundColor = 'rgba(255,255,255,0.15)'; btnVid.style.color = 'white';
             const btnHand = document.getElementById('btnRaiseHand');
-            btnHand.style.backgroundColor = 'rgba(255,255,255,0.15)';
+            btnHand.style.backgroundColor = 'rgba(255,255,255,0.15)'; btnHand.style.color = 'white';
             const btnSpk = document.getElementById('btnToggleSpeaker');
             btnSpk.style.backgroundColor = 'rgba(255,255,255,0.15)'; btnSpk.style.color = 'white';
         }
 
         // ==========================================
-        // ИСТОРИИ (STORIES) И ПРОСМОТРЫ
+        // БАЗОВЫЕ ФУНКЦИИ (Скрепок, Историй, Чатов)
         // ==========================================
         let allStories = []; let currentStoryData = null; let storyMediaFile = null; let storyStream = null; let storyRecorder = null; let storyChunks = [];
 
@@ -1250,9 +1180,6 @@
         function checkMessageViews(id) { socket.emit('get_message_views', {id: id}); }
         socket.on('message_views_data', data => { const list = document.getElementById('viewsList'); list.innerHTML = ''; if(data.views.length === 0) list.innerHTML = '<li style="padding:10px; color:#aaa; text-align:center;">Пока никто не прочитал</li>'; data.views.forEach(v => { list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee; color: var(--text-color-dark);">👁 ${renderVerified(v.username)} <span style="font-size:0.8em; color:#999; float:right;">${formatTime(v.read_at)}</span></li>`; }); openModal('viewsModal'); });
 
-        // ==========================================
-        // ИДЕАЛЬНАЯ ЗАПИСЬ КАК В TELEGRAM
-        // ==========================================
         let tgMode = 'audio'; let holdTimer; let isHolding = false; let startX = 0; let isCancelled = false;
         let activeMediaStream = null; let mediaRecorder; let mediaChunks = []; let currentFacingMode = 'user'; let isFlipping = false; 
 
@@ -1326,7 +1253,6 @@
             await uploadMediaMessage(blob, currentRecordType === 'video' ? 'video_message' : 'audio', ext, tempId);
         };
 
-        // Плеер кастомный
         let currentCustomAudio = null; let currentCustomAudioBtn = null;
         function playCustomAudio(btn, url) {
             if (currentCustomAudio && currentCustomAudio.src === url) { if (currentCustomAudio.paused) { currentCustomAudio.play(); btn.innerText = '⏸'; btn.classList.add('playing'); } else { currentCustomAudio.pause(); btn.innerText = '▶'; btn.classList.remove('playing'); } return; }
@@ -1352,20 +1278,11 @@
             removeTempMessage(tempId);
         }
 
-        // ==========================================
-        // ГАЛЕРЕЯ И БУФЕР ОБМЕНА
-        // ==========================================
         let stagedFiles = [];
-        
         function handleFileSelect(e) { const files = Array.from(e.target.files); stagedFiles = stagedFiles.concat(files); renderPreviewBar(); checkSendButton(); e.target.value = ''; }
-        
         document.addEventListener('paste', (e) => { if (currentRoomId === '') return; if (e.target.tagName === 'INPUT' && e.target.id !== 'messageInput') return; if (e.target.tagName === 'TEXTAREA') return; const items = (e.clipboardData || e.originalEvent.clipboardData).items; let added = false; for (let index in items) { const item = items[index]; if (item.kind === 'file') { const blob = item.getAsFile(); if (blob) { stagedFiles.push(blob); added = true; } } } if (added) { e.preventDefault(); renderPreviewBar(); checkSendButton(); } });
-        
         function renderPreviewBar() { const bar = document.getElementById('file-preview-bar'); bar.innerHTML = ''; if (stagedFiles.length === 0) { bar.style.display = 'none'; return; } bar.style.display = 'flex'; stagedFiles.forEach((file, index) => { const wrapper = document.createElement('div'); wrapper.className = 'preview-item-wrapper'; let el; if (file.type.startsWith('image/')) { el = document.createElement('img'); el.src = URL.createObjectURL(file); el.className = 'preview-item'; } else if (file.type.startsWith('video/')) { el = document.createElement('video'); el.src = URL.createObjectURL(file); el.className = 'preview-item'; } else { el = document.createElement('div'); el.innerHTML = '📄'; el.style.width='100%'; el.style.height='100%'; el.style.display='flex'; el.style.flexDirection='column'; el.style.alignItems='center'; el.style.justifyContent='center'; el.style.background='var(--main-color)'; el.style.color='white'; el.style.borderRadius='8px'; el.style.fontSize='20px'; } const rmBtn = document.createElement('button'); rmBtn.className = 'preview-remove'; rmBtn.innerHTML = '✖'; rmBtn.onclick = () => { stagedFiles.splice(index, 1); renderPreviewBar(); checkSendButton(); }; wrapper.appendChild(el); wrapper.appendChild(rmBtn); bar.appendChild(wrapper); }); }
 
-        // ==========================================
-        // ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ И ЧАТАМИ
-        // ==========================================
         let confirmCallback = null;
         function showConfirm(title, text, callback) { document.getElementById('confirmTitle').innerText = title; document.getElementById('confirmDesc').innerText = text; confirmCallback = callback; openModal('customConfirmModal'); }
         function closeConfirm() { closeModal('customConfirmModal'); confirmCallback = null; }
@@ -1404,7 +1321,6 @@
             setTimeout(() => document.addEventListener('click', () => { const m = document.querySelector('.context-menu'); if(m) m.remove(); }, {once:true}), 10);
         }
 
-        // --- УДАЛЕНИЕ ЧАТОВ ---
         function showChatContextMenu(x, y, id, type, name) {
             const old = document.querySelector('.chat-context-menu'); if (old) old.remove();
             const menu = document.createElement('div'); menu.className = 'context-menu chat-context-menu'; menu.style.visibility = 'hidden';
@@ -1451,12 +1367,12 @@
 
             if (shouldShowSend) {
                 sendBtn.style.display = 'flex';
-                tgBtn.style.display = 'none';
+                if(tgBtn) tgBtn.style.display = 'none';
                 sendBtn.disabled = false;
                 sendBtn.innerText = isEditing ? '💾' : '➤';
             } else {
                 sendBtn.style.display = 'none';
-                tgBtn.style.display = 'flex';
+                if(tgBtn) tgBtn.style.display = 'flex';
             }
         }
         
@@ -1483,6 +1399,82 @@
         // ==========================================
         // БАЗОВЫЕ НАСТРОЙКИ, ГРУППЫ И КАНАЛЫ
         // ==========================================
+        function appendMessage(msg) {
+            let delLocally = JSON.parse(localStorage.getItem('deletedMsgs') || '[]'); if(delLocally.includes(msg.id)) return;
+            messagesStore[msg.id] = msg; if(msg.is_pinned) pinnedMsgs.set(msg.id, msg);
+            const ul = document.getElementById('messages'); const wrapper = document.createElement('li'); wrapper.classList.add('msg-wrapper'); wrapper.setAttribute('data-id', msg.id);
+            const isMe = (msg.username === currentUser); if (isMe) wrapper.classList.add('my-wrapper'); else wrapper.classList.add('in-wrapper');
+            if(isSelectMode) wrapper.classList.add('selecting'); 
+            
+            addMsgListeners(wrapper, msg.id, isMe);
+
+            let avatarHtml = ''; let avatarUrl = msg.users ? msg.users.avatar_url : null; if (msg.avatar_url) avatarUrl = msg.avatar_url;
+            if (avatarUrl) avatarHtml = `<div class="msg-avatar" style="background-image: url(${avatarUrl})" onclick="openProfileModal('${msg.username}')"></div>`;
+            else avatarHtml = `<div class="msg-avatar" onclick="openProfileModal('${msg.username}')">${msg.username.charAt(0).toUpperCase()}</div>`;
+            
+            const bubble = document.createElement('div'); bubble.classList.add('message');
+            if (isMe) bubble.classList.add('my-message'); else bubble.classList.add('in-message');
+            if (msg.font_style) bubble.classList.add('font-' + msg.font_style);
+
+            let content = '';
+            if (!isMe && currentRoomType !== 'dm') content += `<span class="msg-author" onclick="openProfileModal('${msg.username}')">${renderVerified(msg.username)}</span>`;
+            if (msg.reply_to_id && messagesStore[msg.reply_to_id]) { const repText = messagesStore[msg.reply_to_id].text || "Медиафайл"; content += `<div class="reply-block" onclick="scrollToMsg('${msg.reply_to_id}')">Ответ: ${repText.substring(0,30)}</div>`; }
+            if (msg.text) { content += `<div class="msg-text-content">${msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`; }
+            
+            if (msg.media_url) {
+                if (msg.media_type === 'file') {
+                    const urls = msg.media_url.split(',');
+                    content += `<div style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">`;
+                    urls.forEach(u => {
+                        let fName = "Файл"; try { fName = decodeURIComponent(u.split('/').pop().split('_').slice(1).join('_')); } catch(e){}
+                        content += `<a href="${u}" download target="_blank" style="display:flex; align-items:center; gap:12px; background:rgba(0,0,0,0.05); padding:10px 15px; border-radius:12px; border:1px solid var(--input-border); text-decoration:none; color:var(--text-color-dark);">
+                            <div style="font-size:24px; background:var(--main-color); color:white; width:40px; height:40px; display:flex; justify-content:center; align-items:center; border-radius:10px; flex-shrink:0;">📄</div>
+                            <div style="display:flex; flex-direction:column; overflow:hidden;">
+                                <span style="font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; max-width:200px;">${fName}</span>
+                                <span style="font-size:0.8em; color:var(--main-color); margin-top:2px;">Скачать</span>
+                            </div>
+                        </a>`;
+                    });
+                    content += `</div>`;
+                }
+                else if (msg.media_type === 'audio') content += `<div class="custom-audio-player"><button class="play-btn" onclick="playCustomAudio(this, '${msg.media_url}')">▶</button><div class="progress-bar" onclick="seekCustomAudio(event, this)"><div class="progress-fill"></div></div><span class="time-display">...</span></div>`;
+                else if (msg.media_type === 'video_message') content += `<video src="${msg.media_url}" autoplay loop muted playsinline webkit-playsinline class="circle-video-msg" onclick="toggleCircleVideo(this)"></video>`;
+                else if (msg.media_type === 'gallery') { const urls = msg.media_url.split(','); content += `<div class="gallery-grid">`; urls.forEach(u => { content += `<img src="${u}" class="gallery-img" onclick="window.open('${u}', '_blank')">`; }); content += `</div>`; }
+                else if (msg.media_type === 'image') content += `<img src="${msg.media_url}" class="media-content" onload="scrollToBottom()">`;
+                else if (msg.media_type === 'video') content += `<video src="${msg.media_url}" controls class="media-content" onloadedmetadata="scrollToBottom()"></video>`;
+            }
+            
+            let metaContent = '';
+            if(msg.is_edited) metaContent += `<span class="edited-tag">(изменено)</span>`;
+            metaContent += `<span>${formatTime(msg.created_at || new Date().toISOString())}</span>`;
+            if (isMe && currentRoomType !== 'saved') { const tick = msg.is_read ? '✓✓' : '✓'; const tickClass = msg.is_read ? 'msg-status read' : 'msg-status'; metaContent += `<span class="${tickClass}">${tick}</span>`; } 
+            content += `<div class="msg-meta">${metaContent}</div>`;
+            bubble.innerHTML = content;
+            if (!isMe && currentRoomType !== 'saved') wrapper.innerHTML = avatarHtml;
+            wrapper.appendChild(bubble); ul.appendChild(wrapper); scrollToBottom();
+            const newVid = wrapper.querySelector('.circle-video-msg'); if (newVid) newVid.play().catch(e => {});
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput'); const text = input.value.trim();
+            if (text === '' && stagedFiles.length === 0 && !editingId) return;
+
+            if(editingId) { socket.emit('edit_message', {room: currentRoomId, id: editingId, text: text}); editingId = null; } 
+            else if (stagedFiles.length > 0) {
+                document.getElementById('sendBtn').innerText = '⏳'; document.getElementById('sendBtn').disabled = true; socket.emit('typing', {room: currentRoomId, action: 'uploading_file'});
+                const filesToUpload = [...stagedFiles]; stagedFiles = []; renderPreviewBar();
+                let uploadedUrls = []; let isVideo = false; let isFile = false;
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    const file = filesToUpload[i]; const formData = new FormData(); formData.append('file', file); const tempId = 'temp_' + Date.now() + i; appendTempMessage(tempId, 'file');
+                    try { const response = await fetch('/upload', { method: 'POST', body: formData }); const data = await response.json(); if (data.url) { uploadedUrls.push(data.url); if (data.type === 'video') isVideo = true; if (data.type === 'file') isFile = true; } } catch (e) { showToast('Ошибка загрузки файла', 'error'); } removeTempMessage(tempId);
+                }
+                if (uploadedUrls.length > 0) { let mType = 'image'; if (isFile) mType = 'file'; else if (uploadedUrls.length > 1) mType = 'gallery'; else if (isVideo) mType = 'video'; socket.emit('send_message', { room: currentRoomId, text: text, media_url: uploadedUrls.join(','), media_type: mType, reply_to_id: replyingToId }); }
+                if(replyingToId) cancelReply();
+            } else { socket.emit('send_message', {room: currentRoomId, text: text, reply_to_id: replyingToId}); if(replyingToId) cancelReply(); }
+            
+            input.value = ''; input.focus(); clearTimeout(typingTimer); isTyping = false; socket.emit('stop_typing', {room: currentRoomId}); checkSendButton();
+        }
+
         function handleHeaderClick() {
             if (currentRoomId === '') return;
             if (['group', 'channel'].includes(currentRoomType)) { 
