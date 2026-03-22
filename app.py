@@ -65,7 +65,7 @@ def login():
                         error = "Неверный пароль!"
             except Exception as e:
                 print(f"Ошибка БД: {e}")
-                error = "Ошибка подключения к базе. Проверьте RLS."
+                error = "Ошибка подключения к базе. Проверьте настройки."
     return render_template('login.html', error=error)
 
 @app.route('/logout')
@@ -165,10 +165,62 @@ def handle_disconnect():
                     emit('group_call_left', {'username': username, 'room': room}, to=room)
         except Exception: pass
 
+# ================= АДМИН ПАНЕЛЬ =================
+@socketio.on('get_admin_users')
+def get_admin_users():
+    me = session.get('username')
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            users = supabase.table('users').select('username, avatar_url, is_verified, role, is_banned').execute()
+            emit('admin_users_data', users.data)
+    except Exception: pass
+
+@socketio.on('toggle_verification')
+def toggle_verification(data):
+    me = session.get('username')
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            target = data.get('target')
+            current_status = data.get('current_status')
+            supabase.table('users').update({'is_verified': not current_status}).eq('username', target).execute()
+            verified = supabase.table('users').select('username').eq('is_verified', True).execute()
+            v_list = [u['username'] for u in verified.data]
+            emit('update_verified_list', v_list, broadcast=True)
+            get_admin_users()
+    except Exception: pass
+
+@socketio.on('toggle_ban')
+def toggle_ban(data):
+    me = session.get('username')
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            target = data.get('target')
+            current_status = data.get('current_status')
+            supabase.table('users').update({'is_banned': not current_status}).eq('username', target).execute()
+            get_admin_users()
+    except Exception: pass
+
+@socketio.on('change_role')
+def change_role(data):
+    me = session.get('username')
+    try:
+        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
+        if my_info.data and my_info.data[0].get('is_verified'):
+            target = data.get('target')
+            new_role = data.get('role')
+            supabase.table('users').update({'role': new_role}).eq('username', target).execute()
+            get_admin_users()
+    except Exception: pass
+# ================================================
+
 @socketio.on('get_my_chats')
 def get_my_chats():
     try:
         me = session.get('username')
+        if not me: return
         memberships = supabase.table('chat_members').select('chat_id, role').eq('username', me).execute()
         my_roles = {m['chat_id']: m['role'] for m in memberships.data}
         chat_ids = list(my_roles.keys())
@@ -190,23 +242,28 @@ def get_my_chats():
             if chat.get('type') == 'dm':
                 parts = [p.strip() for p in chat['name'].split('&')]
                 target = parts[0] if len(parts) > 1 and parts[1] == me else (parts[1] if len(parts) > 1 else parts[0])
-                target_db = supabase.table('users').select('avatar_url').eq('username', target).execute()
-                if target_db.data and target_db.data[0].get('avatar_url'):
-                    chat['avatar_url'] = target_db.data[0]['avatar_url']
+                try:
+                    target_db = supabase.table('users').select('avatar_url').eq('username', target).execute()
+                    if target_db.data and target_db.data[0].get('avatar_url'):
+                        chat['avatar_url'] = target_db.data[0]['avatar_url']
+                except: pass
 
-            last_msg = supabase.table('messages').select('username, text, media_url, media_type, created_at, is_read, is_pinned').eq('chat_id', chat['id']).order('created_at', desc=True).limit(1).execute()
-            if last_msg.data:
-                chat['last_message'] = last_msg.data[0]
-                chat['last_msg_time'] = last_msg.data[0]['created_at']
-            else:
+            try:
+                last_msg = supabase.table('messages').select('username, text, media_url, media_type, created_at, is_read, is_pinned').eq('chat_id', chat['id']).order('created_at', desc=True).limit(1).execute()
+                if last_msg.data:
+                    chat['last_message'] = last_msg.data[0]
+                    chat['last_msg_time'] = last_msg.data[0]['created_at']
+                else:
+                    chat['last_message'] = None
+                    chat['last_msg_time'] = '1970-01-01T00:00:00Z'
+            except: 
                 chat['last_message'] = None
                 chat['last_msg_time'] = '1970-01-01T00:00:00Z'
-                
+
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
     except Exception as e:
         print("Ошибка в get_my_chats:", e)
-        traceback.print_exc()
         emit('update_chat_list', [])
 
 @socketio.on('search_users')
@@ -385,12 +442,14 @@ def on_join(data):
     try:
         room = data['room']
         me = session.get('username')
+        if not me: return
         join_room(room)
         
         try:
             unread_msgs = supabase.table('messages').select('id').eq('chat_id', room).neq('username', me).eq('is_read', False).execute()
-            for m in unread_msgs.data:
-                supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
+            if unread_msgs.data:
+                for m in unread_msgs.data:
+                    supabase.table('message_reads').insert({'message_id': m['id'], 'username': me}).execute()
         except: pass
         
         try:
@@ -399,9 +458,14 @@ def on_join(data):
         
         emit('messages_read', {'room': room, 'by': me}, to=room)
         
-        history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
-        emit('load_history', history.data)
+        try:
+            history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
+            emit('load_history', history.data)
+        except Exception as query_err:
+            print("Ошибка при получении истории:", query_err)
+            emit('load_history', [])
     except Exception as e:
+        print("Ошибка в on_join:", e)
         emit('load_history', [])
 
 @socketio.on('mark_read')
