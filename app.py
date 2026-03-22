@@ -90,7 +90,7 @@ def upload_file():
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     
-    # Сохраняем оригинальное имя файла для скачивания
+    # Поддержка любых файлов и сохранение имени
     safe_name = urllib.parse.quote(file.filename)
     filename = f"{uuid.uuid4().hex[:8]}_{safe_name}"
     
@@ -618,7 +618,7 @@ def get_story_views(data):
         emit('story_views_data', {'id': story_id, 'views': views.data})
     except Exception: pass
 
-# --- ЗВОНКИ И ДЕЙСТВИЯ ВО ВРЕМЯ ЗВОНКА ---
+# --- ЗВОНКИ (АБСОЛЮТНО ТВОЙ КОД + СИГНАЛЫ) ---
 @socketio.on('call_user')
 def call_user(data): emit('incoming_call', {'from': session.get('username')}, to=f"user_{data.get('target')}")
 
