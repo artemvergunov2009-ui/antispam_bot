@@ -98,7 +98,6 @@
         #flipCameraBtn { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: white; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; z-index: 5001; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
         #flipCameraBtn:active { transform: translateX(-50%) scale(0.9); }
 
-        /* ИСПРАВЛЕННЫЕ ГРАНИЦЫ МЕНЮ */
         .context-menu { position: fixed; background: var(--modal-bg); border: 1px solid var(--input-border); border-radius: 12px; box-shadow: var(--main-shadow); z-index: 10000; padding: 5px 0; min-width: 170px; visibility: hidden; }
         .context-menu-item { padding: 10px 15px; cursor: pointer; color: var(--text-color-dark); font-size: 14px; display: flex; justify-content: space-between; align-items: center;}
         .context-menu-item:hover { background: var(--chat-area-bg); color: var(--main-color); }
@@ -117,6 +116,14 @@
         .reply-block { font-size: 0.8em; background: rgba(0,0,0,0.05); border-left: 3px solid var(--main-color); padding: 5px 8px; border-radius: 4px; margin-bottom: 5px; cursor: pointer; color: var(--text-color-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .edited-tag { font-size: 0.75em; color: var(--text-color-light); margin-left: 5px; font-style: italic; }
         .msg-text-content { word-wrap: break-word; }
+
+        /* === БЛОК СКАЧИВАНИЯ ФАЙЛОВ === */
+        .file-message { display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.05); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--input-border); text-decoration: none; color: var(--text-color-dark); transition: 0.2s; margin-top: 5px; }
+        .file-message:hover { background: rgba(0,0,0,0.08); }
+        .file-icon { font-size: 24px; background: var(--main-color); color: white; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; border-radius: 10px; }
+        .file-info { display: flex; flex-direction: column; overflow: hidden; }
+        .file-name { font-weight: bold; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 200px; }
+        .file-action { font-size: 0.8em; color: var(--main-color); margin-top: 2px; }
 
         #sidebar { width: 340px; background-color: var(--sidebar-bg); display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; margin: 15px; border-radius: var(--border-radius-large); box-shadow: var(--main-shadow); z-index: 2; position: relative; transition: 0.3s;}
         .sidebar-header { padding: 10px 15px; display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
@@ -179,7 +186,6 @@
         #input-area { background: var(--sidebar-bg); flex-shrink: 0; display: flex; flex-direction: column; border-top: 1px solid var(--input-border); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .input-controls { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; width: 100%; flex-wrap: nowrap; padding: 10px 15px; box-sizing: border-box; }
         
-        /* КНОПКА ЗАПИСИ (TELEGRAM СТИЛЬ) */
         .attach-btn { background: transparent; color: var(--text-color-light); width: 40px; height: 40px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; font-size: 20px; transition: 0.2s; padding: 0; }
         .attach-btn:hover { background: rgba(0,0,0,0.05); color: var(--main-color); }
         #tgRecordBtn { transition: transform 0.2s, background-color 0.2s, color 0.2s; user-select: none; -webkit-user-select: none; font-size: 22px; cursor: pointer; }
@@ -226,35 +232,51 @@
         input:checked + .slider { background-color: var(--main-color); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* ЗВОНКИ 1-НА-1 (АБСОЛЮТНО ТВОЙ КОД) */
-        #activeCallOverlay { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: linear-gradient(135deg, var(--bg-color), var(--chat-area-bg)); 
-            z-index: 5000; flex-direction: column; align-items: center; justify-content: center; 
-        }
-        .call-avatar-pulse {
-            width: 120px; height: 120px; border-radius: 50%; background-color: var(--main-color);
-            display: flex; justify-content: center; align-items: center; color: white; font-size: 3em; font-weight: bold;
-            box-shadow: 0 0 0 0 rgba(209, 169, 130, 0.7); animation: pulse 2s infinite cubic-bezier(0.66, 0, 0, 1); margin-bottom: 20px;
-        }
-        @keyframes pulse { to { box-shadow: 0 0 0 45px rgba(209, 169, 130, 0); } }
-        .call-controls { position: absolute; bottom: 50px; display: flex; gap: 25px; z-index: 5002; }
-        .call-action-btn { width: 65px; height: 65px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.8em; color: white; display: flex; justify-content: center; align-items: center; transition: 0.2s; box-shadow: var(--main-shadow); }
-        .call-action-btn:hover { transform: scale(1.1); }
-        .btn-end-call { background-color: #e57373; }
-        .btn-toggle-av { background-color: var(--main-color); }
-
-        #incomingCallModal { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--modal-bg); padding: 20px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 6000; text-align: center; border: 2px solid var(--main-color); }
-        .incoming-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 15px; }
-        .inc-btn { padding: 10px 20px; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer;}
-        .inc-accept { background-color: var(--main-color); }
-        .inc-reject { background-color: #e57373; }
-
-        /* Окно Админки */
-        #adminPanelOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-        #adminPanelContent { background: var(--modal-bg); padding: 30px; border-radius: var(--border-radius-large); width: 90%; max-width: 600px; box-shadow: var(--main-shadow); position: relative; max-height: 85vh; display: flex; flex-direction: column; color: var(--text-color-dark); }
-        #adminUsersList { list-style: none; padding: 0; overflow-y: auto; flex-grow: 1; }
-        .admin-user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--input-border); gap: 10px; flex-wrap: wrap;}
+        /* === ОБНОВЛЕННЫЙ ДИЗАЙН ЗВОНКОВ (В СТИЛЕ ТВОИХ ФОТО) === */
+        .tg-call-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 5000; flex-direction: column; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .tg-call-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #444, #111); opacity: 0.9; z-index: 0; }
+        .tg-call-top { position: relative; z-index: 1; display: flex; justify-content: space-between; padding: 40px 20px 20px; }
+        .tg-call-top-left, .tg-call-top-right { display: flex; gap: 12px; align-items: center; }
+        .tg-icon-btn { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: white; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; position: relative; }
+        .tg-badge { position: absolute; top: -5px; right: -5px; background: #666; color: white; font-size: 11px; padding: 3px 6px; border-radius: 12px; border: 2px solid #222; font-weight: bold; }
+        .tg-call-center { position: relative; z-index: 1; flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 25vh; }
+        .tg-call-avatar-container { margin-bottom: 20px; position: relative; }
+        .tg-call-avatar { width: 180px; height: 180px; border-radius: 50%; font-size: 70px; display: flex; align-items: center; justify-content: center; background-color: var(--main-color); color: white; box-shadow: 0 0 40px rgba(0,0,0,0.5); background-size: cover; background-position: center; border: 3px solid rgba(255,255,255,0.1); }
+        .tg-call-name { color: white; font-size: 28px; font-weight: 600; margin: 0 0 8px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .tg-call-status { color: rgba(255,255,255,0.7); font-size: 16px; margin: 0; }
+        .tg-call-bottom-area { position: absolute; bottom: 0; left: 0; width: 100%; z-index: 2; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); }
+        .tg-call-swipe-btn { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 35px; cursor: pointer; margin-bottom: 15px; }
+        .tg-call-controls { display: flex; gap: 15px; background: rgba(40,40,40,0.85); padding: 15px 30px; border-radius: 40px; backdrop-filter: blur(15px); }
+        .tg-call-btn { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: white; font-size: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .tg-call-btn.end-call { background: #ff3b30; }
+        .tg-call-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.25); }
+        .tg-call-btn.end-call:hover { background: #ff453a; }
+        .tg-call-extra-menu { position: fixed; bottom: 0; left: 0; width: 100%; background: #1c1c1d; border-radius: 25px 25px 0 0; z-index: 5005; padding: 15px 20px 40px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.8, 0.3, 1); color: white; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .tg-call-menu-drag { width: 50px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 6px; margin: 0 auto 25px; cursor: pointer; }
+        .tg-call-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 25px; }
+        .tg-call-grid-item { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.8); text-align: center; cursor: pointer; }
+        .tg-call-grid-item .icon { width: 55px; height: 55px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; font-size: 26px; color: white; transition: 0.2s;}
+        .tg-call-grid-item:hover .icon { background: rgba(255,255,255,0.2); }
+        .tg-call-pill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
+        .tg-call-pill-btn { background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; padding: 12px; font-size: 15px; cursor: pointer; font-weight: 500; transition: 0.2s;}
+        .tg-call-pill-btn:hover { background: rgba(255,255,255,0.2); }
+        .tg-call-list { list-style: none; padding: 0; margin: 0; background: rgba(255,255,255,0.05); border-radius: 18px; overflow: hidden; }
+        .tg-call-list li { display: flex; align-items: center; gap: 18px; padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-size: 17px; }
+        .tg-call-list li:last-child { border-bottom: none; }
+        .tg-call-list li .icon { font-size: 22px; width: 30px; text-align: center; }
+        .tg-call-list li .sub { margin-left: auto; color: rgba(255,255,255,0.5); font-size: 15px; }
+        .tg-participants-content { background: #1c1c1d; width: 100%; border-radius: 25px; padding: 25px; box-sizing: border-box; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;}
+        .tg-participants-content .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .tg-participants-content .search-input { width: 100%; padding: 12px 18px; background: rgba(255,255,255,0.1); border: none; border-radius: 12px; color: white; box-sizing: border-box; margin-bottom: 20px; font-size: 17px; outline: none;}
+        .tg-participants-content .participants-list { list-style: none; padding: 0; margin: 0; max-height: 50vh; overflow-y: auto; }
+        .tg-participants-content .participants-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
+        .tg-participants-content .user-info { display: flex; align-items: center; gap: 15px; }
+        .tg-participants-content .avatar { width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 20px; }
+        .tg-participants-content .details { display: flex; flex-direction: column; }
+        .tg-participants-content .name { font-size: 17px; font-weight: 500;}
+        .tg-participants-content .role { font-size: 13px; color: rgba(255,255,255,0.5); }
+        .tg-participants-content .status-icons { display: flex; gap: 12px; color: rgba(255,255,255,0.5); font-size: 18px;}
+        .tg-participants-content .status-icons .active { color: #4CAF50; }
 
         @media (max-width: 768px) {
             body { margin: 0; flex-direction: column; background-color: var(--sidebar-bg); }
@@ -290,7 +312,7 @@
         </div>
     </div>
 
-    <div id="adminPanelOverlay">
+    <div id="adminPanelOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
         <div id="adminPanelContent">
             <button onclick="document.getElementById('adminPanelOverlay').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✖</button>
             <h2 style="margin-top:0; color:var(--main-color);">👑 Админ-панель</h2>
@@ -381,16 +403,95 @@
         </div>
     </div>
 
-    <div id="activeCallOverlay">
-        <div class="call-avatar-pulse" id="callAvatarIcon">?</div>
-        <h2 id="callTargetName" style="color: var(--text-color-dark); margin: 0; display: flex; align-items: center; justify-content: center;">Собеседник</h2>
-        <p id="callStatusText" style="color: var(--text-color-light); font-weight: bold; margin-top: 5px; font-size: 1.2em;">Установка связи...</p>
+    <div id="activeCallOverlay" class="tg-call-overlay">
+        <div class="tg-call-bg"></div>
+        
+        <div class="tg-call-top">
+            <div class="tg-call-top-left">
+                <button class="tg-icon-btn" onclick="showToast('Открыт чат')">💬</button>
+                <button class="tg-icon-btn" onclick="document.getElementById('callParticipantsModal').style.display='flex'">👥<span class="tg-badge">2</span></button>
+                <button class="tg-icon-btn" onclick="showToast('Вид сеткой')">🔲</button>
+            </div>
+            <div class="tg-call-top-right">
+                <button class="tg-icon-btn" onclick="document.getElementById('activeCallOverlay').style.display='none'; showToast('Звонок свернут в фон')">⌄</button>
+            </div>
+        </div>
+
+        <div class="tg-call-center">
+            <div class="tg-call-avatar-container">
+                <div class="tg-call-avatar call-avatar-pulse" id="callAvatarIcon">?</div>
+            </div>
+            <h2 id="callTargetName" class="tg-call-name">Собеседник</h2>
+            <p id="callStatusText" class="tg-call-status">Установка связи...</p>
+        </div>
+
+        <div class="tg-call-bottom-area">
+            <button class="tg-call-swipe-btn" onclick="toggleCallExtraMenu()">︿</button>
+            <div class="tg-call-controls">
+                <button class="tg-call-btn" onclick="showToast('Динамик включен')">🔊</button>
+                <button class="tg-call-btn" onclick="showToast('Камера отключена')">📹</button>
+                <button class="tg-call-btn" id="btnMuteAudio" onclick="toggleAudio()">🎤</button>
+                <button class="tg-call-btn" onclick="showToast('Рука поднята')">✋</button>
+                <button class="tg-call-btn end-call" onclick="endCall()">☎</button>
+            </div>
+        </div>
+
+        <div id="callExtraMenuWrapper" class="tg-call-extra-menu">
+            <div class="tg-call-menu-drag" onclick="toggleCallExtraMenu()"></div>
+            <div class="tg-call-menu-grid">
+                <div class="tg-call-grid-item" onclick="showToast('Показ экрана')"><div class="icon">↑</div>Показать экран</div>
+                <div class="tg-call-grid-item" onclick="showToast('Просмотр видео')"><div class="icon">▶</div>Смотреть VK Видео</div>
+                <div class="tg-call-grid-item" onclick="showToast('Идёт запись')"><div class="icon">⏺</div>Записать звонок</div>
+                <div class="tg-call-grid-item" onclick="showToast('Эфир в сети')"><div class="icon">◎</div>Запустить эфир</div>
+            </div>
+            <div class="tg-call-pill-grid">
+                <button class="tg-call-pill-btn" onclick="showToast('Выбран vmoji')">✨ vmoji</button>
+                <button class="tg-call-pill-btn" onclick="showToast('Маска активна')">🙂 Маска</button>
+                <button class="tg-call-pill-btn" onclick="showToast('Фон изменен')">🖼 Фон</button>
+            </div>
+            <ul class="tg-call-list">
+                <li onclick="showToast('Субтитры включены')"><span class="icon">💬</span> Субтитры <span class="sub">Отключены</span></li>
+                <li onclick="showToast('Расшифровка')"><span class="icon">📝</span> Расшифровка звонка</li>
+                <li onclick="showToast('Настройки звука')"><span class="icon">🔊</span> Микрофон и динамик <span class="sub">Динамик</span></li>
+                <li onclick="showToast('Настройки')"><span class="icon">⚙️</span> Настройки</li>
+                <li onclick="showToast('Ссылка скопирована')"><span class="icon">🔗</span> Поделиться ссылкой</li>
+            </ul>
+        </div>
+
         <audio id="remoteAudio" autoplay playsinline webkit-playsinline></audio>
         <audio id="localAudio" autoplay playsinline webkit-playsinline muted></audio>
-        <button id="forcePlayBtn" onclick="forcePlayRemoteAudio()" style="display: none; padding: 10px 20px; background: var(--main-color); color: white; border: none; border-radius: 10px; margin-top: 20px; font-weight: bold; cursor: pointer;">▶️ Подключить звук</button>
-        <div class="call-controls">
-            <button class="call-action-btn btn-toggle-av" id="btnMuteAudio" onclick="toggleAudio()">🎤</button>
-            <button class="call-action-btn btn-end-call" onclick="endCall()">🛑</button>
+        <button id="forcePlayBtn" onclick="forcePlayRemoteAudio()" style="display: none; position: absolute; top: 50%; z-index: 9999;">▶️ Звук</button>
+    </div>
+
+    <div id="callParticipantsModal" class="modal" style="z-index: 10000; align-items: flex-end; padding-bottom: 20px;">
+        <div class="tg-participants-content">
+            <div class="header">
+                <button onclick="showToast('Пригласить пользователя')" style="background:none; border:none; color:white; font-size:24px; cursor: pointer;">+</button>
+                <h3 style="margin:0;">2 участника</h3>
+                <button onclick="document.getElementById('callParticipantsModal').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.5); font-size:20px; cursor: pointer;">✖</button>
+            </div>
+            <input type="text" class="search-input" placeholder="🔍 Поиск">
+            <ul class="participants-list">
+                <li>
+                    <div class="user-info">
+                        <div class="avatar" style="background: var(--main-color)">Я</div>
+                        <div class="details">
+                            <span class="name">{{ username }} (Вы)</span>
+                        </div>
+                    </div>
+                    <div class="status-icons"><span class="active">🎤</span> <span class="active">📹</span></div>
+                </li>
+                <li>
+                    <div class="user-info">
+                        <div class="avatar" style="background: #e57373">С</div>
+                        <div class="details">
+                            <span class="name" id="callModalTargetName">Собеседник</span>
+                            <span class="role">Создатель</span>
+                        </div>
+                    </div>
+                    <div class="status-icons"><span class="active">🎤</span> <span class="active">📹</span> <span style="cursor:pointer;" onclick="showToast('Действия')">⋯</span></div>
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -460,11 +561,16 @@
             <div class="input-controls" id="inputControls">
                 <input type="file" id="fileInput" accept="*/*" multiple style="display: none;" onchange="handleFileSelect(event)">
                 <button id="attachBtn" class="attach-btn" onclick="document.getElementById('fileInput').click()">📎</button>
-                <input type="text" id="messageInput" placeholder="Напиши сообщение..." autocomplete="off" oninput="handleTyping(); checkSendButton();">
+                <input type="text" id="messageInput" placeholder="Сообщение..." autocomplete="off" oninput="handleTyping(); checkSendButton();">
                 <div id="recordingStatus"></div>
-                <button id="recordBtn" class="attach-btn" onclick="toggleVoiceRecord()" title="Голосовое">🎤</button>
-                <button id="videoRecordBtn" class="attach-btn" onclick="toggleVideoRecord()" title="Видеосообщение">📹</button>
-                <button id="sendBtn" class="attach-btn" onclick="sendMessage()" disabled>➤</button>
+                
+                <button id="sendBtn" class="attach-btn" style="display:none;" onclick="sendMessage()">➤</button>
+                
+                <button id="tgRecordBtn" class="attach-btn" 
+                    onmousedown="startHold(event)" onmouseup="endHold(event)" onmouseleave="cancelHold(event)"
+                    ontouchstart="startHold(event)" ontouchend="endHold(event)" ontouchmove="moveHold(event)">
+                    🎤
+                </button>
             </div>
         </div>
     </div>
@@ -508,7 +614,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v28.0 (Admin Panel Phase 1)</b><br><br>Добавлена админка с Баном, Ролями и Верификацией!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v37.0 (Final UI)</b><br><br>Обновлен интерфейс звонков и добавлена поддержка любых файлов!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -547,8 +653,27 @@
         let editingId = null; let replyingToId = null; let forwardingMsgId = null;
         let showingArchive = false;
 
+        function toggleCallExtraMenu() {
+            const menu = document.getElementById('callExtraMenuWrapper');
+            if (menu.style.transform === 'translateY(0%)') {
+                menu.style.transform = 'translateY(100%)';
+            } else {
+                menu.style.transform = 'translateY(0%)';
+            }
+        }
+
+        function scrollToMsg(id) {
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if(el) { 
+                el.scrollIntoView({behavior: 'smooth', block: 'center'}); 
+                el.style.backgroundColor = 'rgba(209, 169, 130, 0.3)'; 
+                el.style.transition = 'background-color 0.5s';
+                setTimeout(() => { el.style.backgroundColor = 'transparent'; }, 1500); 
+            }
+        }
+
         // ==========================================
-        // ДИНАМИЧЕСКИЕ ГАЛОЧКИ И АДМИНКА (С БАНОМ И РОЛЯМИ)
+        // ДИНАМИЧЕСКИЕ ГАЛОЧКИ И АДМИНКА
         // ==========================================
         let verifiedUsersList = [];
         socket.on('update_verified_list', list => { verifiedUsersList = list; document.getElementById('myDrawerName').innerHTML = renderVerified(currentUser); socket.emit('get_my_chats'); });
@@ -663,8 +788,20 @@
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 document.getElementById('localAudio').srcObject = localStream;
                 activeCallTarget = currentChatTarget;
+                
+                // Настраиваем новый дизайн
                 document.getElementById('callTargetName').innerHTML = renderVerified(activeCallTarget);
                 document.getElementById('callAvatarIcon').innerText = activeCallTarget.charAt(0).toUpperCase();
+                document.getElementById('callModalTargetName').innerText = activeCallTarget;
+                
+                const chatData = myChatsList.find(c => c.id === currentRoomId);
+                if(chatData && chatData.avatar_url) {
+                    document.getElementById('callAvatarIcon').style.backgroundImage = `url(${chatData.avatar_url})`;
+                    document.getElementById('callAvatarIcon').innerText = '';
+                } else {
+                    document.getElementById('callAvatarIcon').style.backgroundImage = 'none';
+                }
+
                 document.getElementById('activeCallOverlay').style.display = 'flex';
                 document.getElementById('callStatusText').innerText = "Звоним...";
                 isCallAnswered = false;
@@ -698,8 +835,20 @@
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 document.getElementById('localAudio').srcObject = localStream;
+                
+                // Настраиваем новый дизайн
                 document.getElementById('callTargetName').innerHTML = renderVerified(activeCallTarget);
                 document.getElementById('callAvatarIcon').innerText = activeCallTarget.charAt(0).toUpperCase();
+                document.getElementById('callModalTargetName').innerText = activeCallTarget;
+                
+                const chatData = myChatsList.find(c => c.name.includes(activeCallTarget) && c.type === 'dm');
+                if(chatData && chatData.avatar_url) {
+                    document.getElementById('callAvatarIcon').style.backgroundImage = `url(${chatData.avatar_url})`;
+                    document.getElementById('callAvatarIcon').innerText = '';
+                } else {
+                    document.getElementById('callAvatarIcon').style.backgroundImage = 'none';
+                }
+
                 document.getElementById('activeCallOverlay').style.display = 'flex';
                 document.getElementById('callStatusText').innerText = "Соединение...";
                 socket.emit('answer_call', {caller: activeCallTarget});
@@ -744,8 +893,8 @@
                 const track = localStream.getAudioTracks()[0];
                 track.enabled = !track.enabled; 
                 const btn = document.getElementById('btnMuteAudio');
-                btn.style.backgroundColor = track.enabled ? 'rgba(255,255,255,0.2)' : 'var(--call-btn-red)';
-                btn.innerText = track.enabled ? '🎤' : '🔇'; 
+                btn.style.backgroundColor = track.enabled ? 'rgba(255,255,255,0.15)' : 'white';
+                btn.style.color = track.enabled ? 'white' : 'black'; 
             }
         }
 
@@ -762,12 +911,17 @@
             document.getElementById('activeCallOverlay').style.display = 'none';
             document.getElementById('incomingCallModal').style.display = 'none';
             document.getElementById('forcePlayBtn').style.display = 'none';
+            document.getElementById('callExtraMenuWrapper').style.transform = 'translateY(100%)';
+            document.getElementById('callParticipantsModal').style.display = 'none';
             document.getElementById('callStatusText').innerText = "Установка связи...";
             if (peerConnection) { peerConnection.close(); peerConnection = null; }
             if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
             document.getElementById('remoteAudio').srcObject = null; document.getElementById('localAudio').srcObject = null;
             activeCallTarget = ''; iceCandidateQueue = [];
-            document.getElementById('btnMuteAudio').style.backgroundColor = 'rgba(255,255,255,0.2)';
+            
+            const btn = document.getElementById('btnMuteAudio');
+            btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
+            btn.style.color = 'white';
         }
 
         // ==========================================
@@ -861,10 +1015,83 @@
         socket.on('message_views_data', data => { const list = document.getElementById('viewsList'); list.innerHTML = ''; if(data.views.length === 0) list.innerHTML = '<li style="padding:10px; color:#aaa; text-align:center;">Пока никто не прочитал</li>'; data.views.forEach(v => { list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee; color: var(--text-color-dark);">👁 ${renderVerified(v.username)} <span style="font-size:0.8em; color:#999; float:right;">${formatTime(v.read_at)}</span></li>`; }); openModal('viewsModal'); });
 
         // ==========================================
-        // МЕДИА (КРУЖОЧКИ, ФРОНТАЛКА)
+        // ИДЕАЛЬНАЯ ЗАПИСЬ КАК В TELEGRAM
         // ==========================================
-        let recordingType = null; let activeMediaStream = null; let mediaRecorder; let mediaChunks = []; let currentCustomAudio = null; let currentCustomAudioBtn = null; let currentFacingMode = 'user'; let isFlipping = false; 
+        let tgMode = 'audio'; let holdTimer; let isHolding = false; let startX = 0; let isCancelled = false;
+        let activeMediaStream = null; let mediaRecorder; let mediaChunks = []; let currentFacingMode = 'user'; let isFlipping = false; 
 
+        function startHold(e) {
+            if(e.cancelable) e.preventDefault();
+            if (currentRoomId === '' || document.getElementById('messageInput').disabled) return;
+            startX = e.touches ? e.touches[0].clientX : e.clientX; isCancelled = false; isHolding = false;
+            const btn = document.getElementById('tgRecordBtn'); btn.style.transform = 'scale(0.8)'; 
+            holdTimer = setTimeout(() => {
+                isHolding = true; btn.style.transform = 'scale(1.5)'; btn.style.backgroundColor = 'var(--main-color)'; btn.style.color = 'white';
+                document.getElementById('recordingStatus').style.display = 'flex'; document.getElementById('recordingStatus').innerText = tgMode === 'audio' ? '🎤 Запись... (< отмена)' : '📹 Запись... (< отмена)';
+                document.getElementById('messageInput').style.display = 'none'; document.getElementById('attachBtn').style.display = 'none';
+                document.getElementById('sendBtn').style.display = 'none';
+                startMediaRecord(tgMode);
+            }, 300); 
+        }
+
+        function endHold(e) {
+            if(e && e.cancelable) e.preventDefault();
+            clearTimeout(holdTimer);
+            const btn = document.getElementById('tgRecordBtn'); if (!btn) return;
+            btn.style.transform = 'scale(1)'; btn.style.backgroundColor = 'transparent'; btn.style.color = 'var(--text-color-light)';
+            if (!isHolding) { tgMode = tgMode === 'audio' ? 'video' : 'audio'; btn.innerText = tgMode === 'audio' ? '🎤' : '📹'; } 
+            else { isHolding = false; stopMediaRecord(!isCancelled); }
+        }
+
+        function cancelHold(e) { if (isHolding && !isCancelled) { isCancelled = true; endHold(e); } }
+
+        function moveHold(e) {
+            if (!isHolding || isCancelled) return;
+            const currentX = e.touches ? e.touches[0].clientX : e.clientX;
+            if (startX - currentX > 40) { 
+                isCancelled = true; const btn = document.getElementById('tgRecordBtn'); btn.innerText = '🗑'; 
+                setTimeout(() => { btn.innerText = tgMode === 'audio' ? '🎤' : '📹'; }, 1000);
+                endHold(e);
+            }
+        }
+
+        async function startMediaRecord(type) {
+            try {
+                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode, width:{ideal:320}, height:{ideal:320} } } : { audio: true };
+                activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                if (type === 'video') { const preview = document.getElementById('videoPreview'); preview.srcObject = activeMediaStream; preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)'; document.getElementById('videoPreviewContainer').style.display = 'block'; }
+                
+                mediaRecorder = new MediaRecorder(activeMediaStream); 
+                mediaChunks = [];
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
+                mediaRecorder.onstop = handleMediaStop; mediaRecorder.start();
+                socket.emit('typing', {room: currentRoomId, action: type === 'video' ? 'recording_video' : 'recording_audio'});
+            } catch(e) { showToast("Нет доступа к микрофону/камере!", "error"); isCancelled = true; endHold(); }
+        }
+
+        function stopMediaRecord(send) {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') { mediaRecorder.sendOnStop = send; mediaRecorder.stop(); }
+            document.getElementById('recordingStatus').style.display = 'none'; document.getElementById('attachBtn').style.display = 'flex'; document.getElementById('messageInput').style.display = 'block'; document.getElementById('messageInput').focus(); checkSendButton();
+        }
+
+        const handleMediaStop = async function(e) {
+            const send = e.target ? e.target.sendOnStop : true; 
+            if (isFlipping) { activeMediaStream.getTracks().forEach(track => track.stop()); mediaChunks = []; isFlipping = false; startMediaRecord('video'); return; }
+            
+            const currentRecordType = tgMode;
+            let mime = e.target.mimeType || (currentRecordType === 'video' ? 'video/webm' : 'audio/webm'); 
+            let ext = mime.includes('mp4') ? 'mp4' : 'webm';
+            
+            const blob = new Blob(mediaChunks, { type: mime }); 
+            activeMediaStream.getTracks().forEach(track => track.stop()); document.getElementById('videoPreviewContainer').style.display = 'none'; socket.emit('stop_typing', {room: currentRoomId});
+            
+            if (!send) return;
+            const tempId = 'temp_' + Date.now(); appendTempMessage(tempId, currentRecordType === 'video' ? 'video_message' : 'audio');
+            await uploadMediaMessage(blob, currentRecordType === 'video' ? 'video_message' : 'audio', ext, tempId);
+        };
+
+        // Плеер кастомный
+        let currentCustomAudio = null; let currentCustomAudioBtn = null;
         function playCustomAudio(btn, url) {
             if (currentCustomAudio && currentCustomAudio.src === url) { if (currentCustomAudio.paused) { currentCustomAudio.play(); btn.innerText = '⏸'; btn.classList.add('playing'); } else { currentCustomAudio.pause(); btn.innerText = '▶'; btn.classList.remove('playing'); } return; }
             if (currentCustomAudio) { currentCustomAudio.pause(); if(currentCustomAudioBtn) { currentCustomAudioBtn.innerText = '▶'; currentCustomAudioBtn.classList.remove('playing'); } }
@@ -874,58 +1101,14 @@
             currentCustomAudio.addEventListener('ended', () => { btn.innerText = '▶'; btn.classList.remove('playing'); fill.style.width = '0%'; timeDisp.innerText = formatDuration(currentCustomAudio.duration || 0); });
             currentCustomAudio.addEventListener('loadedmetadata', () => { if(timeDisp.innerText === '0:00' || timeDisp.innerText === '...') timeDisp.innerText = formatDuration(currentCustomAudio.duration); });
         }
-
         function seekCustomAudio(e, bar) { if (!currentCustomAudio) return; const player = bar.closest('.custom-audio-player'); if (currentCustomAudioBtn && currentCustomAudioBtn.closest('.custom-audio-player') !== player) return; const rect = bar.getBoundingClientRect(); currentCustomAudio.currentTime = ((e.clientX - rect.left) / rect.width) * currentCustomAudio.duration; }
         function formatDuration(sec) { if(isNaN(sec) || sec === Infinity) return "0:00"; const m = Math.floor(sec/60); const s = Math.floor(sec%60).toString().padStart(2, '0'); return `${m}:${s}`; }
         function toggleCircleVideo(vid) { if (vid.muted) { vid.muted = false; vid.currentTime = 0; vid.play().catch(e=>{}); } else { vid.muted = true; } }
 
-        async function flipCamera(e) { if (e) e.stopPropagation(); if (!activeMediaStream || recordingType !== 'video') return; isFlipping = true; currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }
+        async function flipCamera(e) { if (e) e.stopPropagation(); if (!activeMediaStream || tgMode !== 'video') return; isFlipping = true; currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }
 
         function appendTempMessage(id, type) { const ul = document.getElementById('messages'); const wrapper = document.createElement('li'); wrapper.classList.add('msg-wrapper', 'my-wrapper'); wrapper.setAttribute('data-temp-id', id); wrapper.style.opacity = '0.6'; let text = 'Отправка...'; if(type === 'audio') text = '🎤 Загрузка голосового...'; if(type === 'video_message') text = '📹 Загрузка кружочка...'; if(type === 'file') text = '📎 Загрузка файла...'; wrapper.innerHTML = `<div class="message my-message"><div class="msg-text-content" style="display:flex; align-items:center; gap:8px;"><span class="recording-pulse">⏳</span> ${text}</div></div>`; ul.appendChild(wrapper); scrollToBottom(); }
         function removeTempMessage(id) { const el = document.querySelector(`[data-temp-id="${id}"]`); if(el) el.remove(); }
-
-        const handleMediaStop = async () => {
-            if (isFlipping) {
-                activeMediaStream.getTracks().forEach(track => track.stop()); mediaChunks = []; isFlipping = false;
-                try {
-                    const constraints = { audio: true, video: { facingMode: currentFacingMode } }; activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    const preview = document.getElementById('videoPreview'); preview.srcObject = activeMediaStream; preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
-                    let options = {}; if (MediaRecorder.isTypeSupported('video/mp4')) options.mimeType = 'video/mp4'; else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm';
-                    mediaRecorder = new MediaRecorder(activeMediaStream, options); mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); }; mediaRecorder.onstop = handleMediaStop; mediaRecorder.start();
-                } catch(e) { showToast("Ошибка камеры", "error"); stopMediaRecord(); }
-                return;
-            }
-            const currentRecordType = recordingType; let mime = mediaRecorder.mimeType; if (!mime) mime = currentRecordType === 'video' ? 'video/mp4' : 'audio/mp4';
-            let ext = 'webm'; if (mime.includes('mp4')) ext = 'mp4'; else if (mime.includes('quicktime') || mime.includes('mov')) ext = 'mov'; else if (mime.includes('ogg')) ext = 'ogg';
-            const blob = new Blob(mediaChunks, { type: mime }); activeMediaStream.getTracks().forEach(track => track.stop()); document.getElementById('videoPreviewContainer').style.display = 'none';
-            const tempId = 'temp_' + Date.now(); appendTempMessage(tempId, currentRecordType === 'video' ? 'video_message' : 'audio'); socket.emit('typing', {room: currentRoomId, action: 'typing'}); setTimeout(() => socket.emit('stop_typing', {room: currentRoomId}), 500);
-            await uploadMediaMessage(blob, currentRecordType === 'video' ? 'video_message' : 'audio', ext, tempId);
-        };
-
-        async function startMediaRecord(type) {
-            try {
-                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode } } : { audio: true }; activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                if (type === 'video') { const preview = document.getElementById('videoPreview'); preview.srcObject = activeMediaStream; preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)'; document.getElementById('videoPreviewContainer').style.display = 'block'; }
-                let options = {}; if (type === 'video') { if (MediaRecorder.isTypeSupported('video/mp4')) options.mimeType = 'video/mp4'; else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm'; } else { if (MediaRecorder.isTypeSupported('audio/mp4')) options.mimeType = 'audio/mp4'; else if (MediaRecorder.isTypeSupported('audio/webm')) options.mimeType = 'audio/webm'; }
-                mediaRecorder = new MediaRecorder(activeMediaStream, options); mediaChunks = []; mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); }; mediaRecorder.onstop = handleMediaStop; mediaRecorder.start();
-                document.getElementById('attachBtn').style.display = 'none'; document.getElementById('messageInput').style.display = 'none'; document.getElementById('sendBtn').style.display = 'none';
-                const recStatus = document.getElementById('recordingStatus'); recStatus.style.display = 'flex'; recStatus.innerText = type === 'video' ? '📹 Запись видео...' : '🎤 Запись аудио...';
-                if (type === 'audio') { const btn = document.getElementById('recordBtn'); btn.classList.add('recording-pulse'); btn.innerHTML = '⏹'; document.getElementById('videoRecordBtn').style.display = 'none'; } 
-                else { const btn = document.getElementById('videoRecordBtn'); btn.classList.add('recording-pulse'); btn.innerHTML = '⏹'; document.getElementById('recordBtn').style.display = 'none'; }
-                recordingType = type; socket.emit('typing', {room: currentRoomId, action: type === 'video' ? 'recording_video' : 'recording_audio'});
-            } catch(e) { showToast("Нет доступа к микрофону/камере!", "error"); }
-        }
-        
-        function stopMediaRecord() {
-            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            document.getElementById('recordingStatus').style.display = 'none'; document.getElementById('attachBtn').style.display = 'flex'; document.getElementById('messageInput').style.display = 'block'; document.getElementById('sendBtn').style.display = 'flex';
-            const rBtn = document.getElementById('recordBtn'); rBtn.classList.remove('recording-pulse'); rBtn.innerHTML = '🎤'; rBtn.style.display = 'flex';
-            const vBtn = document.getElementById('videoRecordBtn'); vBtn.classList.remove('recording-pulse'); vBtn.innerHTML = '📹'; vBtn.style.display = 'flex';
-            document.getElementById('messageInput').disabled = false; document.getElementById('messageInput').focus(); recordingType = null; checkSendButton();
-        }
-
-        function toggleVoiceRecord() { if (recordingType === 'audio') stopMediaRecord(); else if (!recordingType) startMediaRecord('audio'); }
-        function toggleVideoRecord() { if (recordingType === 'video') stopMediaRecord(); else if (!recordingType) startMediaRecord('video'); }
 
         async function uploadMediaMessage(blob, overrideType, ext, tempId) {
             const formData = new FormData(); formData.append('file', blob, overrideType === 'video_message' ? `video.${ext}` : `voice.${ext}`); 
@@ -943,7 +1126,7 @@
         
         document.addEventListener('paste', (e) => { if (currentRoomId === '') return; if (e.target.tagName === 'INPUT' && e.target.id !== 'messageInput') return; if (e.target.tagName === 'TEXTAREA') return; const items = (e.clipboardData || e.originalEvent.clipboardData).items; let added = false; for (let index in items) { const item = items[index]; if (item.kind === 'file') { const blob = item.getAsFile(); if (blob) { stagedFiles.push(blob); added = true; } } } if (added) { e.preventDefault(); renderPreviewBar(); checkSendButton(); } });
         
-        // === ИСПРАВЛЕНИЕ: ДОБАВЛЕНО ОТОБРАЖЕНИЕ ПРЕВЬЮ ДЛЯ ЛЮБЫХ ФАЙЛОВ ===
+        // === ИСПРАВЛЕНИЕ: ОТОБРАЖЕНИЕ ПРЕВЬЮ ДЛЯ ЛЮБЫХ ФАЙЛОВ ===
         function renderPreviewBar() { const bar = document.getElementById('file-preview-bar'); bar.innerHTML = ''; if (stagedFiles.length === 0) { bar.style.display = 'none'; return; } bar.style.display = 'flex'; stagedFiles.forEach((file, index) => { const wrapper = document.createElement('div'); wrapper.className = 'preview-item-wrapper'; let el; if (file.type.startsWith('image/')) { el = document.createElement('img'); el.src = URL.createObjectURL(file); el.className = 'preview-item'; } else if (file.type.startsWith('video/')) { el = document.createElement('video'); el.src = URL.createObjectURL(file); el.className = 'preview-item'; } else { el = document.createElement('div'); el.innerHTML = '📄'; el.style.width='100%'; el.style.height='100%'; el.style.display='flex'; el.style.flexDirection='column'; el.style.alignItems='center'; el.style.justifyContent='center'; el.style.background='var(--main-color)'; el.style.color='white'; el.style.borderRadius='8px'; el.style.fontSize='20px'; } const rmBtn = document.createElement('button'); rmBtn.className = 'preview-remove'; rmBtn.innerHTML = '✖'; rmBtn.onclick = () => { stagedFiles.splice(index, 1); renderPreviewBar(); checkSendButton(); }; wrapper.appendChild(el); wrapper.appendChild(rmBtn); bar.appendChild(wrapper); }); }
 
         // ==========================================
@@ -980,7 +1163,6 @@
             
             menu.innerHTML = html; document.body.appendChild(menu);
             
-            // Защита от выхода меню за пределы экрана
             const rect = menu.getBoundingClientRect(); let newX = x; let newY = y;
             if (x + rect.width > window.innerWidth) newX = window.innerWidth - rect.width - 10;
             if (y + rect.height > window.innerHeight) newY = window.innerHeight - rect.height - 10;
@@ -1024,7 +1206,27 @@
         function deleteMsgLocally(id) { let del = JSON.parse(localStorage.getItem('deletedMsgs') || '[]'); del.push(id); localStorage.setItem('deletedMsgs', JSON.stringify(del)); const el = document.querySelector(`[data-id="${id}"]`); if(el) el.remove(); showToast("Удалено у вас", "info"); }
         function deleteSingleMsg(id) { showConfirm("Удалить у всех?", "Это сообщение исчезнет у всех собеседников", () => socket.emit('delete_messages', {room: currentRoomId, ids: [id]})); }
 
-        function checkSendButton() { const hasText = document.getElementById('messageInput').value.trim().length > 0; const hasFiles = stagedFiles.length > 0; document.getElementById('sendBtn').disabled = !(hasText || hasFiles || editingId); document.getElementById('sendBtn').innerText = editingId ? '💾' : '➤'; }
+        // === ИСПРАВЛЕНИЕ: КНОПКА ОТПРАВКИ РАБОТАЕТ ИДЕАЛЬНО ===
+        function checkSendButton() { 
+            const hasText = document.getElementById('messageInput').value.trim().length > 0; 
+            const hasFiles = stagedFiles.length > 0; 
+            const isEditing = editingId !== null;
+            const shouldShowSend = hasText || hasFiles || isEditing;
+
+            const sendBtn = document.getElementById('sendBtn');
+            const tgBtn = document.getElementById('tgRecordBtn');
+
+            if (shouldShowSend) {
+                sendBtn.style.display = 'flex';
+                tgBtn.style.display = 'none';
+                sendBtn.disabled = false;
+                sendBtn.innerText = isEditing ? '💾' : '➤';
+            } else {
+                sendBtn.style.display = 'none';
+                tgBtn.style.display = 'flex';
+            }
+        }
+        
         function prepareEdit(id) { const textDiv = document.querySelector(`[data-id="${id}"] .msg-text-content`); if(!textDiv) return; document.getElementById('messageInput').value = textDiv.innerText; document.getElementById('messageInput').focus(); editingId = id; checkSendButton(); }
         function setReply(id) { replyingToId = id; const msg = messagesStore[id]; const text = msg && msg.text ? msg.text.substring(0, 40) + "..." : "Медиафайл"; document.getElementById('reply-preview-text').innerText = `Ответ на: ${text}`; document.getElementById('reply-preview-bar').style.display = 'flex'; document.getElementById('messageInput').focus(); }
         function cancelReply() { replyingToId = null; document.getElementById('reply-preview-bar').style.display = 'none'; }
@@ -1416,13 +1618,6 @@
                 showToast("Сбой отрисовки интерфейса. Очистите кэш.", "error");
             }
         }
-
-        function checkSendButton() { 
-    const hasText = document.getElementById('messageInput').value.trim().length > 0; 
-    const hasFiles = stagedFiles.length > 0; 
-    document.getElementById('sendBtn').disabled = !(hasText || hasFiles || editingId); 
-    document.getElementById('sendBtn').innerText = editingId ? '💾' : '➤'; 
-}
 
         function closeMobileChat(e) { e.stopPropagation(); document.getElementById('sidebar').style.display = 'flex'; document.getElementById('chat-area').style.display = 'none'; document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active')); currentRoomId = ''; }
     </script>
