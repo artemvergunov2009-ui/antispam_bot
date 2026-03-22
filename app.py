@@ -465,9 +465,9 @@ def on_join(data):
         try:
             history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
             emit('load_history', history.data)
-        except Exception as query_err:
+        except Exception:
             emit('load_history', [])
-    except Exception as e:
+    except Exception:
         emit('load_history', [])
 
 @socketio.on('mark_read')
@@ -639,7 +639,6 @@ def webrtc_ice_candidate(data): emit('webrtc_ice_candidate', {'candidate': data[
 @socketio.on('end_call')
 def end_call(data): emit('call_ended', {'by': session.get('username')}, to=f"user_{data['target']}")
 
-# === НОВОЕ: Обработчик действий во время звонка (Поднятие руки и т.д.) ===
 @socketio.on('call_action')
 def handle_call_action(data):
     try:
