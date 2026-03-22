@@ -1,8 +1,8 @@
 import os
 import uuid
 import traceback
-from datetime import datetime, timedelta
 import urllib.parse
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
@@ -12,7 +12,6 @@ app = Flask(__name__)
 # Секретный ключ тоже берем из среды, а если его нет — используем запасной
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
 socketio = SocketIO(app, cors_allowed_origins="*")
-
 # --- Настройки Supabase (БЕЗОПАСНЫЕ) -
 # Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -20,7 +19,6 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("ВНИМАНИЕ: Ключи Supabase не найдены! Убедитесь, что добавили их в Environment Variables.")
-
 # Создаем клиента только если ключи есть (чтобы локально не падало с ошибкой до настройки)
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -95,7 +93,7 @@ def upload_file():
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     
-    # === ИСПРАВЛЕНИЕ: ПРАВИЛЬНОЕ СОХРАНЕНИЕ ИМЕН ФАЙЛОВ ===
+    # Сохраняем оригинальное имя файла для красивого отображения в чате
     safe_name = urllib.parse.quote(file.filename)
     filename = f"{uuid.uuid4().hex[:8]}_{safe_name}"
     
@@ -105,6 +103,7 @@ def upload_file():
         supabase.storage.from_('chat_media').upload(path=filename, file=file_bytes, file_options={"content-type": file.content_type})
         url = supabase.storage.from_('chat_media').get_public_url(filename)
         
+        # Определяем тип файла для верной отрисовки в HTML
         if file.content_type.startswith('audio'): media_type = 'audio'
         elif file.content_type.startswith('video'): media_type = 'video'
         elif file.content_type.startswith('image'): media_type = 'image'
