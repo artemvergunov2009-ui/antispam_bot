@@ -432,12 +432,12 @@
         <div class="tg-call-bottom-area">
             <button class="tg-call-swipe-btn" onclick="toggleCallExtraMenu()">︿</button>
             <div class="tg-call-controls">
-                <button class="tg-call-btn" onclick="showToast('Динамик включен')">🔊</button>
-                <button class="tg-call-btn" onclick="showToast('Камера отключена')">📹</button>
-                <button class="tg-call-btn" id="btnMuteAudio" onclick="toggleAudio()">🎤</button>
-                <button class="tg-call-btn" onclick="showToast('Рука поднята')">✋</button>
-                <button class="tg-call-btn end-call" onclick="endCall()">☎</button>
-            </div>
+    <button id="btnLoudspeaker" class="tg-call-btn" onclick="toggleSpeaker()">🔊</button>
+    <button id="btnCamera" class="tg-call-btn" onclick="toggleCallVideo()">📹</button>
+    <button class="tg-call-btn" id="btnMuteAudio" onclick="toggleAudio()">🎤</button>
+    <button id="btnHand" class="tg-call-btn" onclick="toggleHand()">✋</button>
+    <button class="tg-call-btn end-call" onclick="endCall()">☎</button>
+</div>
         </div>
 
         <div id="callExtraMenuWrapper" class="tg-call-extra-menu">
@@ -1623,7 +1623,136 @@
             }
         }
 
+    
         function closeMobileChat(e) { e.stopPropagation(); document.getElementById('sidebar').style.display = 'flex'; document.getElementById('chat-area').style.display = 'none'; document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active')); currentRoomId = ''; }
+    
+    // ==========================================
+// НОВЫЕ ФУНКЦИИ УПРАВЛЕНИЯ ЗВОНКАМИ
+// ==========================================
+
+// 1. Громкая связь (Визуальный переключатель)
+let isSpeaker = false;
+function toggleSpeaker() {
+    isSpeaker = !isSpeaker;
+    const btn = document.getElementById('btnLoudspeaker');
+    btn.style.backgroundColor = isSpeaker ? 'white' : 'rgba(255,255,255,0.15)';
+    btn.style.color = isSpeaker ? 'black' : 'white';
+    showToast(isSpeaker ? 'Громкая связь включена' : 'Громкая связь выключена');
+}
+
+// 2. Включение/Выключение камеры во время звонка
+let isCallVideoEnabled = false;
+async function toggleCallVideo() {
+    const btn = document.getElementById('btnCamera');
+    const myAvatar = document.getElementById('callAvatarIcon');
+    
+    if (!localStream) return;
+
+    if (!isCallVideoEnabled) {
+        try {
+            // Запрашиваем доступ к камере (без отзеркаливания)
+            const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            const videoTrack = videoStream.getVideoTracks()[0];
+            localStream.addTrack(videoTrack);
+            
+            myAvatar.innerHTML = '<video autoplay muted playsinline style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></video>';
+            myAvatar.querySelector('video').srcObject = new MediaStream([videoTrack]);
+            myAvatar.style.backgroundImage = 'none';
+
+            isCallVideoEnabled = true;
+            btn.style.backgroundColor = 'white';
+            btn.style.color = 'black';
+        } catch (err) {
+            showToast("Нет доступа к камере!", "error");
+        }
+    } else {
+        // Отключаем камеру
+        const videoTracks = localStream.getVideoTracks();
+        videoTracks.forEach(t => { t.stop(); localStream.removeTrack(t); });
+        
+        myAvatar.innerHTML = activeCallTarget ? activeCallTarget.charAt(0).toUpperCase() : '?';
+        isCallVideoEnabled = false;
+        btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
+        btn.style.color = 'white';
+    }
+}
+
+// 4. Поднятие руки (Ладонь)
+let isHandRaised = false;
+function toggleHand() {
+    isHandRaised = !isHandRaised;
+    const btn = document.getElementById('btnHand');
+    btn.style.backgroundColor = isHandRaised ? 'white' : 'rgba(255,255,255,0.15)';
+    btn.style.color = isHandRaised ? 'black' : 'white';
+    
+    // Отправляем сигнал собеседнику
+    socket.emit('call_action', { target: activeCallTarget, action: 'hand', state: isHandRaised });
+    showToast(isHandRaised ? 'Вы подняли руку' : 'Вы опустили руку');
+}
+
+// Слушаем действия от собеседника (поднятие руки)
+socket.on('call_action', (data) => {
+    if (data.action === 'hand') {
+        const targetEl = document.getElementById('callTargetName');
+        if (data.state) {
+            showToast('Собеседник поднял руку ✋');
+            if (!targetEl.innerText.includes('✋')) targetEl.innerHTML += ' <span style="color:#ffcc00;">✋</span>';
+        } else {
+            targetEl.innerHTML = targetEl.innerHTML.replace(/<span.*?>✋<\/span>/, '').trim();
+        }
+    }
+});
+
+// 6 & 9. Скрытие звонка в фон и возврат
+function minimizeCall() {
+    document.getElementById('activeCallOverlay').style.display = 'none';
+    document.getElementById('miniCallWidget').style.display = 'flex';
+    
+    // Переносим аватарку на мини-виджет
+    const mainAvatar = document.getElementById('callAvatarIcon');
+    const miniAvatar = document.getElementById('miniCallAvatar');
+    miniAvatar.style.backgroundImage = mainAvatar.style.backgroundImage;
+    miniAvatar.innerText = mainAvatar.style.backgroundImage === 'none' ? mainAvatar.innerText : '';
+}
+
+function restoreCall() {
+    document.getElementById('miniCallWidget').style.display = 'none';
+    document.getElementById('activeCallOverlay').style.display = 'flex';
+}
+
+// Синхронизация времени на мини-виджете
+const originalStartCallTimer = startCallTimer;
+startCallTimer = function() {
+    if (callTimerInterval) return; 
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(() => {
+        const diff = Math.floor((Date.now() - callStartTime) / 1000);
+        const m = String(Math.floor(diff / 60)).padStart(2, '0');
+        const s = String(diff % 60).padStart(2, '0');
+        const timeStr = `${m}:${s}`;
+        document.getElementById('callStatusText').innerText = timeStr;
+        document.getElementById('miniCallTime').innerText = timeStr; // Добавлено для виджета
+    }, 1000);
+};
+
+// Не забываем прятать виджет при завершении звонка
+const originalEndCallLocally = endCallLocally;
+endCallLocally = function() {
+    originalEndCallLocally();
+    document.getElementById('miniCallWidget').style.display = 'none';
+    
+    // Сбрасываем кнопки
+    isHandRaised = false;
+    isSpeaker = false;
+    isCallVideoEnabled = false;
+    document.getElementById('btnHand').style.backgroundColor = 'rgba(255,255,255,0.15)';
+    document.getElementById('btnHand').style.color = 'white';
+    document.getElementById('btnLoudspeaker').style.backgroundColor = 'rgba(255,255,255,0.15)';
+    document.getElementById('btnLoudspeaker').style.color = 'white';
+    document.getElementById('btnCamera').style.backgroundColor = 'rgba(255,255,255,0.15)';
+    document.getElementById('btnCamera').style.color = 'white';
+};
+    
     </script>
 </body>
 </html>
