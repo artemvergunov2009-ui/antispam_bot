@@ -1417,22 +1417,12 @@
             }
         }
 
-        function checkSendButton() {
-            try {
-                const hasText = document.getElementById('messageInput').value.trim().length > 0;
-                const hasFiles = stagedFiles.length > 0;
-                const isEditing = editingId !== null;
-                const shouldShowSend = hasText || hasFiles || isEditing;
-
-                const sendBtn = document.getElementById('sendBtn');
-                const tgBtn = document.getElementById('tgRecordBtn');
-
-                if (shouldShowSend) {
-                    sendBtn.style.display = 'flex';
-                    tgBtn.style.display = 'none';
-                    sendBtn.disabled = false;
-                    sendBtn.innerText = isEditing ? '💾' : '➤';
-                } else {
+        function checkSendButton() { 
+    const hasText = document.getElementById('messageInput').value.trim().length > 0; 
+    const hasFiles = stagedFiles.length > 0; 
+    document.getElementById('sendBtn').disabled = !(hasText || hasFiles || editingId); 
+    document.getElementById('sendBtn').innerText = editingId ? '💾' : '➤'; 
+} else {
                     sendBtn.style.display = 'none';
                     tgBtn.style.display = 'flex';
                 }
