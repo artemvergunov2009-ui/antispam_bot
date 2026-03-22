@@ -268,6 +268,8 @@ def get_my_chats():
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
     except Exception as e:
+        print("Ошибка в get_my_chats:", e)
+        traceback.print_exc()
         emit('update_chat_list', [])
 
 @socketio.on('search_users')
@@ -465,9 +467,9 @@ def on_join(data):
         try:
             history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
             emit('load_history', history.data)
-        except Exception:
+        except Exception as query_err:
             emit('load_history', [])
-    except Exception:
+    except Exception as e:
         emit('load_history', [])
 
 @socketio.on('mark_read')
@@ -617,7 +619,6 @@ def get_story_views(data):
         emit('story_views_data', {'id': story_id, 'views': views.data})
     except Exception: pass
 
-# --- ЗВОНКИ (АБСОЛЮТНО ТВОЙ КОД) ---
 @socketio.on('call_user')
 def call_user(data): emit('incoming_call', {'from': session.get('username')}, to=f"user_{data.get('target')}")
 
