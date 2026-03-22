@@ -1422,14 +1422,7 @@
     const hasFiles = stagedFiles.length > 0; 
     document.getElementById('sendBtn').disabled = !(hasText || hasFiles || editingId); 
     document.getElementById('sendBtn').innerText = editingId ? '💾' : '➤'; 
-} else {
-                    sendBtn.style.display = 'none';
-                    tgBtn.style.display = 'flex';
-                }
-            } catch(e) {
-                console.error(e);
-            }
-        }
+}
 
         function closeMobileChat(e) { e.stopPropagation(); document.getElementById('sidebar').style.display = 'flex'; document.getElementById('chat-area').style.display = 'none'; document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active')); currentRoomId = ''; }
     </script>
