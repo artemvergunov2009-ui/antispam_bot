@@ -9,17 +9,15 @@ from supabase import create_client, Client
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-# Секретный ключ тоже берем из среды, а если его нет — используем запасной
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
 socketio = SocketIO(app, cors_allowed_origins="*")
-# --- Настройки Supabase (БЕЗОПАСНЫЕ) -
-# Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
+
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("ВНИМАНИЕ: Ключи Supabase не найдены! Убедитесь, что добавили их в Environment Variables.")
-# Создаем клиента только если ключи есть (чтобы локально не падало с ошибкой до настройки)
+
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -47,7 +45,6 @@ def login():
                                 supabase.table('chat_members').insert({'chat_id': official.data[0]['id'], 'username': username, 'role': 'member'}).execute()
                     except Exception: pass
 
-                    # === НОВОЕ: АКТИВИРУЕМ ДОЛГУЮ СЕССИЮ ===
                     session.permanent = True
                     session['username'] = username
                     return redirect(url_for('chat'))
@@ -93,21 +90,18 @@ def upload_file():
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     
-    # Сохраняем оригинальное имя файла для красивого отображения в чате
     safe_name = urllib.parse.quote(file.filename)
     filename = f"{uuid.uuid4().hex[:8]}_{safe_name}"
     
     try:
         file_bytes = file.read()
-        # Всё сохраняем в chat_media, чтобы базу не трогать!
         supabase.storage.from_('chat_media').upload(path=filename, file=file_bytes, file_options={"content-type": file.content_type})
         url = supabase.storage.from_('chat_media').get_public_url(filename)
         
-        # Определяем тип файла для верной отрисовки в HTML
         if file.content_type.startswith('audio'): media_type = 'audio'
         elif file.content_type.startswith('video'): media_type = 'video'
         elif file.content_type.startswith('image'): media_type = 'image'
-        else: media_type = 'file' # Для apk, pdf, docx и т.д.
+        else: media_type = 'file' 
         
         return jsonify({'url': url, 'type': media_type})
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -178,7 +172,6 @@ def handle_disconnect():
                     emit('group_call_left', {'username': username, 'room': room}, to=room)
         except Exception: pass
 
-# ================= АДМИН ПАНЕЛЬ =================
 @socketio.on('get_admin_users')
 def get_admin_users():
     me = session.get('username')
@@ -227,7 +220,6 @@ def change_role(data):
             supabase.table('users').update({'role': new_role}).eq('username', target).execute()
             get_admin_users()
     except Exception: pass
-# ================================================
 
 @socketio.on('get_my_chats')
 def get_my_chats():
@@ -276,8 +268,6 @@ def get_my_chats():
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
     except Exception as e:
-        print("Ошибка в get_my_chats:", e)
-        traceback.print_exc()
         emit('update_chat_list', [])
 
 @socketio.on('search_users')
@@ -476,10 +466,8 @@ def on_join(data):
             history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
             emit('load_history', history.data)
         except Exception as query_err:
-            print("Ошибка при получении истории:", query_err)
             emit('load_history', [])
     except Exception as e:
-        print("Ошибка в on_join:", e)
         emit('load_history', [])
 
 @socketio.on('mark_read')
@@ -650,6 +638,15 @@ def webrtc_ice_candidate(data): emit('webrtc_ice_candidate', {'candidate': data[
 
 @socketio.on('end_call')
 def end_call(data): emit('call_ended', {'by': session.get('username')}, to=f"user_{data['target']}")
+
+# === НОВОЕ: Обработчик действий во время звонка (Поднятие руки и т.д.) ===
+@socketio.on('call_action')
+def handle_call_action(data):
+    try:
+        target = data.get('target')
+        action = data.get('action')
+        emit('call_action_received', {'from': session.get('username'), 'action': action}, to=f"user_{target}")
+    except: pass
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
