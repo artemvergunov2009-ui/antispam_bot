@@ -63,6 +63,12 @@
         #storyViewerClose { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; }
         #storyViewsBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; display: none; }
 
+        /* АДМИН ПАНЕЛЬ */
+        #adminPanelOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        #adminPanelContent { background: var(--modal-bg); padding: 30px; border-radius: var(--border-radius-large); width: 90%; max-width: 600px; box-shadow: var(--main-shadow); position: relative; max-height: 85vh; display: flex; flex-direction: column; color: var(--text-color-dark); }
+        #adminUsersList { list-style: none; padding: 0; overflow-y: auto; flex-grow: 1; }
+        .admin-user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--input-border); gap: 10px; flex-wrap: wrap;}
+
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; margin-top: 8px; border-radius: 12px; overflow: hidden; max-width: 300px; }
         .gallery-img { width: 100%; height: 100%; max-height: 200px; object-fit: cover; cursor: pointer; transition: 0.2s; background: #eee; }
         .gallery-img:hover { filter: brightness(0.9); }
@@ -282,6 +288,15 @@
         </div>
     </div>
 
+    <div id="adminPanelOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
+        <div id="adminPanelContent">
+            <button onclick="document.getElementById('adminPanelOverlay').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✖</button>
+            <h2 style="margin-top:0; color:var(--main-color);">👑 Админ-панель</h2>
+            <input type="text" id="adminSearchInput" placeholder="Поиск пользователей..." style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark);">
+            <ul id="adminUsersList"></ul>
+        </div>
+    </div>
+
     <div id="storyCreatorModal" class="modal" style="z-index: 9000;">
         <div class="modal-content" style="width: 350px;">
             <h3 style="margin-bottom: 10px;">Создать историю</h3>
@@ -385,6 +400,7 @@
             <div class="drawer-status" id="myDrawerStatus">в сети</div>
         </div>
         <ul class="drawer-menu">
+            <li class="drawer-item" id="adminPanelBtn" style="display:none; color: var(--main-color);" onclick="openAdminPanel()">👑 Админ-панель</li>
             <li class="drawer-item" onclick="openStoryCreatorModal()">📸 Выложить историю</li>
             <li class="drawer-item" onclick="openSettingsModal()">⚙️ Настройки</li>
             <li class="drawer-item" onclick="openHelpModal()">❓ Помощь</li>
@@ -495,7 +511,7 @@
     <div class="setting-row"><span class="setting-label">🔔 Push-уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="slider"></span></label></div><div class="modal-buttons" style="margin-top: 20px;"><button class="modal-btn btn-cancel" onclick="closeModal('settingsModal')">Закрыть</button><button class="modal-btn btn-create" onclick="saveSettings()">Сохранить профиль</button></div></div></div>
     
     <div id="profileModal" class="modal"><div class="modal-content"><h3 id="profileUsername" style="display:flex; justify-content:center; align-items:center;">Профиль</h3><div id="profileAvatar" class="profile-avatar-large"><span id="profileInitials">?</span></div><div id="profileOnlineBadge" style="margin-top: -10px; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;"></div><p id="profileCustomStatus" style="color: var(--main-color); font-weight: bold; margin-bottom: 15px;"></p><textarea id="profileBio" rows="3" disabled style="background: var(--chat-area-bg); border: none;"></textarea><div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('profileModal')">Закрыть</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v33.0</b><br><br>Идеальное меню без вылетов за экран. Бесперебойная работа чатов!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
+    <div id="helpModal" class="modal"><div class="modal-content"><h3>Помощь</h3><p style="font-size: 0.9em; text-align: left;"><b>Samberrrgram v33.0 (Absolute Fix)</b><br><br>Идеальная работа чатов, меню сообщений и кружочки как в TG!</p><button class="modal-btn btn-cancel" style="width: 100%; margin-top: 15px;" onclick="closeModal('helpModal')">Понятно</button></div></div>
     
     <div id="groupInfoModal" class="modal">
         <div class="modal-content">
@@ -534,7 +550,6 @@
         let editingId = null; let replyingToId = null; let forwardingMsgId = null;
         let showingArchive = false;
 
-        // Плавная перемотка к сообщению
         function scrollToMsg(id) {
             const el = document.querySelector(`[data-id="${id}"]`);
             if(el) { 
@@ -556,6 +571,42 @@
             if (verifiedUsersList.includes(name)) return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
             return name;
         }
+
+        function openAdminPanel() { socket.emit('get_admin_users'); document.getElementById('adminPanelOverlay').style.display = 'flex'; closeDrawer(); }
+        
+        socket.on('admin_users_data', users => {
+            const list = document.getElementById('adminUsersList'); list.innerHTML = '';
+            users.forEach(u => {
+                let vBtnText = u.is_verified ? 'Забрать ☑️' : 'Выдать ☑️';
+                let vBtnColor = u.is_verified ? '#e57373' : 'var(--main-color)';
+                
+                let bBtnText = u.is_banned ? 'Разбанить' : 'Забанить';
+                let bBtnColor = u.is_banned ? '#4CAF50' : '#e57373';
+                
+                let roleHtml = `
+                    <select onchange="changeRole('${u.username}', this.value)" style="padding:5px; border-radius:5px; border:1px solid #ccc; outline:none;">
+                        <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
+                        <option value="moderator" ${u.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                    </select>
+                `;
+
+                list.innerHTML += `
+                    <li class="admin-user-item">
+                        <div style="font-weight:bold; margin-bottom:5px;">${u.username} ${u.is_verified ? '☑️' : ''} ${u.is_banned ? '(БАН)' : ''}</div>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                            ${roleHtml}
+                            <button style="padding:5px; border:none; border-radius:5px; background:${vBtnColor}; color:white; cursor:pointer;" onclick="toggleVerification('${u.username}', ${u.is_verified})">${vBtnText}</button>
+                            <button style="padding:5px; border:none; border-radius:5px; background:${bBtnColor}; color:white; cursor:pointer;" onclick="toggleBan('${u.username}', ${u.is_banned})">${bBtnText}</button>
+                        </div>
+                    </li>
+                `;
+            });
+        });
+
+        function toggleVerification(username, currentStatus) { socket.emit('toggle_verification', {target: username, current_status: currentStatus}); }
+        function toggleBan(username, currentStatus) { socket.emit('toggle_ban', {target: username, current_status: currentStatus}); }
+        function changeRole(username, newRole) { socket.emit('change_role', {target: username, role: newRole}); }
 
         // ==========================================
         // ЗВУКИ И РИНГТОНЫ (ТВОЙ КОД)
@@ -865,11 +916,11 @@
 
         async function startMediaRecord(type) {
             try {
-                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode } } : { audio: true };
+                const constraints = type === 'video' ? { audio: true, video: { facingMode: currentFacingMode, width:{ideal:320}, height:{ideal:320} } } : { audio: true };
                 activeMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 if (type === 'video') { const preview = document.getElementById('videoPreview'); preview.srcObject = activeMediaStream; preview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)'; document.getElementById('videoPreviewContainer').style.display = 'block'; }
                 
-                // БЕЗ УКАЗАНИЯ ФОРМАТА - ТЕЛЕФОН САМ ВЫБЕРЕТ ЛУЧШИЙ (Чтобы на iOS писалось видео, а не только голос)
+                // БЕЗ УКАЗАНИЯ ФОРМАТА - ТЕЛЕФОН САМ ВЫБЕРЕТ ЛУЧШИЙ
                 mediaRecorder = new MediaRecorder(activeMediaStream); 
                 mediaChunks = [];
                 mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
@@ -1050,7 +1101,16 @@
                 let lastMsgText = 'Нет сообщений'; let timeStr = '';
                 if (chat.last_message) { timeStr = formatTime(chat.last_msg_time); if (chat.last_message.text) lastMsgText = chat.last_message.text; else if (chat.last_message.media_type === 'audio') lastMsgText = '🎤 Голосовое сообщение'; else if (chat.last_message.media_type === 'video_message') lastMsgText = '📹 Видеосообщение'; else if (chat.last_message.media_type === 'gallery') lastMsgText = '🖼 Галерея'; else if (chat.last_message.media_url) lastMsgText = '📷 Медиафайл'; if (chat.type === 'group' && chat.last_message.username !== currentUser) lastMsgText = `${chat.last_message.username}: ${lastMsgText}`; else if (chat.last_message.username === currentUser) lastMsgText = `Вы: ${lastMsgText}`; }
                 li.innerHTML = `${avHtml}<div class="chat-list-info"><div class="chat-list-header"><span class="chat-list-name">${pinHtml}${renderVerified(displayName)}</span><span class="chat-list-time">${timeStr}</span></div><div class="chat-list-last-msg-container"><span class="chat-list-last-msg">${lastMsgText}</span>${badgeHtml}</div></div>`;
-                li.onclick = (e) => openChat(chat.id, displayName, chat.type, chat.my_role, e);
+                
+                li.onclick = (e) => {
+                    try {
+                        openChat(chat.id, displayName, chat.type, chat.my_role, e);
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Ошибка при открытии чата", "error");
+                    }
+                };
+                
                 li.addEventListener('contextmenu', (e) => { e.preventDefault(); showChatContextMenu(e.clientX, e.clientY, chat.id, chat.type, displayName); });
                 let pt; li.addEventListener('touchstart', e => { pt = setTimeout(() => { const t = e.touches[0]; showChatContextMenu(t.clientX, t.clientY, chat.id, chat.type, displayName); }, 500); }, {passive: true}); li.addEventListener('touchend', () => clearTimeout(pt)); li.addEventListener('touchmove', () => clearTimeout(pt));
                 list.appendChild(li);
@@ -1062,24 +1122,53 @@
         socket.on('chat_created', () => socket.emit('get_my_chats'));
 
         function openChat(roomId, chatName, chatType, role, event) {
-            if (currentRoomId !== '') socket.emit('leave', {room: currentRoomId});
-            document.getElementById('messages').innerHTML = '';
-            currentRoomId = roomId; currentRoomType = chatType; currentChatTarget = chatName; myRole = role || 'member';
-            document.getElementById('currentChatName').innerHTML = renderVerified(chatName);
-            pinnedMsgs.clear(); updatePinnedUI(); messagesStore = {}; stagedFiles = []; renderPreviewBar(); checkSendButton();
-            if (isSelectMode) toggleSelectMode();
-            
-            const statusEl = document.getElementById('currentChatStatus'); statusEl.classList.remove('status-online', 'status-typing');
-            const callBtn = document.getElementById('callButton'); const controls = document.getElementById('inputControls'); const blocker = document.getElementById('channelBlocker');
+            try {
+                if (currentRoomId !== '') socket.emit('leave', {room: currentRoomId});
+                document.getElementById('messages').innerHTML = '';
+                currentRoomId = roomId; currentRoomType = chatType; currentChatTarget = chatName; myRole = role || 'member';
+                document.getElementById('currentChatName').innerHTML = renderVerified(chatName);
+                pinnedMsgs.clear(); updatePinnedUI(); messagesStore = {}; stagedFiles = []; renderPreviewBar(); checkSendButton();
+                if (isSelectMode) toggleSelectMode();
+                
+                const statusEl = document.getElementById('currentChatStatus'); statusEl.classList.remove('status-online', 'status-typing');
+                const callBtn = document.getElementById('callButton'); const controls = document.getElementById('inputControls'); const blocker = document.getElementById('channelBlocker');
 
-            if (chatType === 'dm') { statusEl.innerText = 'загрузка...'; socket.emit('check_user_status', {username: chatName}); callBtn.style.display = 'block'; controls.style.display = 'flex'; blocker.style.display = 'none'; } 
-            else if (chatType === 'channel') { statusEl.innerText = 'Канал'; callBtn.style.display = 'none'; if(myRole === 'owner' || myRole === 'admin') { controls.style.display = 'flex'; blocker.style.display = 'none'; } else { controls.style.display = 'none'; blocker.style.display = 'block'; } } 
-            else { statusEl.innerText = 'Группа'; callBtn.style.display = 'none'; controls.style.display = 'flex'; blocker.style.display = 'none'; }
-            
-            document.getElementById('messageInput').disabled = false;
-            
-            socket.emit('join', {room: currentRoomId}); socket.emit('get_my_chats');
-            if (window.innerWidth <= 768) { document.getElementById('sidebar').style.display = 'none'; document.getElementById('chat-area').style.display = 'flex'; setTimeout(scrollToBottom, 50); }
+                if (chatType === 'dm') { statusEl.innerText = 'загрузка...'; socket.emit('check_user_status', {username: chatName}); callBtn.style.display = 'block'; controls.style.display = 'flex'; blocker.style.display = 'none'; } 
+                else if (chatType === 'channel') { statusEl.innerText = 'Канал'; callBtn.style.display = 'none'; if(myRole === 'owner' || myRole === 'admin') { controls.style.display = 'flex'; blocker.style.display = 'none'; } else { controls.style.display = 'none'; blocker.style.display = 'block'; } } 
+                else { statusEl.innerText = 'Группа'; callBtn.style.display = 'none'; controls.style.display = 'flex'; blocker.style.display = 'none'; }
+                
+                document.getElementById('messageInput').disabled = false;
+                
+                socket.emit('join', {room: currentRoomId}); socket.emit('get_my_chats');
+                if (window.innerWidth <= 768) { document.getElementById('sidebar').style.display = 'none'; document.getElementById('chat-area').style.display = 'flex'; setTimeout(scrollToBottom, 50); }
+            } catch(e) {
+                console.error(e);
+                showToast("Сбой отрисовки интерфейса. Очистите кэш.", "error");
+            }
+        }
+
+        function checkSendButton() {
+            try {
+                const hasText = document.getElementById('messageInput').value.trim().length > 0;
+                const hasFiles = stagedFiles.length > 0;
+                const isEditing = editingId !== null;
+                const shouldShowSend = hasText || hasFiles || isEditing;
+
+                const sendBtn = document.getElementById('sendBtn');
+                const tgBtn = document.getElementById('tgRecordBtn');
+
+                if (shouldShowSend) {
+                    sendBtn.style.display = 'flex';
+                    tgBtn.style.display = 'none';
+                    sendBtn.disabled = false;
+                    sendBtn.innerText = isEditing ? '💾' : '➤';
+                } else {
+                    sendBtn.style.display = 'none';
+                    tgBtn.style.display = 'flex';
+                }
+            } catch(e) {
+                console.error(e);
+            }
         }
 
         function closeMobileChat(e) { e.stopPropagation(); document.getElementById('sidebar').style.display = 'flex'; document.getElementById('chat-area').style.display = 'none'; document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active')); currentRoomId = ''; }
