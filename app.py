@@ -5,16 +5,22 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
 from werkzeug.security import generate_password_hash, check_password_hash
-
 app = Flask(__name__)
+# Секретный ключ тоже берем из среды, а если его нет — используем запасной
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- Настройки Supabase (С БРОНИРОВАННЫМ ФОЛЛБЕКОМ) ---
-# Если ключей нет в Render, сервер использует эти запасные, чтобы ничего не ломалось
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://xydudvxraeijlqxrimoy.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZHVkdnhyYWVpamxxeHJpbW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NTUwMzQsImV4cCI6MjA4OTQzMTAzNH0.1ZNxO5YcBixDehQ613yGj-rdhD2x-3KgTD2wiukXW5I")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# --- Настройки Supabase (БЕЗОПАСНЫЕ) ---
+# Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("ВНИМАНИЕ: Ключи Supabase не найдены! Убедитесь, что добавили их в Environment Variables.")
+
+# Создаем клиента только если ключи есть (чтобы локально не падало с ошибкой до настройки)
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -23,45 +29,51 @@ def login():
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
         if username and password:
-            user_response = supabase.table('users').select('*').eq('username', username).execute()
-            if not user_response.data:
-                hashed_pw = generate_password_hash(password)
-                supabase.table('users').insert({'username': username, 'password_hash': hashed_pw, 'last_seen': datetime.utcnow().isoformat()}).execute()
-                saved_id = f"saved_{username}"
-                supabase.table('chats').insert({'id': saved_id, 'name': 'Избранные', 'type': 'saved'}).execute()
-                supabase.table('chat_members').insert({'chat_id': saved_id, 'username': username, 'role': 'owner'}).execute()
-                
-                try:
-                    official = supabase.table('chats').select('id').eq('name', 'Samberrrgram Official').execute()
-                    if official.data:
-                        existing = supabase.table('chat_members').select('*').eq('chat_id', official.data[0]['id']).eq('username', username).execute()
-                        if not existing.data:
-                            supabase.table('chat_members').insert({'chat_id': official.data[0]['id'], 'username': username, 'role': 'member'}).execute()
-                except Exception: pass
-
-                session['username'] = username
-                return redirect(url_for('chat'))
-            else:
-                user = user_response.data[0]
-                if user.get('is_banned'): return render_template('login.html', error="Ваш аккаунт заблокирован администратором.")
-                
-                if not user.get('password_hash'):
+            try:
+                user_response = supabase.table('users').select('*').eq('username', username).execute()
+                if not user_response.data:
                     hashed_pw = generate_password_hash(password)
-                    supabase.table('users').update({'password_hash': hashed_pw, 'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
+                    supabase.table('users').insert({'username': username, 'password_hash': hashed_pw, 'last_seen': datetime.utcnow().isoformat()}).execute()
+                    saved_id = f"saved_{username}"
+                    supabase.table('chats').insert({'id': saved_id, 'name': 'Избранные', 'type': 'saved'}).execute()
+                    supabase.table('chat_members').insert({'chat_id': saved_id, 'username': username, 'role': 'owner'}).execute()
+                    
+                    try:
+                        official = supabase.table('chats').select('id').eq('name', 'Samberrrgram Official').execute()
+                        if official.data:
+                            existing = supabase.table('chat_members').select('*').eq('chat_id', official.data[0]['id']).eq('username', username).execute()
+                            if not existing.data:
+                                supabase.table('chat_members').insert({'chat_id': official.data[0]['id'], 'username': username, 'role': 'member'}).execute()
+                    except Exception: pass
+
                     session['username'] = username
-                    return redirect(url_for('chat'))
-                elif check_password_hash(user['password_hash'], password):
-                    session['username'] = username
-                    supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
                     return redirect(url_for('chat'))
                 else:
-                    error = "Неверный пароль!"
+                    user = user_response.data[0]
+                    if user.get('is_banned'): return render_template('login.html', error="Ваш аккаунт заблокирован администратором.")
+                    
+                    if not user.get('password_hash'):
+                        hashed_pw = generate_password_hash(password)
+                        supabase.table('users').update({'password_hash': hashed_pw, 'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
+                        session['username'] = username
+                        return redirect(url_for('chat'))
+                    elif check_password_hash(user['password_hash'], password):
+                        session['username'] = username
+                        supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
+                        return redirect(url_for('chat'))
+                    else:
+                        error = "Неверный пароль!"
+            except Exception as e:
+                print(f"Ошибка БД: {e}")
+                error = "Ошибка подключения к базе. Проверьте RLS."
     return render_template('login.html', error=error)
 
 @app.route('/logout')
 def logout():
     username = session.get('username')
-    if username: supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
+    if username: 
+        try: supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
+        except: pass
     session.pop('username', None)
     return redirect(url_for('login'))
 
@@ -153,57 +165,6 @@ def handle_disconnect():
                     emit('group_call_left', {'username': username, 'room': room}, to=room)
         except Exception: pass
 
-# ================= АДМИН ПАНЕЛЬ =================
-@socketio.on('get_admin_users')
-def get_admin_users():
-    me = session.get('username')
-    try:
-        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-        if my_info.data and my_info.data[0].get('is_verified'):
-            users = supabase.table('users').select('username, avatar_url, is_verified, role, is_banned').execute()
-            emit('admin_users_data', users.data)
-    except Exception: pass
-
-@socketio.on('toggle_verification')
-def toggle_verification(data):
-    me = session.get('username')
-    try:
-        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-        if my_info.data and my_info.data[0].get('is_verified'):
-            target = data.get('target')
-            current_status = data.get('current_status')
-            supabase.table('users').update({'is_verified': not current_status}).eq('username', target).execute()
-            verified = supabase.table('users').select('username').eq('is_verified', True).execute()
-            v_list = [u['username'] for u in verified.data]
-            emit('update_verified_list', v_list, broadcast=True)
-            get_admin_users()
-    except Exception: pass
-
-@socketio.on('toggle_ban')
-def toggle_ban(data):
-    me = session.get('username')
-    try:
-        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-        if my_info.data and my_info.data[0].get('is_verified'):
-            target = data.get('target')
-            current_status = data.get('current_status')
-            supabase.table('users').update({'is_banned': not current_status}).eq('username', target).execute()
-            get_admin_users()
-    except Exception: pass
-
-@socketio.on('change_role')
-def change_role(data):
-    me = session.get('username')
-    try:
-        my_info = supabase.table('users').select('is_verified, role').eq('username', me).execute()
-        if my_info.data and my_info.data[0].get('is_verified'):
-            target = data.get('target')
-            new_role = data.get('role')
-            supabase.table('users').update({'role': new_role}).eq('username', target).execute()
-            get_admin_users()
-    except Exception: pass
-# ================================================
-
 @socketio.on('get_my_chats')
 def get_my_chats():
     try:
@@ -240,9 +201,12 @@ def get_my_chats():
             else:
                 chat['last_message'] = None
                 chat['last_msg_time'] = '1970-01-01T00:00:00Z'
+                
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
-    except Exception:
+    except Exception as e:
+        print("Ошибка в get_my_chats:", e)
+        traceback.print_exc()
         emit('update_chat_list', [])
 
 @socketio.on('search_users')
