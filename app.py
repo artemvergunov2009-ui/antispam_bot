@@ -73,6 +73,10 @@ def login():
                 error = "Ошибка подключения к базе."
     return render_template('login.html', error=error)
 
+@app.route('/sw.js')
+def sw():
+    return app.send_static_file('sw.js') # Если положил файл в папку static
+
 @app.route('/logout')
 def logout():
     username = session.get('username')
@@ -306,29 +310,9 @@ def delete_messages(data):
     room = data.get('room')
     if msg_ids:
         try:
-            # 1. Сначала находим эти сообщения в базе, чтобы получить ссылки на файлы
-            messages = supabase.table('messages').select('media_url').in_('id', msg_ids).execute()
-            
-            for msg in messages.data:
-                url = msg.get('media_url')
-                if url:
-                    # Разрезаем URL, чтобы получить чистое имя файла в хранилище
-                    # Ссылка обычно выглядит так: .../storage/v1/object/public/chat_media/filename
-                    file_path = url.split('/')[-1]
-                    
-                    # Пробуем удалить из папки chat_media
-                    try:
-                        supabase.storage.from_('chat_media').remove([file_path])
-                    except:
-                        pass # Если файла нет или он в другой корзине, просто идем дальше
-
-            # 2. Теперь, когда файлы стерты (или если их не было), удаляем сами сообщения
             supabase.table('messages').delete().in_('id', msg_ids).execute()
-            
-            # 3. Сообщаем всем в комнате, что сообщения исчезли
             emit('messages_deleted', {'ids': msg_ids}, to=room)
-        except Exception as e:
-            print(f"Ошибка при удалении: {e}")
+        except Exception: pass
 
 @socketio.on('edit_message')
 def edit_message(data):
