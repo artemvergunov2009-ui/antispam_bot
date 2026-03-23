@@ -422,12 +422,16 @@
         </div>
 
         <div class="tg-call-center">
-            <div class="tg-call-avatar-container">
-                <div class="tg-call-avatar call-avatar-pulse" id="callAvatarIcon">?</div>
-            </div>
-            <h2 id="callTargetName" class="tg-call-name">Собеседник</h2>
-            <p id="callStatusText" class="tg-call-status">Установка связи...</p>
-        </div>
+    <video id="remoteCallVideo" autoplay playsinline style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0;"></video>
+    
+    <video id="localCallVideo" autoplay muted playsinline style="display:none; position:absolute; top:90px; right:20px; width:110px; height:160px; border-radius:15px; border:2px solid rgba(255,255,255,0.3); object-fit:cover; z-index:10; box-shadow: 0 5px 25px rgba(0,0,0,0.5);"></video>
+
+    <div class="tg-call-avatar-container" style="z-index: 1;">
+        <div class="tg-call-avatar call-avatar-pulse" id="callAvatarIcon">?</div>
+    </div>
+    <h2 id="callTargetName" class="tg-call-name" style="z-index: 1;">Собеседник</h2>
+    <p id="callStatusText" class="tg-call-status" style="z-index: 1;">Установка связи...</p>
+</div>
 
         <div class="tg-call-bottom-area">
             <button class="tg-call-swipe-btn" onclick="toggleCallExtraMenu()">︿</button>
@@ -767,21 +771,60 @@
         function stopCallTimer() { clearInterval(callTimerInterval); callTimerInterval = null; }
 
         async function setupWebRTC() {
-            peerConnection = new RTCPeerConnection(rtcConfig);
-            if (localStream) { localStream.getTracks().forEach(track => { peerConnection.addTrack(track, localStream); }); }
+    peerConnection = new RTCPeerConnection(rtcConfig);
+    if (localStream) { 
+        localStream.getTracks().forEach(track => { peerConnection.addTrack(track, localStream); }); 
+    }
 
-            peerConnection.ontrack = (event) => {
-                startCallTimer();
-                const remoteAudio = document.getElementById('remoteAudio');
-                if (remoteAudio.srcObject !== event.streams[0]) {
-                    remoteAudio.srcObject = event.streams[0];
-                    remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
-                }
+    // Если мы добавили или удалили видео-трек, нужно обновить соединение
+    peerConnection.onnegotiationneeded = async () => {
+        try {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('webrtc_offer', {target: activeCallTarget, offer: offer});
+        } catch (err) {
+            console.error("Ошибка renegotiation:", err);
+        }
+    };
+
+    peerConnection.ontrack = (event) => {
+        startCallTimer();
+        
+        if (event.track.kind === 'audio') {
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio.srcObject !== event.streams[0]) {
+                remoteAudio.srcObject = event.streams[0];
+                remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
+            }
+        } 
+        else if (event.track.kind === 'video') {
+            const remoteVideo = document.getElementById('remoteCallVideo');
+            const avatarContainer = document.getElementById('callAvatarIcon');
+            
+            if (remoteVideo.srcObject !== event.streams[0]) {
+                remoteVideo.srcObject = event.streams[0];
+            }
+            
+            remoteVideo.style.display = 'block';
+            avatarContainer.style.display = 'none';
+
+            // Если собеседник выключил камеру
+            event.track.onmute = () => {
+                remoteVideo.style.display = 'none';
+                avatarContainer.style.display = 'flex';
             };
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
+            // Если снова включил
+            event.track.onunmute = () => {
+                remoteVideo.style.display = 'block';
+                avatarContainer.style.display = 'none';
             };
         }
+    };
+
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
+    };
+}
 
         function forcePlayRemoteAudio() { document.getElementById('remoteAudio').play(); document.getElementById('forcePlayBtn').style.display = 'none'; }
 
@@ -926,6 +969,21 @@
             const btn = document.getElementById('btnMuteAudio');
             btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
             btn.style.color = 'white';
+        
+            // Внутри endCallLocally добавь:
+document.getElementById('remoteCallVideo').style.display = 'none';
+document.getElementById('localCallVideo').style.display = 'none';
+document.getElementById('callAvatarIcon').style.display = 'flex'; // Возвращаем аватарку
+
+if (localVideoTrack) {
+    localVideoTrack.stop();
+    localVideoTrack = null;
+}
+
+// Сброс кнопки ладони/переворота обратно на ладонь
+document.getElementById('btnHand').innerText = '✋';
+document.getElementById('btnHand').onclick = toggleHand;
+callFacingMode = 'user';
         }
 
         // ==========================================
@@ -1641,39 +1699,89 @@ function toggleSpeaker() {
 }
 
 // 2. Включение/Выключение камеры во время звонка
-let isCallVideoEnabled = false;
+let localVideoTrack = null;
+let callFacingMode = 'user'; // 'user' - фронталка, 'environment' - основная
+
 async function toggleCallVideo() {
     const btn = document.getElementById('btnCamera');
-    const myAvatar = document.getElementById('callAvatarIcon');
+    const btnHand = document.getElementById('btnHand');
+    const localVideo = document.getElementById('localCallVideo');
     
-    if (!localStream) return;
+    if (!peerConnection) return;
 
     if (!isCallVideoEnabled) {
         try {
-            // Запрашиваем доступ к камере (без отзеркаливания)
-            const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-            const videoTrack = videoStream.getVideoTracks()[0];
-            localStream.addTrack(videoTrack);
+            const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: callFacingMode } });
+            localVideoTrack = videoStream.getVideoTracks()[0];
             
-            myAvatar.innerHTML = '<video autoplay muted playsinline style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></video>';
-            myAvatar.querySelector('video').srcObject = new MediaStream([videoTrack]);
-            myAvatar.style.backgroundImage = 'none';
+            // Показываем себя в окошке
+            localVideo.srcObject = new MediaStream([localVideoTrack]);
+            localVideo.style.display = 'block';
+            localVideo.style.transform = callFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+
+            // Отправляем трек собеседнику
+            const senders = peerConnection.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) {
+                videoSender.replaceTrack(localVideoTrack);
+            } else {
+                peerConnection.addTrack(localVideoTrack, localStream);
+            }
 
             isCallVideoEnabled = true;
             btn.style.backgroundColor = 'white';
             btn.style.color = 'black';
+            
+            // Превращаем ладонь в кнопку переворота камеры
+            btnHand.innerText = '🔄';
+            btnHand.onclick = flipCallCamera;
+            
         } catch (err) {
             showToast("Нет доступа к камере!", "error");
         }
     } else {
-        // Отключаем камеру
-        const videoTracks = localStream.getVideoTracks();
-        videoTracks.forEach(t => { t.stop(); localStream.removeTrack(t); });
+        // Выключаем камеру
+        if (localVideoTrack) {
+            localVideoTrack.stop();
+            const senders = peerConnection.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) peerConnection.removeTrack(videoSender);
+            localVideoTrack = null;
+        }
         
-        myAvatar.innerHTML = activeCallTarget ? activeCallTarget.charAt(0).toUpperCase() : '?';
+        localVideo.style.display = 'none';
         isCallVideoEnabled = false;
         btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
         btn.style.color = 'white';
+        
+        // Возвращаем ладонь
+        btnHand.innerText = '✋';
+        btnHand.onclick = toggleHand;
+    }
+}
+
+async function flipCallCamera() {
+    if (!isCallVideoEnabled || !localVideoTrack) return;
+    
+    callFacingMode = callFacingMode === 'user' ? 'environment' : 'user';
+    localVideoTrack.stop(); 
+    
+    try {
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: callFacingMode } });
+        localVideoTrack = videoStream.getVideoTracks()[0];
+        
+        const localVideo = document.getElementById('localCallVideo');
+        localVideo.srcObject = new MediaStream([localVideoTrack]);
+        localVideo.style.transform = callFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+        
+        // Моментально заменяем трек в текущем соединении без обрыва связи
+        const senders = peerConnection.getSenders();
+        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+        if (videoSender) {
+            videoSender.replaceTrack(localVideoTrack);
+        }
+    } catch (err) {
+        showToast("Не удалось перевернуть камеру", "error");
     }
 }
 
