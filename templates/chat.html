@@ -653,6 +653,16 @@
 
     <script>
         const socket = io();
+        // Регистрация Service Worker для фоновых пушей
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+    navigator.serviceWorker.register('/sw.js')
+    .then(function(swReg) {
+        console.log('Service Worker успешно зарегистрирован!', swReg);
+    })
+    .catch(function(error) {
+        console.error('Ошибка регистрации Service Worker:', error);
+    });
+}
         let currentRoomId = ''; let currentRoomType = ''; let currentChatTarget = ''; let myRole = 'member';
         const currentUser = "{{ username }}";
 
