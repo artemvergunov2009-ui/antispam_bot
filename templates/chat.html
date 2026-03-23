@@ -688,9 +688,12 @@
         socket.on('client_init_data', data => { if (data.is_verified) { document.getElementById('adminPanelBtn').style.display = 'flex'; } });
 
         function renderVerified(name) {
-            if (verifiedUsersList.includes(name)) return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
-            return name;
-        }
+    // Принудительно ставим галочку официальному каналу ИЛИ верифицированным юзерам
+    if (name === 'Samberrrgram Official' || verifiedUsersList.includes(name)) {
+        return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
+    }
+    return name;
+}
 
         function openAdminPanel() { socket.emit('get_admin_users'); document.getElementById('adminPanelOverlay').style.display = 'flex'; closeDrawer(); }
         
