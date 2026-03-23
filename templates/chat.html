@@ -770,12 +770,62 @@
         }
         function stopCallTimer() { clearInterval(callTimerInterval); callTimerInterval = null; }
 
-        async function setupWebRTC() {
+
+    async function setupWebRTC() {
     peerConnection = new RTCPeerConnection(rtcConfig);
     if (localStream) { 
         localStream.getTracks().forEach(track => { peerConnection.addTrack(track, localStream); }); 
     }
 
+    peerConnection.onnegotiationneeded = async () => {
+        try {
+            // ФИКС: Защита от одновременных запросов
+            if (peerConnection.signalingState !== "stable") return;
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('webrtc_offer', {target: activeCallTarget, offer: offer});
+        } catch (err) { console.error("Ошибка renegotiation:", err); }
+    };
+
+    peerConnection.ontrack = (event) => {
+        startCallTimer();
+        
+        // ФИКС: Собираем треки в изолированные медиапотоки
+        if (event.track.kind === 'audio') {
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (!remoteAudio.srcObject) remoteAudio.srcObject = new MediaStream();
+            if (!remoteAudio.srcObject.getAudioTracks().includes(event.track)) {
+                remoteAudio.srcObject.addTrack(event.track);
+                remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
+            }
+        } else if (event.track.kind === 'video') {
+            const remoteVideo = document.getElementById('remoteCallVideo');
+            const avatarContainer = document.getElementById('callAvatarIcon');
+            
+            if (!remoteVideo.srcObject) remoteVideo.srcObject = new MediaStream();
+            if (!remoteVideo.srcObject.getVideoTracks().includes(event.track)) {
+                remoteVideo.srcObject.addTrack(event.track);
+            }
+            
+            remoteVideo.style.display = 'block';
+            avatarContainer.style.display = 'none';
+
+            event.track.onmute = () => {
+                remoteVideo.style.display = 'none';
+                avatarContainer.style.display = 'flex';
+            };
+            event.track.onunmute = () => {
+                remoteVideo.style.display = 'block';
+                avatarContainer.style.display = 'none';
+            };
+        }
+    };
+
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
+    };
+}
+        
     // Если мы добавили или удалили видео-трек, нужно обновить соединение
     peerConnection.onnegotiationneeded = async () => {
         try {
@@ -824,7 +874,6 @@
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
     };
-}
 
         function forcePlayRemoteAudio() { document.getElementById('remoteAudio').play(); document.getElementById('forcePlayBtn').style.display = 'none'; }
 
@@ -911,15 +960,20 @@
         });
 
         socket.on('webrtc_offer', async (data) => {
-            if(data.from !== activeCallTarget) return;
-            await setupWebRTC();
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-            for (let c of iceCandidateQueue) await peerConnection.addIceCandidate(c);
-            iceCandidateQueue = [];
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            socket.emit('webrtc_answer', {target: activeCallTarget, answer: answer});
-        });
+    if(data.from !== activeCallTarget) return;
+    
+    // ФИКС: Создаем WebRTC только если соединения еще не существует
+    if (!peerConnection) {
+        await setupWebRTC();
+    }
+    
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+    for (let c of iceCandidateQueue) await peerConnection.addIceCandidate(c);
+    iceCandidateQueue = [];
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit('webrtc_answer', {target: activeCallTarget, answer: answer});
+});
 
         socket.on('webrtc_answer', async (data) => {
             if(data.from !== activeCallTarget) return;
@@ -1702,6 +1756,8 @@ function toggleSpeaker() {
 let localVideoTrack = null;
 let callFacingMode = 'user'; // 'user' - фронталка, 'environment' - основная
 
+
+
 async function toggleCallVideo() {
     const btn = document.getElementById('btnCamera');
     const btnHand = document.getElementById('btnHand');
@@ -1714,25 +1770,17 @@ async function toggleCallVideo() {
             const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: callFacingMode } });
             localVideoTrack = videoStream.getVideoTracks()[0];
             
-            // Показываем себя в окошке
             localVideo.srcObject = new MediaStream([localVideoTrack]);
             localVideo.style.display = 'block';
             localVideo.style.transform = callFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
 
-            // Отправляем трек собеседнику
-            const senders = peerConnection.getSenders();
-            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-            if (videoSender) {
-                videoSender.replaceTrack(localVideoTrack);
-            } else {
-                peerConnection.addTrack(localVideoTrack, localStream);
-            }
+            // ФИКС: Сохраняем сендер при добавлении трека
+            localVideoSender = peerConnection.addTrack(localVideoTrack, localStream);
 
             isCallVideoEnabled = true;
             btn.style.backgroundColor = 'white';
             btn.style.color = 'black';
             
-            // Превращаем ладонь в кнопку переворота камеры
             btnHand.innerText = '🔄';
             btnHand.onclick = flipCallCamera;
             
@@ -1740,12 +1788,13 @@ async function toggleCallVideo() {
             showToast("Нет доступа к камере!", "error");
         }
     } else {
-        // Выключаем камеру
         if (localVideoTrack) {
             localVideoTrack.stop();
-            const senders = peerConnection.getSenders();
-            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-            if (videoSender) peerConnection.removeTrack(videoSender);
+            // ФИКС: Корректно удаляем трек из WebRTC
+            if (localVideoSender) {
+                peerConnection.removeTrack(localVideoSender);
+                localVideoSender = null;
+            }
             localVideoTrack = null;
         }
         
@@ -1754,7 +1803,6 @@ async function toggleCallVideo() {
         btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
         btn.style.color = 'white';
         
-        // Возвращаем ладонь
         btnHand.innerText = '✋';
         btnHand.onclick = toggleHand;
     }
@@ -1774,11 +1822,9 @@ async function flipCallCamera() {
         localVideo.srcObject = new MediaStream([localVideoTrack]);
         localVideo.style.transform = callFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
         
-        // Моментально заменяем трек в текущем соединении без обрыва связи
-        const senders = peerConnection.getSenders();
-        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-        if (videoSender) {
-            videoSender.replaceTrack(localVideoTrack);
+        // ФИКС: Меняем видео на лету без обрыва
+        if (localVideoSender) {
+            localVideoSender.replaceTrack(localVideoTrack);
         }
     } catch (err) {
         showToast("Не удалось перевернуть камеру", "error");
@@ -1849,6 +1895,17 @@ endCallLocally = function() {
     originalEndCallLocally();
     document.getElementById('miniCallWidget').style.display = 'none';
     
+    document.getElementById('remoteCallVideo').style.display = 'none';
+document.getElementById('localCallVideo').style.display = 'none';
+document.getElementById('callAvatarIcon').style.display = 'flex';
+
+if (localVideoTrack) {
+    localVideoTrack.stop();
+    localVideoTrack = null;
+}
+localVideoSender = null;
+callFacingMode = 'user';
+
     // Сбрасываем кнопки
     isHandRaised = false;
     isSpeaker = false;
