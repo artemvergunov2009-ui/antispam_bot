@@ -687,13 +687,20 @@ def qr_login_execute():
 
 @socketio.on('request_qr')
 def request_qr():
-    # Компьютер просит сгенерировать новый код
+    print("=== ПОЛУЧЕН ЗАПРОС НА QR КОД ===")
     token = uuid.uuid4().hex
     try:
+        # Пытаемся записать в базу
         supabase.table('qr_sessions').insert({'token': token, 'status': 'pending'}).execute()
-        join_room(f"qr_{token}") # Создаем приватную "комнату" для этого кода
+        print(f"Токен {token} успешно записан в БД!")
+        
+        join_room(f"qr_{token}")
         emit('qr_generated', {'token': token})
-    except Exception: pass
+        print("Сигнал qr_generated отправлен браузеру!")
+        
+    except Exception as e:
+        print("!!! ОШИБКА ПРИ СОЗДАНИИ QR-КОДА !!!")
+        print(e)
 
 @socketio.on('approve_qr')
 def approve_qr(data):
