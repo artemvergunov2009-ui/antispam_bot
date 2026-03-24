@@ -881,10 +881,92 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
         function stopCallTimer() { clearInterval(callTimerInterval); callTimerInterval = null; }
 
         async function setupWebRTC() {
-    peerConnection = new RTCPeerConnection(rtcConfig);
-    if (localStream) { 
-        localStream.getTracks().forEach(track => { peerConnection.addTrack(track, localStream); }); 
-    }
+            // 1. Динамически получаем твои личные мощные TURN-серверы
+            const response = await fetch("https://samberrrgram.metered.live/api/v1/turn/credentials?apiKey=dfd2f65a68d9f2975f474f28004d4c66008c");
+            const meteredIceServers = await response.json();
+            
+            // 2. Собираем конфиг: Google STUN + твои TURN-серверы
+            const rtcConfig = { 
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    ...meteredIceServers // Магия JavaScript: распаковываем массив серверов сюда
+                ] 
+            };
+
+            // 3. Запускаем WebRTC с новым конфигом
+            peerConnection = new RTCPeerConnection(rtcConfig);
+            
+            // Создаем постоянные "трубы" для аудио и видео с самого начала!
+            peerConnection.addTransceiver('audio', { direction: 'sendrecv' });
+            peerConnection.addTransceiver('video', { direction: 'sendrecv' });
+
+            if (localStream) { 
+                localStream.getTracks().forEach(track => {
+                    const transceiver = peerConnection.getTransceivers().find(t => t.receiver.track.kind === track.kind);
+                    if (transceiver) {
+                        transceiver.sender.replaceTrack(track);
+                    }
+                }); 
+            }
+
+            peerConnection.onnegotiationneeded = async () => {
+                try {
+                    if (peerConnection.signalingState !== "stable") return;
+                    const offer = await peerConnection.createOffer();
+                    await peerConnection.setLocalDescription(offer);
+                    socket.emit('webrtc_offer', {target: activeCallTarget, offer: offer});
+                } catch (err) {
+                    console.error("Ошибка renegotiation:", err);
+                }
+            };
+
+            peerConnection.ontrack = (event) => {
+                startCallTimer();
+                
+                if (event.track.kind === 'audio') {
+                    const remoteAudio = document.getElementById('remoteAudio');
+                    if (remoteAudio.srcObject !== event.streams[0]) {
+                        remoteAudio.srcObject = event.streams[0];
+                        remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
+                    }
+                } 
+                else if (event.track.kind === 'video') {
+                    const remoteVideo = document.getElementById('remoteCallVideo');
+                    const avatarContainer = document.getElementById('callAvatarIcon');
+                    
+                    if (remoteVideo.srcObject !== event.streams[0]) {
+                        remoteVideo.srcObject = event.streams[0];
+                    }
+                    
+                    remoteVideo.style.display = 'block';
+                    avatarContainer.style.display = 'none';
+
+                    event.track.onmute = () => {
+                        remoteVideo.style.display = 'none';
+                        avatarContainer.style.display = 'flex';
+                    };
+                    event.track.onunmute = () => {
+                        remoteVideo.style.display = 'block';
+                        avatarContainer.style.display = 'none';
+                    };
+                }
+            };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
+            };
+
+            // ДЕТЕКТОР СЕТИ: будет писать в консоль и выдавать плашку при сбоях
+            peerConnection.oniceconnectionstatechange = () => {
+                console.log("Состояние сети WebRTC:", peerConnection.iceConnectionState);
+                if (peerConnection.iceConnectionState === 'failed' || peerConnection.iceConnectionState === 'disconnected') {
+                    showToast("Слабый интернет или жесткий NAT (сеть блокирует звонок)!", "error");
+                }
+                if (peerConnection.iceConnectionState === 'connected') {
+                    console.log("🚀 Успешно пробили NAT и соединились!");
+                }
+            };
+        }
 
     // Если мы добавили или удалили видео-трек, нужно обновить соединение
     peerConnection.onnegotiationneeded = async () => {
@@ -934,7 +1016,6 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
     };
-}
 
         function forcePlayRemoteAudio() { document.getElementById('remoteAudio').play(); document.getElementById('forcePlayBtn').style.display = 'none'; }
 
