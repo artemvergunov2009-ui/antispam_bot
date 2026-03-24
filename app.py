@@ -660,5 +660,53 @@ def call_action(data):
     # Пересылаем действие собеседнику
     emit('call_action', {'state': data.get('state'), 'action': data.get('action')}, to=f"user_{data.get('target')}")
 
+
+# ==========================================
+# МАГИЯ QR-АВТОРИЗАЦИИ
+# ==========================================
+@app.route('/qr_login_execute')
+def qr_login_execute():
+    token = request.args.get('token')
+    if not token: return redirect(url_for('login'))
+    
+    try:
+        # Проверяем, подтвержден ли этот код телефоном
+        res = supabase.table('qr_sessions').select('*').eq('token', token).execute()
+        if res.data and res.data[0]['status'] == 'approved':
+            username = res.data[0]['username']
+            session.permanent = True
+            session['username'] = username
+            
+            # Удаляем токен, чтобы он стал одноразовым (безопасность!)
+            supabase.table('qr_sessions').delete().eq('token', token).execute()
+            return redirect(url_for('chat'))
+    except Exception as e:
+        print("Ошибка QR входа:", e)
+        
+    return redirect(url_for('login'))
+
+@socketio.on('request_qr')
+def request_qr():
+    # Компьютер просит сгенерировать новый код
+    token = uuid.uuid4().hex
+    try:
+        supabase.table('qr_sessions').insert({'token': token, 'status': 'pending'}).execute()
+        join_room(f"qr_{token}") # Создаем приватную "комнату" для этого кода
+        emit('qr_generated', {'token': token})
+    except Exception: pass
+
+@socketio.on('approve_qr')
+def approve_qr(data):
+    # Этот сигнал будет отправлять телефон, когда отсканирует код
+    token = data.get('token')
+    username = session.get('username')
+    if username and token:
+        try:
+            # Обновляем статус в базе
+            supabase.table('qr_sessions').update({'status': 'approved', 'username': username}).eq('token', token).execute()
+            # Отправляем компьютеру сигнал: "Пускай его!"
+            emit('qr_approved', {'token': token}, to=f"qr_{token}")
+        except Exception: pass
+
 if __name__ == '__main__':
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
