@@ -662,45 +662,52 @@ def call_action(data):
 
 
 # ==========================================
-# МАГИЯ QR-АВТОРИЗАЦИИ
+# МАГИЯ QR-АВТОРИЗАЦИИ (БЕЗ БАЗЫ ДАННЫХ!)
 # ==========================================
+
+# Словарь в оперативной памяти сервера для хранения временных кодов
+active_qr_sessions = {}
+
 @app.route('/qr_login_execute')
 def qr_login_execute():
     token = request.args.get('token')
     if not token: return redirect(url_for('login'))
     
-    try:
-        # Проверяем, подтвержден ли этот код телефоном
-        res = supabase.table('qr_sessions').select('*').eq('token', token).execute()
-        if res.data and res.data[0]['status'] == 'approved':
-            username = res.data[0]['username']
-            session.permanent = True
-            session['username'] = username
-            
-            # Удаляем токен, чтобы он стал одноразовым (безопасность!)
-            supabase.table('qr_sessions').delete().eq('token', token).execute()
-            return redirect(url_for('chat'))
-    except Exception as e:
-        print("Ошибка QR входа:", e)
+    # Проверяем, есть ли токен в памяти и одобрен ли он
+    if token in active_qr_sessions and active_qr_sessions[token].get('status') == 'approved':
+        username = active_qr_sessions[token].get('username')
+        
+        session.permanent = True
+        session['username'] = username
+        
+        # Удаляем токен из памяти (одноразовость)
+        del active_qr_sessions[token]
+        return redirect(url_for('chat'))
         
     return redirect(url_for('login'))
 
 @socketio.on('request_qr')
 def request_qr():
-    print("=== ПОЛУЧЕН ЗАПРОС НА QR КОД ===")
     token = uuid.uuid4().hex
-    try:
-        # Пытаемся записать в базу
-        supabase.table('qr_sessions').insert({'token': token, 'status': 'pending'}).execute()
-        print(f"Токен {token} успешно записан в БД!")
+    
+    # Просто записываем токен в память сервера
+    active_qr_sessions[token] = {'status': 'pending', 'username': None}
+    
+    join_room(f"qr_{token}")
+    emit('qr_generated', {'token': token})
+
+@socketio.on('approve_qr')
+def approve_qr(data):
+    token = data.get('token')
+    username = session.get('username')
+    
+    if username and token in active_qr_sessions:
+        # Меняем статус в памяти
+        active_qr_sessions[token]['status'] = 'approved'
+        active_qr_sessions[token]['username'] = username
         
-        join_room(f"qr_{token}")
-        emit('qr_generated', {'token': token})
-        print("Сигнал qr_generated отправлен браузеру!")
-        
-    except Exception as e:
-        print("!!! ОШИБКА ПРИ СОЗДАНИИ QR-КОДА !!!")
-        print(e)
+        # Даем отмашку компьютеру
+        emit('qr_approved', {'token': token}, to=f"qr_{token}")
 
 @socketio.on('approve_qr')
 def approve_qr(data):
