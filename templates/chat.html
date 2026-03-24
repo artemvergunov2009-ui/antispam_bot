@@ -780,29 +780,93 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
         let callTimerInterval = null; let callStartTime = null; let isCallAnswered = false;
 
         const rtcConfig = { 
-    iceServers: [
-        // Пачка надежных STUN-серверов от Google (чтобы пробить базовую защиту)
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        // Тот самый бесплатный TURN, но теперь мы стучимся по защищенным портам (443), которые провайдеры боятся блокировать
-        { 
-            urls: 'turn:openrelay.metered.ca:80', 
-            username: 'openrelayproject', 
-            credential: 'openrelayproject' 
-        },
-        { 
-            urls: 'turn:openrelay.metered.ca:443', 
-            username: 'openrelayproject', 
-            credential: 'openrelayproject' 
-        },
-        { 
-            urls: 'turn:openrelay.metered.ca:443?transport=tcp', 
-            username: 'openrelayproject', 
-            credential: 'openrelayproject' 
+            iceServers: [
+                // Бронебойный список серверов Google для пробития мобильного интернета
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
+                // Резервный TURN-сервер по защищенному порту (чтобы операторы не блокировали)
+                { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+                { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+            ] 
+        };
+
+        function startCallTimer() {
+            if (callTimerInterval) return; 
+            callStartTime = Date.now();
+            callTimerInterval = setInterval(() => {
+                const diff = Math.floor((Date.now() - callStartTime) / 1000);
+                const m = String(Math.floor(diff / 60)).padStart(2, '0');
+                const s = String(diff % 60).padStart(2, '0');
+                const timeStr = `${m}:${s}`;
+                document.getElementById('callStatusText').innerText = timeStr;
+                if(document.getElementById('miniCallTime')) document.getElementById('miniCallTime').innerText = timeStr;
+            }, 1000);
         }
-    ] 
-};
+        
+        function stopCallTimer() { clearInterval(callTimerInterval); callTimerInterval = null; }
+
+        async function setupWebRTC() {
+            peerConnection = new RTCPeerConnection(rtcConfig);
+            
+            // ЗАЩИТА ОТ ОШИБКИ M-LINES: Сразу резервируем каналы под аудио и видео, 
+            // даже если видео сейчас выключено. Это решает краши при включении камеры!
+            peerConnection.addTransceiver('audio', { direction: 'sendrecv' });
+            peerConnection.addTransceiver('video', { direction: 'sendrecv' });
+
+            if (localStream) { 
+                localStream.getTracks().forEach(track => { peerConnection.addTrack(track, localStream); }); 
+            }
+
+            peerConnection.onnegotiationneeded = async () => {
+                try {
+                    if (peerConnection.signalingState !== "stable") return;
+                    const offer = await peerConnection.createOffer();
+                    await peerConnection.setLocalDescription(offer);
+                    socket.emit('webrtc_offer', {target: activeCallTarget, offer: offer});
+                } catch (err) {
+                    console.error("Ошибка renegotiation:", err);
+                }
+            };
+
+            peerConnection.ontrack = (event) => {
+                startCallTimer();
+                
+                if (event.track.kind === 'audio') {
+                    const remoteAudio = document.getElementById('remoteAudio');
+                    if (remoteAudio.srcObject !== event.streams[0]) {
+                        remoteAudio.srcObject = event.streams[0];
+                        remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
+                    }
+                } 
+                else if (event.track.kind === 'video') {
+                    const remoteVideo = document.getElementById('remoteCallVideo');
+                    const avatarContainer = document.getElementById('callAvatarIcon');
+                    
+                    if (remoteVideo.srcObject !== event.streams[0]) {
+                        remoteVideo.srcObject = event.streams[0];
+                    }
+                    
+                    remoteVideo.style.display = 'block';
+                    avatarContainer.style.display = 'none';
+
+                    event.track.onmute = () => {
+                        remoteVideo.style.display = 'none';
+                        avatarContainer.style.display = 'flex';
+                    };
+                    event.track.onunmute = () => {
+                        remoteVideo.style.display = 'block';
+                        avatarContainer.style.display = 'none';
+                    };
+                }
+            };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
+            };
+        }
 
         function startCallTimer() {
             if (callTimerInterval) return; 
