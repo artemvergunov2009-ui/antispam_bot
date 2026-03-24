@@ -38,6 +38,9 @@
         button:hover { background: #b8916b; transform: scale(1.02); }
         .error { color: #e57373; margin-bottom: 15px; font-weight: bold; }
     </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
 </head>
 <body>
     <div class="login-container">
@@ -51,5 +54,36 @@
             <button type="submit">Войти / Регистрация</button>
         </form>
     </div>
+
+    <div id="qr-container" style="text-align: center; margin-top: 20px;">
+    <button type="button" onclick="generateQR()" style="padding: 10px; background: var(--main-color, #d1a982); color: white; border: none; border-radius: 10px; cursor: pointer;">
+        Вход по QR-коду
+    </button>
+    <div id="qr-box" style="display: none; margin-top: 15px;">
+        <p style="color: #888; font-size: 14px;">Отсканируйте код через приложение на телефоне</p>
+        <img id="qr-image" src="" alt="QR" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+    </div>
+</div>
+<script>
+    const socket = io();
+
+    function generateQR() {
+        document.getElementById('qr-box').style.display = 'block';
+        document.getElementById('qr-image').src = "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"; // Гифка загрузки
+        socket.emit('request_qr'); // Просим сервер дать токен
+    }
+
+    // Сервер сгенерировал токен — рисуем картинку!
+    socket.on('qr_generated', (data) => {
+        // Мы используем публичный генератор, который превратит наш длинный токен в картинку QR-кода
+        document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${data.token}&color=3e2723`;
+    });
+
+    // Телефон подтвердил код — нас пускают!
+    socket.on('qr_approved', (data) => {
+        document.getElementById('qr-box').innerHTML = "<h3 style='color: #4CAF50;'>Успешно! Входим...</h3>";
+        window.location.href = `/qr_login_execute?token=${data.token}`;
+    });
+</script>
 </body>
 </html>
