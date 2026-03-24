@@ -779,7 +779,30 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
         let localStream; let peerConnection; let activeCallTarget = ''; let iceCandidateQueue = [];
         let callTimerInterval = null; let callStartTime = null; let isCallAnswered = false;
 
-        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }] };
+        const rtcConfig = { 
+    iceServers: [
+        // Пачка надежных STUN-серверов от Google (чтобы пробить базовую защиту)
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        // Тот самый бесплатный TURN, но теперь мы стучимся по защищенным портам (443), которые провайдеры боятся блокировать
+        { 
+            urls: 'turn:openrelay.metered.ca:80', 
+            username: 'openrelayproject', 
+            credential: 'openrelayproject' 
+        },
+        { 
+            urls: 'turn:openrelay.metered.ca:443', 
+            username: 'openrelayproject', 
+            credential: 'openrelayproject' 
+        },
+        { 
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp', 
+            username: 'openrelayproject', 
+            credential: 'openrelayproject' 
+        }
+    ] 
+};
 
         function startCallTimer() {
             if (callTimerInterval) return; 
