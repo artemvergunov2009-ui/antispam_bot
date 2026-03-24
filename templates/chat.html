@@ -11,7 +11,12 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
     <style>
         :root {
             --bg-color: #fdfaf5; --sidebar-bg: #ffffff; --chat-area-bg: #f5eee6;
@@ -516,6 +521,7 @@
         <ul class="drawer-menu">
             <li class="drawer-item" id="adminPanelBtn" style="display:none; color: var(--main-color);" onclick="openAdminPanel()">👑 Админ-панель</li>
             <li class="drawer-item" onclick="openStoryCreatorModal()">📸 Выложить историю</li>
+            <li class="drawer-item" onclick="openScanner()">📱 Привязать устройство</li>
             <li class="drawer-item" onclick="openSettingsModal()">⚙️ Настройки</li>
             <li class="drawer-item" onclick="openHelpModal()">❓ Помощь</li>
             <li class="drawer-item" onclick="window.location.href='/logout'" style="color: #e57373; margin-top: auto; border-top: 1px solid var(--input-border);">🚪 Выйти</li>
@@ -651,6 +657,19 @@
             </div>
             <ul id="groupMemberList" style="list-style: none; padding: 0; text-align: left; max-height: 150px; overflow-y: auto;"></ul>
             <div class="modal-buttons"><button class="modal-btn btn-cancel" style="width: 100%" onclick="closeModal('groupInfoModal')">Закрыть</button></div>
+        </div>
+    </div>
+
+   <div id="qrScannerModal" class="modal" style="z-index: 10500;">
+        <div class="modal-content" style="width: 320px; text-align: center;">
+            <h3 style="margin-top: 0;">Сканировать код</h3>
+            <p style="font-size: 0.8em; color: var(--text-color-light); margin-bottom: 15px;">Наведите камеру на QR-код на экране компьютера</p>
+            
+            <div id="qr-reader" style="width: 100%; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--main-color);"></div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" style="width: 100%;" onclick="closeScanner()">Отмена</button>
+            </div>
         </div>
     </div>
 
@@ -1877,7 +1896,50 @@ endCallLocally = function() {
     document.getElementById('btnCamera').style.backgroundColor = 'rgba(255,255,255,0.15)';
     document.getElementById('btnCamera').style.color = 'white';
 };
-    
+
+ // ==========================================
+        // СКАНЕР QR КОДОВ ДЛЯ АВТОРИЗАЦИИ ПК
+        // ==========================================
+        let html5QrcodeScanner = null;
+
+        function openScanner() {
+            openModal('qrScannerModal');
+            
+            // Запускаем камеру и сканер
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "qr-reader", { fps: 10, qrbox: {width: 200, height: 200} }, /* verbose= */ false);
+                
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        function closeScanner() {
+            closeModal('qrScannerModal');
+            if (html5QrcodeScanner) {
+                // Выключаем камеру при закрытии
+                html5QrcodeScanner.clear().catch(error => {
+                    console.error("Ошибка остановки сканера", error);
+                });
+                html5QrcodeScanner = null;
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Камера увидела код! decodedText - это тот самый длинный токен с компа
+            console.log("Распознан токен:", decodedText);
+            
+            // Тормозим камеру и закрываем окно
+            closeScanner();
+            showToast("QR-код распознан! Входим...", "info");
+            
+            // Отправляем токен на наш сервер, чтобы он пустил комп
+            socket.emit('approve_qr', { token: decodedText });
+        }
+
+        function onScanFailure(error) {
+            // Эту функцию библиотека вызывает постоянно, пока не найдет код.
+            // Просто игнорируем, чтобы не засорять консоль.
+        }
+
     </script>
 </body>
 </html>
