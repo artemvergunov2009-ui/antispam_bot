@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -420,31 +420,31 @@
                 <button class="tg-icon-btn" onclick="showToast('Вид сеткой')">🔲</button>
             </div>
             <div class="tg-call-top-right">
-                <button class="tg-icon-btn" onclick="minimizeCall()">⌄</button>
-            </div>
+    <button class="tg-icon-btn" onclick="minimizeCall()">⌄</button>
+</div>
         </div>
 
         <div class="tg-call-center">
-            <video id="remoteCallVideo" autoplay playsinline style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0;"></video>
-            
-            <video id="localCallVideo" autoplay muted playsinline style="display:none; position:absolute; top:90px; right:20px; width:110px; height:160px; border-radius:15px; border:2px solid rgba(255,255,255,0.3); object-fit:cover; z-index:10; box-shadow: 0 5px 25px rgba(0,0,0,0.5);"></video>
+    <video id="remoteCallVideo" autoplay playsinline style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0;"></video>
+    
+    <video id="localCallVideo" autoplay muted playsinline style="display:none; position:absolute; top:90px; right:20px; width:110px; height:160px; border-radius:15px; border:2px solid rgba(255,255,255,0.3); object-fit:cover; z-index:10; box-shadow: 0 5px 25px rgba(0,0,0,0.5);"></video>
 
-            <div class="tg-call-avatar-container" style="z-index: 1;">
-                <div class="tg-call-avatar call-avatar-pulse" id="callAvatarIcon">?</div>
-            </div>
-            <h2 id="callTargetName" class="tg-call-name" style="z-index: 1;">Собеседник</h2>
-            <p id="callStatusText" class="tg-call-status" style="z-index: 1;">Установка связи...</p>
-        </div>
+    <div class="tg-call-avatar-container" style="z-index: 1;">
+        <div class="tg-call-avatar call-avatar-pulse" id="callAvatarIcon">?</div>
+    </div>
+    <h2 id="callTargetName" class="tg-call-name" style="z-index: 1;">Собеседник</h2>
+    <p id="callStatusText" class="tg-call-status" style="z-index: 1;">Установка связи...</p>
+</div>
 
         <div class="tg-call-bottom-area">
             <button class="tg-call-swipe-btn" onclick="toggleCallExtraMenu()">︿</button>
             <div class="tg-call-controls">
-                <button id="btnLoudspeaker" class="tg-call-btn" onclick="toggleSpeaker()">🔊</button>
-                <button id="btnCamera" class="tg-call-btn" onclick="toggleCallVideo()">📹</button>
-                <button class="tg-call-btn" id="btnMuteAudio" onclick="toggleAudio()">🎤</button>
-                <button id="btnHand" class="tg-call-btn" onclick="toggleHand()">✋</button>
-                <button class="tg-call-btn end-call" onclick="endCall()">☎</button>
-            </div>
+    <button id="btnLoudspeaker" class="tg-call-btn" onclick="toggleSpeaker()">🔊</button>
+    <button id="btnCamera" class="tg-call-btn" onclick="toggleCallVideo()">📹</button>
+    <button class="tg-call-btn" id="btnMuteAudio" onclick="toggleAudio()">🎤</button>
+    <button id="btnHand" class="tg-call-btn" onclick="toggleHand()">✋</button>
+    <button class="tg-call-btn end-call" onclick="endCall()">☎</button>
+</div>
         </div>
 
         <div id="callExtraMenuWrapper" class="tg-call-extra-menu">
@@ -660,62 +660,15 @@
         const currentUser = "{{ username }}";
 
         // Регистрация Service Worker для фоновых пушей
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.register('/sw.js')
-            .then(function(swReg) {
-                console.log('Service Worker успешно зарегистрирован!', swReg);
-            })
-            .catch(function(error) {
-                console.error('Ошибка регистрации Service Worker:', error);
-            });
-        }
-
-        // ==========================================
-        // МАГИЯ ДЛЯ PUSH-УВЕДОМЛЕНИЙ (VAPID)
-        // ==========================================
-        const publicVapidKey = 'ТВОЙ_PUBLIC_KEY_СЮДА'; // Вставь сюда сгенерированный публичный ключ
-
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
-            return outputArray;
-        }
-
-        async function subscribeUserToPush() {
-            if ('serviceWorker' in navigator && 'PushManager' in window) {
-                try {
-                    const registration = await navigator.serviceWorker.ready;
-                    const permission = await Notification.requestPermission();
-                    
-                    if (permission !== 'granted') {
-                        showToast('Разрешение на уведомления не дано', 'error');
-                        return;
-                    }
-
-                    const subscription = await registration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-                    });
-                    
-                    // Отправляем данные подписки на наш Python сервер
-                    await fetch('/subscribe', {
-                        method: 'POST',
-                        body: JSON.stringify(subscription),
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    
-                    showToast('Уведомления успешно подключены!');
-                } catch (err) {
-                    console.error('Ошибка подписки:', err);
-                    showToast('Ошибка при подписке на уведомления', 'error');
-                }
-            } else {
-                showToast('Ваш браузер не поддерживает Push-уведомления', 'error');
-            }
-        }
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+    navigator.serviceWorker.register('/sw.js')
+    .then(function(swReg) {
+        console.log('Service Worker успешно зарегистрирован!', swReg);
+    })
+    .catch(function(error) {
+        console.error('Ошибка регистрации Service Worker:', error);
+    });
+}
 
         let messagesStore = {}; let pinnedMsgs = new Map(); let myChatsList = [];
         let isSelectMode = false; let selectedMsgs = new Set();
@@ -749,11 +702,12 @@
         socket.on('client_init_data', data => { if (data.is_verified) { document.getElementById('adminPanelBtn').style.display = 'flex'; } });
 
         function renderVerified(name) {
-            if (name === 'Samberrrgram Official' || verifiedUsersList.includes(name)) {
-                return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
-            }
-            return name;
-        }
+    // Принудительно ставим галочку официальному каналу ИЛИ верифицированным юзерам
+    if (name === 'Samberrrgram Official' || verifiedUsersList.includes(name)) {
+        return `${name} <span class="verified-badge" title="Верифицирован"></span>`;
+    }
+    return name;
+}
 
         function openAdminPanel() { socket.emit('get_admin_users'); document.getElementById('adminPanelOverlay').style.display = 'flex'; closeDrawer(); }
         
@@ -808,23 +762,18 @@
             const audios = ['msgSound', 'ringtoneAudio', 'dialingAudio', 'acceptAudio', 'rejectAudio', 'endAudio'];
             audios.forEach(id => {
                 const a = document.getElementById(id);
-                if(a) {
-                    a.muted = true;
-                    a.play().then(() => { 
-                        a.pause(); 
-                        a.currentTime = 0; 
-                        a.muted = false;
-                    }).catch(e => {});
-                }
+                if(a) a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(e => {});
             });
+            document.body.removeEventListener('click', unlockAudio);
         }, { once: true });
 
         // ==========================================
-        // ЗВОНКИ И ИСТОРИЯ (WebRTC)
+        // ЗВОНКИ И ИСТОРИЯ (ТВОЙ КОД)
         // ==========================================
         let localStream; let peerConnection; let activeCallTarget = ''; let iceCandidateQueue = [];
         let callTimerInterval = null; let callStartTime = null; let isCallAnswered = false;
-        let isCallVideoEnabled = false;
+
+        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }] };
 
         function startCallTimer() {
             if (callTimerInterval) return; 
@@ -833,101 +782,66 @@
                 const diff = Math.floor((Date.now() - callStartTime) / 1000);
                 const m = String(Math.floor(diff / 60)).padStart(2, '0');
                 const s = String(diff % 60).padStart(2, '0');
-                const timeStr = `${m}:${s}`;
-                document.getElementById('callStatusText').innerText = timeStr;
-                if(document.getElementById('miniCallTime')) document.getElementById('miniCallTime').innerText = timeStr;
+                document.getElementById('callStatusText').innerText = `${m}:${s}`;
             }, 1000);
         }
-        
         function stopCallTimer() { clearInterval(callTimerInterval); callTimerInterval = null; }
 
         async function setupWebRTC() {
-            // 1. Динамически получаем твои личные мощные TURN-серверы
-            const response = await fetch("https://samberrrgram.metered.live/api/v1/turn/credentials?apiKey=dfd2f65a68d9f2975f474f28004d4c66008c");
-            const meteredIceServers = await response.json();
-            
-            // 2. Собираем конфиг: Google STUN + твои TURN-серверы
-            const rtcConfig = { 
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    ...meteredIceServers
-                ] 
-            };
+    peerConnection = new RTCPeerConnection(rtcConfig);
+    if (localStream) { 
+        localStream.getTracks().forEach(track => { peerConnection.addTrack(track, localStream); }); 
+    }
 
-            // 3. Запускаем WebRTC с новым конфигом
-            peerConnection = new RTCPeerConnection(rtcConfig);
-            
-            // Создаем постоянные "трубы" для аудио и видео с самого начала!
-            peerConnection.addTransceiver('audio', { direction: 'sendrecv' });
-            peerConnection.addTransceiver('video', { direction: 'sendrecv' });
+    // Если мы добавили или удалили видео-трек, нужно обновить соединение
+    peerConnection.onnegotiationneeded = async () => {
+        try {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('webrtc_offer', {target: activeCallTarget, offer: offer});
+        } catch (err) {
+            console.error("Ошибка renegotiation:", err);
+        }
+    };
 
-            if (localStream) { 
-                localStream.getTracks().forEach(track => {
-                    const transceiver = peerConnection.getTransceivers().find(t => t.receiver.track.kind === track.kind);
-                    if (transceiver) {
-                        transceiver.sender.replaceTrack(track);
-                    }
-                }); 
+    peerConnection.ontrack = (event) => {
+        startCallTimer();
+        
+        if (event.track.kind === 'audio') {
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio.srcObject !== event.streams[0]) {
+                remoteAudio.srcObject = event.streams[0];
+                remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
             }
+        } 
+        else if (event.track.kind === 'video') {
+            const remoteVideo = document.getElementById('remoteCallVideo');
+            const avatarContainer = document.getElementById('callAvatarIcon');
+            
+            if (remoteVideo.srcObject !== event.streams[0]) {
+                remoteVideo.srcObject = event.streams[0];
+            }
+            
+            remoteVideo.style.display = 'block';
+            avatarContainer.style.display = 'none';
 
-            peerConnection.onnegotiationneeded = async () => {
-                try {
-                    if (peerConnection.signalingState !== "stable") return;
-                    const offer = await peerConnection.createOffer();
-                    await peerConnection.setLocalDescription(offer);
-                    socket.emit('webrtc_offer', {target: activeCallTarget, offer: offer});
-                } catch (err) {
-                    console.error("Ошибка renegotiation:", err);
-                }
+            // Если собеседник выключил камеру
+            event.track.onmute = () => {
+                remoteVideo.style.display = 'none';
+                avatarContainer.style.display = 'flex';
             };
-
-            peerConnection.ontrack = (event) => {
-                startCallTimer();
-                
-                if (event.track.kind === 'audio') {
-                    const remoteAudio = document.getElementById('remoteAudio');
-                    if (remoteAudio.srcObject !== event.streams[0]) {
-                        remoteAudio.srcObject = event.streams[0];
-                        remoteAudio.play().catch(e => { document.getElementById('forcePlayBtn').style.display = 'block'; });
-                    }
-                } 
-                else if (event.track.kind === 'video') {
-                    const remoteVideo = document.getElementById('remoteCallVideo');
-                    const avatarContainer = document.getElementById('callAvatarIcon');
-                    
-                    if (remoteVideo.srcObject !== event.streams[0]) {
-                        remoteVideo.srcObject = event.streams[0];
-                    }
-                    
-                    remoteVideo.style.display = 'block';
-                    avatarContainer.style.display = 'none';
-
-                    event.track.onmute = () => {
-                        remoteVideo.style.display = 'none';
-                        avatarContainer.style.display = 'flex';
-                    };
-                    event.track.onunmute = () => {
-                        remoteVideo.style.display = 'block';
-                        avatarContainer.style.display = 'none';
-                    };
-                }
-            };
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
-            };
-
-            // ДЕТЕКТОР СЕТИ: будет писать в консоль и выдавать плашку при сбоях
-            peerConnection.oniceconnectionstatechange = () => {
-                console.log("Состояние сети WebRTC:", peerConnection.iceConnectionState);
-                if (peerConnection.iceConnectionState === 'failed' || peerConnection.iceConnectionState === 'disconnected') {
-                    showToast("Слабый интернет или жесткий NAT (сеть блокирует звонок)!", "error");
-                }
-                if (peerConnection.iceConnectionState === 'connected') {
-                    console.log("🚀 Успешно пробили NAT и соединились!");
-                }
+            // Если снова включил
+            event.track.onunmute = () => {
+                remoteVideo.style.display = 'block';
+                avatarContainer.style.display = 'none';
             };
         }
+    };
+
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) socket.emit('webrtc_ice_candidate', {target: activeCallTarget, candidate: event.candidate});
+    };
+}
 
         function forcePlayRemoteAudio() { document.getElementById('remoteAudio').play(); document.getElementById('forcePlayBtn').style.display = 'none'; }
 
@@ -939,6 +853,7 @@
                 document.getElementById('localAudio').srcObject = localStream;
                 activeCallTarget = currentChatTarget;
                 
+                // Настраиваем новый дизайн
                 document.getElementById('callTargetName').innerHTML = renderVerified(activeCallTarget);
                 document.getElementById('callAvatarIcon').innerText = activeCallTarget.charAt(0).toUpperCase();
                 document.getElementById('callModalTargetName').innerText = activeCallTarget;
@@ -985,6 +900,7 @@
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 document.getElementById('localAudio').srcObject = localStream;
                 
+                // Настраиваем новый дизайн
                 document.getElementById('callTargetName').innerHTML = renderVerified(activeCallTarget);
                 document.getElementById('callAvatarIcon').innerText = activeCallTarget.charAt(0).toUpperCase();
                 document.getElementById('callModalTargetName').innerText = activeCallTarget;
@@ -1071,29 +987,20 @@
             btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
             btn.style.color = 'white';
         
-            document.getElementById('remoteCallVideo').style.display = 'none';
-            document.getElementById('localCallVideo').style.display = 'none';
-            document.getElementById('callAvatarIcon').style.display = 'flex'; 
+            // Внутри endCallLocally добавь:
+document.getElementById('remoteCallVideo').style.display = 'none';
+document.getElementById('localCallVideo').style.display = 'none';
+document.getElementById('callAvatarIcon').style.display = 'flex'; // Возвращаем аватарку
 
-            if (localVideoTrack) {
-                localVideoTrack.stop();
-                localVideoTrack = null;
-            }
+if (localVideoTrack) {
+    localVideoTrack.stop();
+    localVideoTrack = null;
+}
 
-            document.getElementById('btnHand').innerText = '✋';
-            document.getElementById('btnHand').onclick = toggleHand;
-            callFacingMode = 'user';
-            
-            isCallVideoEnabled = false;
-            isSpeaker = false;
-            isHandRaised = false;
-            
-            document.getElementById('btnLoudspeaker').style.backgroundColor = 'rgba(255,255,255,0.15)';
-            document.getElementById('btnLoudspeaker').style.color = 'white';
-            document.getElementById('btnCamera').style.backgroundColor = 'rgba(255,255,255,0.15)';
-            document.getElementById('btnCamera').style.color = 'white';
-            
-            document.getElementById('miniCallWidget').style.display = 'none';
+// Сброс кнопки ладони/переворота обратно на ладонь
+document.getElementById('btnHand').innerText = '✋';
+document.getElementById('btnHand').onclick = toggleHand;
+callFacingMode = 'user';
         }
 
         // ==========================================
@@ -1293,10 +1200,12 @@
         // ==========================================
         let stagedFiles = [];
         
+        // === ИСПРАВЛЕНИЕ: ДОБАВЛЕНА ПОДДЕРЖКА ЛЮБЫХ ФАЙЛОВ ===
         function handleFileSelect(e) { const files = Array.from(e.target.files); stagedFiles = stagedFiles.concat(files); renderPreviewBar(); checkSendButton(); e.target.value = ''; }
         
         document.addEventListener('paste', (e) => { if (currentRoomId === '') return; if (e.target.tagName === 'INPUT' && e.target.id !== 'messageInput') return; if (e.target.tagName === 'TEXTAREA') return; const items = (e.clipboardData || e.originalEvent.clipboardData).items; let added = false; for (let index in items) { const item = items[index]; if (item.kind === 'file') { const blob = item.getAsFile(); if (blob) { stagedFiles.push(blob); added = true; } } } if (added) { e.preventDefault(); renderPreviewBar(); checkSendButton(); } });
         
+        // === ИСПРАВЛЕНИЕ: ОТОБРАЖЕНИЕ ПРЕВЬЮ ДЛЯ ЛЮБЫХ ФАЙЛОВ ===
         function renderPreviewBar() { const bar = document.getElementById('file-preview-bar'); bar.innerHTML = ''; if (stagedFiles.length === 0) { bar.style.display = 'none'; return; } bar.style.display = 'flex'; stagedFiles.forEach((file, index) => { const wrapper = document.createElement('div'); wrapper.className = 'preview-item-wrapper'; let el; if (file.type.startsWith('image/')) { el = document.createElement('img'); el.src = URL.createObjectURL(file); el.className = 'preview-item'; } else if (file.type.startsWith('video/')) { el = document.createElement('video'); el.src = URL.createObjectURL(file); el.className = 'preview-item'; } else { el = document.createElement('div'); el.innerHTML = '📄'; el.style.width='100%'; el.style.height='100%'; el.style.display='flex'; el.style.flexDirection='column'; el.style.alignItems='center'; el.style.justifyContent='center'; el.style.background='var(--main-color)'; el.style.color='white'; el.style.borderRadius='8px'; el.style.fontSize='20px'; } const rmBtn = document.createElement('button'); rmBtn.className = 'preview-remove'; rmBtn.innerHTML = '✖'; rmBtn.onclick = () => { stagedFiles.splice(index, 1); renderPreviewBar(); checkSendButton(); }; wrapper.appendChild(el); wrapper.appendChild(rmBtn); bar.appendChild(wrapper); }); }
 
         // ==========================================
@@ -1376,6 +1285,7 @@
         function deleteMsgLocally(id) { let del = JSON.parse(localStorage.getItem('deletedMsgs') || '[]'); del.push(id); localStorage.setItem('deletedMsgs', JSON.stringify(del)); const el = document.querySelector(`[data-id="${id}"]`); if(el) el.remove(); showToast("Удалено у вас", "info"); }
         function deleteSingleMsg(id) { showConfirm("Удалить у всех?", "Это сообщение исчезнет у всех собеседников", () => socket.emit('delete_messages', {room: currentRoomId, ids: [id]})); }
 
+        // === ИСПРАВЛЕНИЕ: КНОПКА ОТПРАВКИ РАБОТАЕТ ИДЕАЛЬНО ===
         function checkSendButton() { 
             const hasText = document.getElementById('messageInput').value.trim().length > 0; 
             const hasFiles = stagedFiles.length > 0; 
@@ -1535,6 +1445,7 @@
             if (msg.text) { content += `<div class="msg-text-content">${msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`; }
             
             if (msg.media_url) {
+                // === ИСПРАВЛЕНИЕ: ОТОБРАЖЕНИЕ ЛЮБЫХ ФАЙЛОВ ===
                 if (msg.media_type === 'file') {
                     const urls = msg.media_url.split(',');
                     content += `<div style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">`;
@@ -1610,6 +1521,7 @@
                 }
                 
                 if (uploadedUrls.length > 0) {
+                    // === ИСПРАВЛЕНИЕ: ОТПРАВКА ЛЮБЫХ ФАЙЛОВ ===
                     let mType = 'image';
                     if (isFile) mType = 'file';
                     else if (uploadedUrls.length > 1) mType = 'gallery';
@@ -1636,20 +1548,8 @@
         
         let currentTheme = localStorage.getItem('theme') || 'default'; document.body.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme; document.getElementById('themeSelect').value = currentTheme;
         function changeTheme(val) { document.body.className = val === 'default' ? '' : 'theme-' + val; localStorage.setItem('theme', val); }
-        
-        let pushEnabled = localStorage.getItem('pushEnabled') === 'true'; 
-        if (pushEnabled) { document.getElementById('notifToggle').checked = true; }
-        
-        function toggleNotifications() { 
-            pushEnabled = document.getElementById('notifToggle').checked; 
-            localStorage.setItem('pushEnabled', pushEnabled); 
-            
-            if (pushEnabled) {
-                subscribeUserToPush(); 
-            } else {
-                if (Notification.permission !== "granted") Notification.requestPermission();
-            }
-        }
+        let pushEnabled = localStorage.getItem('pushEnabled') === 'true'; if (pushEnabled) { document.getElementById('notifToggle').checked = true; }
+        function toggleNotifications() { pushEnabled = document.getElementById('notifToggle').checked; localStorage.setItem('pushEnabled', pushEnabled); if (pushEnabled && Notification.permission !== "granted") Notification.requestPermission(); }
         
         let typingTimer; let isTyping = false;
         function handleTyping() { if (currentRoomId === '') return; if (!isTyping) { isTyping = true; socket.emit('typing', {room: currentRoomId, action: 'typing'}); } clearTimeout(typingTimer); typingTimer = setTimeout(() => { isTyping = false; socket.emit('stop_typing', {room: currentRoomId}); }, 1500); }
@@ -1668,14 +1568,6 @@
 
         function formatLastSeen(iso) { if (!iso || iso.startsWith('1970')) return 'был(а) недавно'; const d = new Date(iso); const now = new Date(); const hh = d.getHours().toString().padStart(2, '0'); const mm = d.getMinutes().toString().padStart(2, '0'); if ((now - d)/(1000*60*60) < 24 && now.getDate() === d.getDate()) return `в сети в ${hh}:${mm}`; return `в сети ${d.getDate().toString().padStart(2, '0')}.${(d.getMonth()+1).toString().padStart(2, '0')} в ${hh}:${mm}`; }
         function formatTime(iso) { if (!iso || iso.startsWith('1970')) return ''; const d = new Date(iso); return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`; }
-
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerText = message;
-            document.getElementById('toastContainer').appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
 
         socket.on('connect', () => { 
             socket.emit('user_connected'); 
@@ -1806,7 +1698,186 @@
             }
         }
 
+    
         function closeMobileChat(e) { e.stopPropagation(); document.getElementById('sidebar').style.display = 'flex'; document.getElementById('chat-area').style.display = 'none'; document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active')); currentRoomId = ''; }
+    
+    // ==========================================
+// НОВЫЕ ФУНКЦИИ УПРАВЛЕНИЯ ЗВОНКАМИ
+// ==========================================
+
+// 1. Громкая связь (Визуальный переключатель)
+let isSpeaker = false;
+function toggleSpeaker() {
+    isSpeaker = !isSpeaker;
+    const btn = document.getElementById('btnLoudspeaker');
+    btn.style.backgroundColor = isSpeaker ? 'white' : 'rgba(255,255,255,0.15)';
+    btn.style.color = isSpeaker ? 'black' : 'white';
+    showToast(isSpeaker ? 'Громкая связь включена' : 'Громкая связь выключена');
+}
+
+// 2. Включение/Выключение камеры во время звонка
+let localVideoTrack = null;
+let callFacingMode = 'user'; // 'user' - фронталка, 'environment' - основная
+
+async function toggleCallVideo() {
+    const btn = document.getElementById('btnCamera');
+    const btnHand = document.getElementById('btnHand');
+    const localVideo = document.getElementById('localCallVideo');
+    
+    if (!peerConnection) return;
+
+    if (!isCallVideoEnabled) {
+        try {
+            const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: callFacingMode } });
+            localVideoTrack = videoStream.getVideoTracks()[0];
+            
+            // Показываем себя в окошке
+            localVideo.srcObject = new MediaStream([localVideoTrack]);
+            localVideo.style.display = 'block';
+            localVideo.style.transform = callFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+
+            // Отправляем трек собеседнику
+            const senders = peerConnection.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) {
+                videoSender.replaceTrack(localVideoTrack);
+            } else {
+                peerConnection.addTrack(localVideoTrack, localStream);
+            }
+
+            isCallVideoEnabled = true;
+            btn.style.backgroundColor = 'white';
+            btn.style.color = 'black';
+            
+            // Превращаем ладонь в кнопку переворота камеры
+            btnHand.innerText = '🔄';
+            btnHand.onclick = flipCallCamera;
+            
+        } catch (err) {
+            showToast("Нет доступа к камере!", "error");
+        }
+    } else {
+        // Выключаем камеру
+        if (localVideoTrack) {
+            localVideoTrack.stop();
+            const senders = peerConnection.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) peerConnection.removeTrack(videoSender);
+            localVideoTrack = null;
+        }
+        
+        localVideo.style.display = 'none';
+        isCallVideoEnabled = false;
+        btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
+        btn.style.color = 'white';
+        
+        // Возвращаем ладонь
+        btnHand.innerText = '✋';
+        btnHand.onclick = toggleHand;
+    }
+}
+
+async function flipCallCamera() {
+    if (!isCallVideoEnabled || !localVideoTrack) return;
+    
+    callFacingMode = callFacingMode === 'user' ? 'environment' : 'user';
+    localVideoTrack.stop(); 
+    
+    try {
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: callFacingMode } });
+        localVideoTrack = videoStream.getVideoTracks()[0];
+        
+        const localVideo = document.getElementById('localCallVideo');
+        localVideo.srcObject = new MediaStream([localVideoTrack]);
+        localVideo.style.transform = callFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+        
+        // Моментально заменяем трек в текущем соединении без обрыва связи
+        const senders = peerConnection.getSenders();
+        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+        if (videoSender) {
+            videoSender.replaceTrack(localVideoTrack);
+        }
+    } catch (err) {
+        showToast("Не удалось перевернуть камеру", "error");
+    }
+}
+
+// 4. Поднятие руки (Ладонь)
+let isHandRaised = false;
+function toggleHand() {
+    isHandRaised = !isHandRaised;
+    const btn = document.getElementById('btnHand');
+    btn.style.backgroundColor = isHandRaised ? 'white' : 'rgba(255,255,255,0.15)';
+    btn.style.color = isHandRaised ? 'black' : 'white';
+    
+    // Отправляем сигнал собеседнику
+    socket.emit('call_action', { target: activeCallTarget, action: 'hand', state: isHandRaised });
+    showToast(isHandRaised ? 'Вы подняли руку' : 'Вы опустили руку');
+}
+
+// Слушаем действия от собеседника (поднятие руки)
+socket.on('call_action', (data) => {
+    if (data.action === 'hand') {
+        const targetEl = document.getElementById('callTargetName');
+        if (data.state) {
+            showToast('Собеседник поднял руку ✋');
+            if (!targetEl.innerText.includes('✋')) targetEl.innerHTML += ' <span style="color:#ffcc00;">✋</span>';
+        } else {
+            targetEl.innerHTML = targetEl.innerHTML.replace(/<span.*?>✋<\/span>/, '').trim();
+        }
+    }
+});
+
+// 6 & 9. Скрытие звонка в фон и возврат
+function minimizeCall() {
+    document.getElementById('activeCallOverlay').style.display = 'none';
+    document.getElementById('miniCallWidget').style.display = 'flex';
+    
+    // Переносим аватарку на мини-виджет
+    const mainAvatar = document.getElementById('callAvatarIcon');
+    const miniAvatar = document.getElementById('miniCallAvatar');
+    miniAvatar.style.backgroundImage = mainAvatar.style.backgroundImage;
+    miniAvatar.innerText = mainAvatar.style.backgroundImage === 'none' ? mainAvatar.innerText : '';
+}
+
+function restoreCall() {
+    document.getElementById('miniCallWidget').style.display = 'none';
+    document.getElementById('activeCallOverlay').style.display = 'flex';
+}
+
+// Синхронизация времени на мини-виджете
+const originalStartCallTimer = startCallTimer;
+startCallTimer = function() {
+    if (callTimerInterval) return; 
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(() => {
+        const diff = Math.floor((Date.now() - callStartTime) / 1000);
+        const m = String(Math.floor(diff / 60)).padStart(2, '0');
+        const s = String(diff % 60).padStart(2, '0');
+        const timeStr = `${m}:${s}`;
+        document.getElementById('callStatusText').innerText = timeStr;
+        document.getElementById('miniCallTime').innerText = timeStr; // Добавлено для виджета
+    }, 1000);
+};
+
+// Не забываем прятать виджет при завершении звонка
+const originalEndCallLocally = endCallLocally;
+endCallLocally = function() {
+    originalEndCallLocally();
+    document.getElementById('miniCallWidget').style.display = 'none';
+    
+    // Сбрасываем кнопки
+    isHandRaised = false;
+    isSpeaker = false;
+    isCallVideoEnabled = false;
+    document.getElementById('btnHand').style.backgroundColor = 'rgba(255,255,255,0.15)';
+    document.getElementById('btnHand').style.color = 'white';
+    document.getElementById('btnLoudspeaker').style.backgroundColor = 'rgba(255,255,255,0.15)';
+    document.getElementById('btnLoudspeaker').style.color = 'white';
+    document.getElementById('btnCamera').style.backgroundColor = 'rgba(255,255,255,0.15)';
+    document.getElementById('btnCamera').style.color = 'white';
+};
+    
     </script>
 </body>
 </html>
