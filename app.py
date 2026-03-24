@@ -723,4 +723,5 @@ def approve_qr(data):
         except Exception: pass
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    # Выключаем debug, чтобы Python не дублировал приложение в памяти!
+    socketio.run(app, debug=False)
