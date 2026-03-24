@@ -1924,15 +1924,16 @@ endCallLocally = function() {
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            // Камера увидела код! decodedText - это тот самый длинный токен с компа
             console.log("Распознан токен:", decodedText);
-            
-            // Тормозим камеру и закрываем окно
             closeScanner();
-            showToast("QR-код распознан! Входим...", "info");
+            showToast("QR-код распознан! Авторизуем ПК...", "info");
             
-            // Отправляем токен на наш сервер, чтобы он пустил комп
-            socket.emit('approve_qr', { token: decodedText });
+            // ЯВНО передаем твой никнейм (currentUser), чтобы iOS ничего не потерял!
+            // Заодно делаем .trim(), чтобы убрать случайные пробелы
+            socket.emit('approve_qr', { 
+                token: decodedText.trim(),
+                username: currentUser 
+            });
         }
 
         function onScanFailure(error) {
