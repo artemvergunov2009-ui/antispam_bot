@@ -319,11 +319,12 @@
     </div>
 
     <div id="adminPanelOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
-        <div id="adminPanelContent">
-            <button onclick="document.getElementById('adminPanelOverlay').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✖</button>
-            <h2 style="margin-top:0; color:var(--main-color);">👑 Админ-панель</h2>
-            <input type="text" id="adminSearchInput" placeholder="Поиск пользователей..." style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark);">
-            <ul id="adminUsersList"></ul>
+        <div id="adminPanelContent" style="background: var(--modal-bg); padding: 30px; border-radius: var(--border-radius-large); width: 350px; max-height: 85vh; display: flex; flex-direction: column; position: relative; box-shadow: var(--main-shadow); color: var(--text-color-dark);">
+            <button onclick="document.getElementById('adminPanelOverlay').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer; color: var(--text-color-light);">✖</button>
+            <h2 style="margin-top:0; margin-bottom: 15px; color:var(--main-color); text-align: center; flex-shrink: 0;">👑 Админ-панель</h2>
+            <input type="text" id="adminSearchInput" placeholder="Поиск пользователей..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color-dark); box-sizing: border-box; outline: none; flex-shrink: 0; font-family: inherit;">
+            
+            <ul id="adminUsersList" style="list-style: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; text-align: left;"></ul>
         </div>
     </div>
 
