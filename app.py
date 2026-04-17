@@ -113,10 +113,18 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        
         user = supabase.table('users').select('*').eq('username', username).execute()
-        if user.data and check_password_hash(user.data[0]['password'], password):
-            session['username'] = username
-            return redirect(url_for('chat'))
+        
+        # Проверяем: 1. Юзер найден? 2. Пароль в базе не пустой? 3. Пароль совпадает?
+        if user.data:
+            stored_password = user.data[0].get('password')
+            if stored_password and check_password_hash(stored_password, password):
+                session['username'] = username
+                return redirect(url_for('chat'))
+        
+        return "Неверный логин, пароль или аккаунт не настроен"
+    
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
