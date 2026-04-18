@@ -674,6 +674,58 @@
     </div>
 
     <script>
+
+        // --- 1. В самом начале блока <script> добавь переменную ---
+let canPlaySounds = false;
+setTimeout(() => { canPlaySounds = true; }, 2000); // Разрешаем звуки через 2 сек
+
+// --- 2. Найди и замени функцию selectUser(username) на эту ---
+function selectUser(username) {
+    const chatList = document.getElementById('chat-list');
+    let chatItem = document.querySelector(`.chat-item[data-username="${username}"]`);
+
+    if (chatItem) {
+        // Если чат уже есть, просто перемещаем его в самый верх
+        chatList.prepend(chatItem);
+    } else {
+        // Если чата нет, создаем его (используя твою существующую логику)
+        // Но добавляем именно в начало списка
+        const newChatItem = createChatItem(username, 'offline'); // Твоя функция создания
+        chatList.prepend(newChatItem);
+        chatItem = newChatItem;
+    }
+
+    // Мгновенно открываем чат
+    loadChat(username); 
+    
+    // Закрываем поиск (у тебя это searchResults.style.display = 'none')
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('user-search').value = '';
+}
+
+// --- 3. Найди места, где у тебя .play() для звуков, и оберни их ---
+// Пример для звука сообщения:
+function playMessageSound() {
+    if (canPlaySounds) {
+        const msgSound = document.getElementById('message-sound');
+        if (msgSound) {
+            msgSound.currentTime = 0;
+            msgSound.play().catch(e => console.log("Audio play blocked"));
+        }
+    }
+}
+
+// Пример для входящего вызова (рингтона):
+// Здесь можно оставить БЕЗ проверки canPlaySounds, 
+// так как звонок вряд ли придет в первую секунду загрузки, 
+// но для надежности лучше тоже обернуть.
+function playRingtone() {
+    if (canPlaySounds) {
+        const ringtone = document.getElementById('ringtone-sound');
+        if (ringtone) ringtone.play();
+    }
+}
+        
         const socket = io();
         let currentRoomId = ''; let currentRoomType = ''; let currentChatTarget = ''; let myRole = 'member';
         const currentUser = "{{ username }}";
