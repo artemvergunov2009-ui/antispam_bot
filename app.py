@@ -264,9 +264,11 @@ def get_my_chats():
             if chat.get('type') == 'dm':
                 try:
                     m_res = supabase.table('chat_members').select('username').eq('chat_id', chat['id']).execute()
-                    other = next((m['username'] for m in m_res.data if m['username'] != me), me)
+                    usernames = [m['username'] for m in m_res.data]
+                    other = next((u for u in usernames if u != me), me if me in usernames else (usernames[0] if usernames else me))
                     u_db = supabase.table('users').select('avatar_url').eq('username', other).execute()
-                    if u_db.data: chat['avatar_url'] = u_db.data[0].get('avatar_url')
+                    if u_db.data and u_db.data[0].get('avatar_url'): 
+                        chat['avatar_url'] = u_db.data[0]['avatar_url']
                 except: pass
             elif chat.get('type') == 'saved':
                 try:
@@ -281,10 +283,11 @@ def get_my_chats():
                     chat['last_msg_time'] = last_msg.data[0]['created_at']
                 else:
                     chat['last_message'] = None
-                    chat['last_msg_time'] = chat.get('created_at', '1970-01-01T00:00:00Z')
+                    # Если сообщений нет, берем время создания чата или текущее время, чтобы он был сверху
+                    chat['last_msg_time'] = chat.get('created_at') or datetime.utcnow().isoformat()
             except: 
                 chat['last_message'] = None
-                chat['last_msg_time'] = chat.get('created_at', '1970-01-01T00:00:00Z')
+                chat['last_msg_time'] = '1970-01-01T00:00:00Z'
 
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
@@ -498,7 +501,7 @@ def on_join(data):
         emit('messages_read', {'room': room, 'by': me}, to=room)
         
         try:
-            history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited, users(avatar_url)').eq('chat_id', room).order('created_at').execute()
+            history = supabase.table('messages').select('id, chat_id, username, text, media_url, media_type, created_at, is_read, reply_to_id, font_style, is_pinned, is_edited').eq('chat_id', room).order('created_at').execute()
             emit('load_history', history.data)
         except Exception as query_err:
             print("Ошибка при получении истории:", query_err)
@@ -729,19 +732,6 @@ def approve_qr(data):
         
         # Даем отмашку компьютеру
         emit('qr_approved', {'token': token}, to=f"qr_{token}")
-
-@socketio.on('approve_qr')
-def approve_qr(data):
-    # Этот сигнал будет отправлять телефон, когда отсканирует код
-    token = data.get('token')
-    username = session.get('username')
-    if username and token:
-        try:
-            # Обновляем статус в базе
-            supabase.table('qr_sessions').update({'status': 'approved', 'username': username}).eq('token', token).execute()
-            # Отправляем компьютеру сигнал: "Пускай его!"
-            emit('qr_approved', {'token': token}, to=f"qr_{token}")
-        except Exception: pass
 
 if __name__ == '__main__':
     # Выключаем debug, чтобы Python не дублировал приложение в памяти!
