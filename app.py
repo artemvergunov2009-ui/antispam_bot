@@ -257,25 +257,29 @@ def get_my_chats():
             chat['my_role'] = my_roles.get(chat['id'], 'member')
             chat['unread_count'] = unread_counts.get(chat['id'], 0)
             if chat.get('type') == 'dm':
-                parts = [p.strip() for p in chat['name'].split('&')]
-                target = parts[0] if len(parts) > 1 and parts[1] == me else (parts[1] if len(parts) > 1 else parts[0])
                 try:
-                    target_db = supabase.table('users').select('avatar_url').eq('username', target).execute()
-                    if target_db.data and target_db.data[0].get('avatar_url'):
-                        chat['avatar_url'] = target_db.data[0]['avatar_url']
+                    m_res = supabase.table('chat_members').select('username').eq('chat_id', chat['id']).execute()
+                    other = next((m['username'] for m in m_res.data if m['username'] != me), me)
+                    u_db = supabase.table('users').select('avatar_url').eq('username', other).execute()
+                    if u_db.data: chat['avatar_url'] = u_db.data[0].get('avatar_url')
+                except: pass
+            elif chat.get('type') == 'saved':
+                try:
+                    u_db = supabase.table('users').select('avatar_url').eq('username', me).execute()
+                    if u_db.data: chat['avatar_url'] = u_db.data[0].get('avatar_url')
                 except: pass
 
             try:
-                last_msg = supabase.table('messages').select('username, text, media_url, media_type, created_at, is_read, is_pinned').eq('chat_id', chat['id']).order('created_at', desc=True).limit(1).execute()
+                last_msg = supabase.table('messages').select('username, text, created_at').eq('chat_id', chat['id']).order('created_at', desc=True).limit(1).execute()
                 if last_msg.data:
                     chat['last_message'] = last_msg.data[0]
                     chat['last_msg_time'] = last_msg.data[0]['created_at']
                 else:
                     chat['last_message'] = None
-                    chat['last_msg_time'] = '1970-01-01T00:00:00Z'
+                    chat['last_msg_time'] = chat.get('created_at', '1970-01-01T00:00:00Z')
             except: 
                 chat['last_message'] = None
-                chat['last_msg_time'] = '1970-01-01T00:00:00Z'
+                chat['last_msg_time'] = chat.get('created_at', '1970-01-01T00:00:00Z')
 
         chats_sorted = sorted(chats.data, key=lambda x: x['last_msg_time'], reverse=True)
         emit('update_chat_list', chats_sorted)
@@ -439,19 +443,31 @@ def update_group_info(data):
 @socketio.on('get_group_info')
 def get_group_info(data):
     room = data.get('room')
+    me = session.get('username')
     try:
         res = supabase.table('chat_members').select('username, role').eq('chat_id', room).execute()
-        chat_res = supabase.table('chats').select('name, avatar_url, description, type, show_members').eq('id', room).execute()
+        chat_res = supabase.table('chats').select('*').eq('id', room).execute()
         if chat_res.data:
+            chat_data = chat_res.data[0]
+            chat_avatar = chat_data.get('avatar_url')
+            if not chat_avatar:
+                if chat_data.get('type') == 'dm':
+                    other = next((m['username'] for m in res.data if m['username'] != me), me)
+                    u_info = supabase.table('users').select('avatar_url').eq('username', other).execute()
+                    if u_info.data: chat_avatar = u_info.data[0].get('avatar_url')
+                elif chat_data.get('type') == 'saved':
+                    u_info = supabase.table('users').select('avatar_url').eq('username', me).execute()
+                    if u_info.data: chat_avatar = u_info.data[0].get('avatar_url')
+
             members_with_avatars = []
             for m in res.data:
                 u_db = supabase.table('users').select('avatar_url').eq('username', m['username']).execute()
-                avatar = u_db.data[0].get('avatar_url') if u_db.data else None
-                members_with_avatars.append({'username': m['username'], 'role': m['role'], 'avatar_url': avatar})
+                avatar_m = u_db.data[0].get('avatar_url') if u_db.data else None
+                members_with_avatars.append({'username': m['username'], 'role': m['role'], 'avatar_url': avatar_m})
             emit('group_info_data', {
-                'room': room, 'members': members_with_avatars, 'name': chat_res.data[0].get('name'),
-                'desc': chat_res.data[0].get('description', ''), 'type': chat_res.data[0].get('type'),
-                'show_members': chat_res.data[0].get('show_members', True), 'avatar_url': chat_res.data[0].get('avatar_url')
+                'room': room, 'members': members_with_avatars, 'name': chat_data.get('name'),
+                'desc': chat_data.get('description', ''), 'type': chat_data.get('type'),
+                'show_members': chat_data.get('show_members', True), 'avatar_url': chat_avatar
             })
     except Exception: pass
 
