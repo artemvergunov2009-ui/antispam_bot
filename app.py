@@ -11,6 +11,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 # Секретный ключ тоже берем из среды, а если его нет — используем запасной
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
+# Устанавливаем срок действия сессии (например, 30 дней)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+app.config['SESSION_COOKIE_SECURE'] = True  # Куки только через HTTPS (Render это поддерживает)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 socketio = SocketIO(app, cors_allowed_origins="*")
 # --- Настройки Supabase (БЕЗОПАСНЫЕ) -
 # Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
