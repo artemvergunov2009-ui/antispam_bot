@@ -2,11 +2,17 @@ import os
 import uuid
 import traceback
 import urllib.parse
+import json
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
 from werkzeug.security import generate_password_hash, check_password_hash
+# Библиотека для Push-уведомлений (нужно установить: pip install pywebpush)
+try:
+    from pywebpush import webpush, WebPushException
+except ImportError:
+    webpush = None
 
 app = Flask(__name__)
 # Секретный ключ тоже берем из среды, а если его нет — используем запасной
@@ -149,6 +155,20 @@ def upload_group_avatar():
         supabase.table('chats').update({'avatar_url': url}).eq('id', chat_id).execute()
         return jsonify({'url': url})
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+@socketio.on('save_push_subscription')
+def save_push_subscription(data):
+    me = session.get('username')
+    if me and data:
+        try:
+            # Сохраняем подписку в колонку push_subscription таблицы users (тип JSONB)
+            supabase.table('users').update({'push_subscription': data}).eq('username', me).execute()
+        except Exception: pass
+
+@socketio.on('get_push_key')
+def get_push_key():
+    if VAPID_PUBLIC_KEY:
+        emit('push_key_data', {'public_key': VAPID_PUBLIC_KEY})
 
 connected_clients = {}
 active_group_calls = {} 
@@ -570,7 +590,9 @@ def handle_message(data):
         members_res = supabase.table('chat_members').select('username').eq('chat_id', room).execute()
         for m in members_res.data:
             target_user = m['username']
-            if target_user != username: emit('new_message_notification', msg_data, to=f"user_{target_user}")
+            if target_user != username:
+                emit('new_message_notification', msg_data, to=f"user_{target_user}")
+                send_push_to_user(target_user, f"Новое сообщение от {username}", text or "Файл", notification_type="message")
     except Exception: pass
 
 @socketio.on('get_profile')
@@ -659,7 +681,10 @@ def get_story_views(data):
 
 # --- ЗВОНКИ (АБСОЛЮТНО ТВОЙ КОД) ---
 @socketio.on('call_user')
-def call_user(data): emit('incoming_call', {'from': session.get('username')}, to=f"user_{data.get('target')}")
+def call_user(data):
+    target = data.get('target')
+    emit('incoming_call', {'from': session.get('username')}, to=f"user_{target}")
+    send_push_to_user(target, "Входящий звонок", f"Вам звонит {session.get('username')}", notification_type="call") # Передаем тип "call"
 
 @socketio.on('answer_call')
 def answer_call(data): emit('call_accepted', {'by': session.get('username')}, to=f"user_{data.get('caller')}")
