@@ -8,12 +8,20 @@ self.addEventListener('push', function(event) {
             body: data.body,
             icon: data.icon || '/static/logo.png', // Твой логотип
             badge: '/static/logo.png',
-            vibrate: [200, 100, 200, 100, 200, 100, 200], // Вибрация для звонка
-            requireInteraction: true, // Уведомление висит, пока юзер не нажмет или не смахнет
             data: {
                 url: data.url || '/chat' // Куда перекинуть при клике
             }
         };
+
+        if (data.type === 'call') {
+            options.vibrate = [200, 100, 200, 100, 200, 100, 200]; // Длинная вибрация для звонка
+            options.requireInteraction = true; // Уведомление висит, пока юзер не нажмет или не смахнет
+            options.tag = 'call'; // Группируем уведомления о звонках
+            options.renotify = true; // Повторно показывать уведомление, если пришел новый звонок
+        } else { // Для обычных сообщений
+            options.vibrate = [200, 100, 200]; // Короткая вибрация для сообщений
+            options.tag = 'message'; // Группируем уведомления о сообщениях
+        }
 
         // Показываем само уведомление
         event.waitUntil(
