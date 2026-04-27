@@ -11,15 +11,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* Улучшенная версия твоей палитры */
             --bg-color: #fdfaf5; 
             --sidebar-bg: #ffffff; 
             --chat-area-bg: #f9f5f0;
@@ -33,14 +31,13 @@
             --message-received-text: #2d2a26;
             --border-color: #eae3d9;
             --shadow-sm: 0 2px 8px rgba(209, 169, 130, 0.1);
-            --shadow-md: 0 8px 24px rgba(209, 169, 130, 0.15);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -52,24 +49,19 @@
             overflow: hidden;
         }
 
-        /* Главный контейнер */
         .app-container {
             display: flex;
             width: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
-            background: var(--bg-color);
-            box-shadow: var(--shadow-md);
+            height: 100%;
         }
 
-        /* --- БОКОВАЯ ПАНЕЛЬ (Сайдбар) --- */
+        /* --- SIDEBAR --- */
         .sidebar {
             width: 320px;
             background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            height: 100%;
             z-index: 10;
         }
 
@@ -84,26 +76,10 @@
         .sidebar-header h2 {
             font-size: 20px;
             font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: color 0.2s;
-            padding: 8px;
-        }
-
-        .icon-btn:hover {
-            color: var(--main-color);
         }
 
         .search-bar {
             padding: 15px;
-            background: var(--sidebar-bg);
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -115,19 +91,12 @@
             padding: 8px 15px;
         }
 
-        .search-wrapper i {
-            color: var(--text-secondary);
-            margin-right: 10px;
-            font-size: 14px;
-        }
-
         .search-wrapper input {
             width: 100%;
             border: none;
             background: transparent;
-            font-size: 14px;
             outline: none;
-            color: var(--text-primary);
+            padding-left: 10px;
         }
 
         .chat-list {
@@ -138,20 +107,15 @@
         .chat-item {
             display: flex;
             align-items: center;
-            padding: 15px 20px;
-            cursor: pointer;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: inherit;
             transition: background 0.2s;
-            border-bottom: 1px solid var(--bg-color);
+            border-bottom: 1px solid rgba(0,0,0,0.03);
         }
 
-        .chat-item:hover {
-            background: var(--bg-color);
-        }
-
-        .chat-item.active {
-            background: rgba(209, 169, 130, 0.1);
-            border-left: 4px solid var(--main-color);
-        }
+        .chat-item:hover { background: var(--bg-color); }
+        .chat-item.active { background: rgba(209, 169, 130, 0.1); }
 
         .avatar {
             width: 48px;
@@ -163,99 +127,49 @@
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 18px;
-            margin-right: 15px;
+            margin-right: 12px;
             flex-shrink: 0;
-            box-shadow: var(--shadow-sm);
         }
 
-        .chat-info {
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .chat-name-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 4px;
-        }
-
-        .chat-name {
-            font-weight: 600;
-            font-size: 15px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-time {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .chat-preview {
-            font-size: 13px;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* --- ЗОНА ЧАТА --- */
+        /* --- CHAT AREA --- */
         .chat-area {
             flex: 1;
             display: flex;
             flex-direction: column;
             background: var(--chat-area-bg);
-            position: relative;
         }
 
         .chat-header {
-            padding: 15px 25px;
+            padding: 12px 25px;
             background: var(--sidebar-bg);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-        }
-
-        .chat-header .avatar {
-            width: 42px;
-            height: 42px;
-            font-size: 16px;
-        }
-
-        .chat-header .status {
-            font-size: 13px;
-            color: var(--main-color);
-            font-weight: 500;
-            margin-top: 2px;
+            gap: 15px;
         }
 
         .messages-container {
             flex: 1;
-            padding: 25px;
+            padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
         }
 
         .message {
             max-width: 70%;
-            padding: 12px 18px;
-            border-radius: 20px;
+            padding: 10px 16px;
+            border-radius: 18px;
             font-size: 15px;
-            line-height: 1.4;
             position: relative;
-            word-wrap: break-word;
             box-shadow: var(--shadow-sm);
+            word-wrap: break-word;
         }
 
         .message.received {
             align-self: flex-start;
             background: var(--message-received-bg);
-            color: var(--message-received-text);
             border-bottom-left-radius: 4px;
         }
 
@@ -266,21 +180,21 @@
             border-bottom-right-radius: 4px;
         }
 
-        .message-time {
+        .message-info {
             font-size: 11px;
+            display: block;
+            margin-top: 4px;
             opacity: 0.7;
-            float: right;
-            margin-top: 8px;
-            margin-left: 12px;
+            text-align: right;
         }
 
-        /* --- ПОЛЕ ВВОДА --- */
+        /* --- INPUT AREA --- */
         .input-area {
-            padding: 15px 25px;
+            padding: 15px 20px;
             background: var(--sidebar-bg);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             border-top: 1px solid var(--border-color);
         }
 
@@ -288,83 +202,59 @@
             flex: 1;
             background: var(--bg-color);
             border-radius: 25px;
+            padding: 5px 15px;
             display: flex;
             align-items: center;
-            padding: 5px 20px;
             border: 1px solid var(--border-color);
         }
 
         .input-wrapper input {
             width: 100%;
-            padding: 10px 0;
+            padding: 10px;
             border: none;
             background: transparent;
-            font-size: 15px;
             outline: none;
-            color: var(--text-primary);
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
         }
 
         .btn-send {
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: var(--main-color);
             color: white;
             border: none;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 16px;
-            box-shadow: var(--shadow-sm);
         }
 
-        .btn-send:hover {
-            background: var(--main-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* --- МОДАЛЬНЫЕ ОКНА И TOASTS --- */
+        /* --- MODALS & TOASTS --- */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(45, 42, 38, 0.6);
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.5);
             z-index: 100;
-            align-items: center;
-            justify-content: center;
+            align-items: center; justify-content: center;
         }
 
         .modal-content {
-            background: var(--sidebar-bg);
-            padding: 30px;
-            border-radius: 24px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 420px;
-            box-shadow: var(--shadow-md);
+            max-width: 400px;
             text-align: center;
-        }
-
-        .close-btn {
-            background: var(--bg-color);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            transition: 0.2s;
-        }
-
-        .close-btn:hover {
-            background: #ffebe6;
-            color: #d9534f;
         }
 
         #toast-container {
@@ -373,46 +263,21 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
         }
 
         .toast {
-            background: rgba(45, 42, 38, 0.9);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 30px;
-            box-shadow: var(--shadow-md);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 10px;
             font-size: 14px;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
         }
 
-        /* --- АДАПТИВНОСТЬ --- */
         @media (max-width: 768px) {
-            .sidebar {
-                position: absolute;
-                width: 100%;
-                z-index: 20;
-                /* Скрывать/показывать сайдбар через JS добавляя класс .hidden */
-            }
-            .sidebar.hidden {
-                transform: translateX(-100%);
-            }
-            .chat-area {
-                width: 100%;
-            }
-            .message {
-                max-width: 85%;
-            }
+            .sidebar { width: 100%; position: absolute; left: 0; height: 100%; }
+            .sidebar.hidden { display: none; }
         }
-
-        /* Кастомный скроллбар */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(209, 169, 130, 0.3); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--main-color); }
     </style>
 </head>
 <body>
@@ -421,71 +286,56 @@
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2>Samberrrgram</h2>
-                <button onclick="openModal('qrScannerModal')" class="icon-btn" title="Авторизовать ПК">
+                <button onclick="openModal('qrScannerModal')" class="btn-icon">
                     <i class="fas fa-qrcode"></i>
                 </button>
             </div>
+            
             <div class="search-bar">
                 <div class="search-wrapper">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Поиск контактов...">
+                    <input type="text" placeholder="Поиск...">
                 </div>
             </div>
-            
+
             <div class="chat-list">
-                <div class="chat-item active">
-                    <div class="avatar">Н</div>
-                    <div class="chat-info">
-                        <div class="chat-name-row">
-                            <span class="chat-name">NEXUS AI Bot</span>
-                            <span class="chat-time">14:20</span>
-                        </div>
-                        <div class="chat-preview">Токен успешно привязан!</div>
+                {% for user in users %}
+                <a href="{{ url_for('chat_with', username=user.username) }}" class="chat-item {% if user.username == chat_partner %}active{% endif %}">
+                    <div class="avatar">{{ user.username[0] | upper }}</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600">{{ user.username }}</div>
+                        <div style="font-size:12px; color:var(--text-secondary)">Нажми, чтобы написать</div>
                     </div>
-                </div>
-                
-                <div class="chat-item">
-                    <div class="avatar" style="background: #b8926a;">M</div>
-                    <div class="chat-info">
-                        <div class="chat-name-row">
-                            <span class="chat-name">Максим Маратович</span>
-                            <span class="chat-time">Вчера</span>
-                        </div>
-                        <div class="chat-preview">Проект принят. Отличная работа!</div>
-                    </div>
-                </div>
-                </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
 
         <div class="chat-area">
             <div class="chat-header">
-                <div class="avatar">Н</div>
-                <div class="chat-info">
-                    <div class="chat-name" style="font-weight: 600; font-size: 16px;">NEXUS AI Bot</div>
-                    <div class="status">печатает...</div>
-                </div>
-                <button class="icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+                <div class="avatar">{{ chat_partner[0] | upper if chat_partner else '?' }}</div>
+                <div style="font-weight:600">{{ chat_partner if chat_partner else 'Выберите чат' }}</div>
             </div>
             
             <div class="messages-container" id="chat-box">
-                <div class="message received">
-                    Привет! Готов к вайб-кодингу? Запускаем Flask-сервер? 🚀
-                    <span class="message-time">14:18</span>
-                </div>
-                
-                <div class="message sent">
-                    Да, дизайн уже обновил. Смотрится пушечно! 😎
-                    <span class="message-time">14:20</span>
-                </div>
-                </div>
+                {% if messages %}
+                    {% for msg in messages %}
+                    <div class="message {% if msg.sender == current_user.username %}sent{% else %}received{% endif %}">
+                        <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">{{ msg.sender }}</div>
+                        {{ msg.content }}
+                        <span class="message-info">{{ msg.timestamp }}</span>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
 
             <div class="input-area">
-                <button class="icon-btn"><i class="fas fa-paperclip"></i></button>
                 <div class="input-wrapper">
-                    <input type="text" id="message-input" placeholder="Написать сообщение...">
-                    <button class="icon-btn" style="padding: 0;"><i class="far fa-smile"></i></button>
+                    <input type="text" id="message-input" placeholder="Сообщение...">
                 </div>
-                <button class="btn-send"><i class="fas fa-paper-plane"></i></button>
+                <button class="btn-send" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -494,83 +344,83 @@
 
     <div id="qrScannerModal" class="modal">
         <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="font-weight: 600;">Сканер QR-кода</h3>
-                <button onclick="closeScanner()" class="close-btn"><i class="fas fa-times"></i></button>
+            <div style="display:flex; justify-content: space-between; margin-bottom: 15px;">
+                <h3>Сканер QR</h3>
+                <button onclick="closeScanner()" class="btn-icon">✕</button>
             </div>
-            <div id="qr-reader" style="width: 100%; border-radius: 15px; overflow: hidden; border: 2px solid var(--border-color);"></div>
+            <div id="qr-reader"></div>
         </div>
     </div>
 
     <script>
         const socket = io();
-        // Вставляем текущего пользователя из Jinja (Flask)
-        let currentUser = "{{ current_user.username if current_user.is_authenticated else 'Guest' }}"; 
+        let currentUser = "{{ current_user.username }}";
+        let chatPartner = "{{ chat_partner }}";
         let html5QrcodeScanner;
 
-        // --- Управление модальными окнами ---
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-            if (modalId === 'qrScannerModal') {
-                initScanner();
+        // ТВОЯ ЛОГИКА ОТПРАВКИ
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (message && chatPartner) {
+                socket.emit('send_message', {
+                    recipient: chatPartner,
+                    message: message
+                });
+                input.value = '';
             }
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
+        socket.on('receive_message', function(data) {
+            const chatBox = document.getElementById('chat-box');
+            const isSent = data.sender === currentUser;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            messageDiv.innerHTML = `
+                <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">${data.sender}</div>
+                ${data.message}
+                <span class="message-info">только что</span>
+            `;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
 
-        // --- Система Toast-уведомлений ---
-        function showToast(message, type = 'info') {
+        // ТВОЯ ЛОГИКА TOAST И QR
+        function showToast(text) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'toast';
-            toast.innerText = message;
-            
+            toast.innerText = text;
             container.appendChild(toast);
-            
-            // Удаляем через 3 секунды
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.5s ease';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
+            setTimeout(() => toast.remove(), 3000);
         }
 
-        // --- Логика QR Сканера ---
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+            if(id === 'qrScannerModal') initScanner();
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
         function initScanner() {
-            // Запускаем камеру и сканер
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, /* verbose= */ false);
-                
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render(onScanSuccess);
+        }
+
+        function onScanSuccess(decodedText) {
+            closeScanner();
+            showToast("QR-код принят!");
+            socket.emit('approve_qr', { token: decodedText.trim(), username: currentUser });
         }
 
         function closeScanner() {
             closeModal('qrScannerModal');
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().catch(error => {
-                    console.error("Ошибка остановки сканера", error);
-                });
-                html5QrcodeScanner = null;
-            }
+            if (html5QrcodeScanner) html5QrcodeScanner.clear();
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            console.log("Распознан токен:", decodedText);
-            closeScanner();
-            showToast("QR-код распознан! Авторизуем ПК...");
-            
-            // ЯВНО передаем твой никнейм
-            socket.emit('approve_qr', { 
-                token: decodedText.trim(),
-                username: currentUser 
-            });
-        }
-
-        function onScanFailure(error) {
-            // Игнорируем постоянные ошибки поиска кода, чтобы не засорять консоль
-        }
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
     </script>
 </body>
 </html>
