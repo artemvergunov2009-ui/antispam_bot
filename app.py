@@ -27,6 +27,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("ВНИМАНИЕ: Ключи Supabase не найдены! Убедитесь, что добавили их в Environment Variables.")
@@ -167,8 +169,32 @@ def save_push_subscription(data):
 
 @socketio.on('get_push_key')
 def get_push_key():
-    if VAPID_PUBLIC_KEY:
+    if VAPID_PUBLIC_KEY: 
         emit('push_key_data', {'public_key': VAPID_PUBLIC_KEY})
+
+def send_push_to_user(target_username, title, body, url='/chat', notification_type='message'):
+    """Отправляет Web-Push уведомление пользователю через Service Worker."""
+    if not webpush or not VAPID_PRIVATE_KEY:
+        return
+    try:
+        # Достаем подписку из базы данных
+        res = supabase.table('users').select('push_subscription').eq('username', target_username).execute()
+        if res.data and res.data[0].get('push_subscription'):
+            subscription_info = res.data[0]['push_subscription']
+            payload = json.dumps({
+                'title': title,
+                'body': body,
+                'url': url,
+                'type': notification_type
+            })
+            webpush(
+                subscription_info=subscription_info,
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": "mailto:admin@sambergram.com"}
+            )
+    except Exception as e:
+        print(f"Ошибка отправки Push-уведомления: {e}")
 
 connected_clients = {}
 active_group_calls = {} 
@@ -181,7 +207,9 @@ def user_connected():
             connected_clients[request.sid] = username
             supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
             join_room(f"user_{username}")
-            emit('status_update', {'username': username, 'status': 'online'}, broadcast=True)
+            
+            # Отправляем статус "в сети" всем КРОМЕ себя, чтобы не слышать звук собственного входа
+            emit('status_update', {'username': username, 'status': 'online'}, broadcast=True, include_self=False)
             
             user_info = supabase.table('users').select('is_verified, role').eq('username', username).execute()
             if user_info.data:
