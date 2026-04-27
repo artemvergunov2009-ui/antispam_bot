@@ -1,10 +1,17 @@
 // Этот код работает в фоне телефона
 
 self.addEventListener('push', function(event) {
-    if (event.data) {
-        const data = event.data.json();
-        
-        const options = {
+    if (!event.data) return;
+
+    let data;
+    try {
+        data = event.data.json();
+    } catch (e) {
+        console.error("Ошибка при чтении данных Push:", e);
+        return;
+    }
+
+    const options = {
             body: data.body,
             icon: data.icon || '/static/logo.png', // Твой логотип
             badge: '/static/logo.png',
@@ -26,8 +33,7 @@ self.addEventListener('push', function(event) {
         // Показываем само уведомление
         event.waitUntil(
             self.registration.showNotification(data.title, options)
-        );
-    }
+        ); 
 });
 
 // Что делать, когда пользователь кликает по уведомлению
