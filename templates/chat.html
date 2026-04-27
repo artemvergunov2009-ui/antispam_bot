@@ -11,12 +11,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='icons.css') }}">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
+    <script src="{{ url_for('static', filename='ui_controller.js') }}"></script>
+
     <style>
         :root {
             --bg-color: #fdfaf5; --sidebar-bg: #ffffff; --chat-area-bg: #f5eee6;
@@ -555,10 +556,11 @@
                 <span class="chat-header-name" id="currentChatName">Выберите чат</span>
                 <span class="chat-header-status" id="currentChatStatus"></span>
             </div>
-            <button id="callButton" class="call-btn" onclick="initiateCall(event)">📞</button>
+            <button id="callButton" class="css-icon-btn call-btn" onclick="initiateCall(event)"><div class="icon-camera"></div></button>
         </div>
         
         <div id="pinned-message-bar">
+            <div id="my-menu" class="msg-context-menu"></div>
             <div id="pinned-message-text" style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1;">📌 Закреплено</div>
             <button id="pinned-unpin-btn" onclick="unpinMsg(event)" style="background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-color-dark);">✖</button>
         </div>
@@ -577,16 +579,16 @@
 
             <div class="input-controls" id="inputControls">
                 <input type="file" id="fileInput" accept="*/*" multiple style="display: none;" onchange="handleFileSelect(event)">
-                <button id="attachBtn" class="attach-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+                <button id="attachBtn" class="css-icon-btn" onclick="document.getElementById('fileInput').click()"><div class="icon-attach"></div></button>
                 <input type="text" id="messageInput" placeholder="Сообщение..." autocomplete="off" oninput="handleTyping(); checkSendButton();">
                 <div id="recordingStatus"></div>
                 
-                <button id="sendBtn" class="attach-btn" style="display:none;" onclick="sendMessage()">➤</button>
+                <button id="sendBtn" class="css-icon-btn" style="display:none;" onclick="sendMessage()"><div class="icon-send"></div></button>
                 
-                <button id="tgRecordBtn" class="attach-btn" 
+                <button id="tgRecordBtn" class="css-icon-btn" 
                     onmousedown="startHold(event)" onmouseup="endHold(event)" onmouseleave="cancelHold(event)"
                     ontouchstart="startHold(event)" ontouchend="endHold(event)" ontouchmove="moveHold(event)">
-                    🎤
+                    <div class="icon-mic" id="tgRecordIcon"></div>
                 </button>
             </div>
         </div>
@@ -1188,8 +1190,12 @@ callFacingMode = 'user';
             if(e && e.cancelable) e.preventDefault();
             clearTimeout(holdTimer);
             const btn = document.getElementById('tgRecordBtn'); if (!btn) return;
+            const icon = document.getElementById('tgRecordIcon');
             btn.style.transform = 'scale(1)'; btn.style.backgroundColor = 'transparent'; btn.style.color = 'var(--text-color-light)';
-            if (!isHolding) { tgMode = tgMode === 'audio' ? 'video' : 'audio'; btn.innerText = tgMode === 'audio' ? '🎤' : '📹'; } 
+            if (!isHolding) { 
+                tgMode = tgMode === 'audio' ? 'video' : 'audio'; 
+                icon.className = tgMode === 'audio' ? 'icon-mic' : 'icon-camera';
+            } 
             else { isHolding = false; stopMediaRecord(!isCancelled); }
         }
 
@@ -1288,19 +1294,18 @@ callFacingMode = 'user';
         document.getElementById('confirmOkBtn').onclick = () => { if(confirmCallback) confirmCallback(); closeConfirm(); };
 
         let pressTimer;
-        function addMsgListeners(wrapper, id, isMe) { wrapper.addEventListener('contextmenu', e => { e.preventDefault(); if(!isSelectMode) showContextMenu(e.clientX, e.clientY, id, isMe); }); wrapper.addEventListener('touchstart', e => { pressTimer = setTimeout(() => { if(!isSelectMode) { const touch = e.touches[0]; showContextMenu(touch.clientX, touch.clientY, id, isMe); } }, 500); }, {passive: true}); wrapper.addEventListener('touchend', () => clearTimeout(pressTimer)); wrapper.addEventListener('touchmove', () => clearTimeout(pressTimer)); wrapper.addEventListener('click', e => { if(isSelectMode) handleMsgClick(e, id); }); }
+        function addMsgListeners(wrapper, id, isMe) { wrapper.addEventListener('contextmenu', e => { e.preventDefault(); if(!isSelectMode) { prepareContextMenu(id, isMe); SmoothUI.showMessageMenu(e, document.getElementById('my-menu')); } }); wrapper.addEventListener('touchstart', e => { pressTimer = setTimeout(() => { if(!isSelectMode) { const touch = e.touches[0]; prepareContextMenu(id, isMe); SmoothUI.showMessageMenu(e, document.getElementById('my-menu')); } }, 500); }, {passive: true}); wrapper.addEventListener('touchend', () => clearTimeout(pressTimer)); wrapper.addEventListener('touchmove', () => clearTimeout(pressTimer)); wrapper.addEventListener('click', e => { if(isSelectMode) handleMsgClick(e, id); }); }
 
         function copyMessageText(id) { const msg = messagesStore[id]; if(msg && msg.text) { navigator.clipboard.writeText(msg.text).then(() => showToast('Текст скопирован!')); } else { showToast('Нет текста для копирования', 'error'); } }
 
-        function showContextMenu(x, y, id, isMyMessage) {
-            const old = document.querySelector('.context-menu'); if (old) old.remove();
-            const menu = document.createElement('div'); menu.className = 'context-menu'; menu.style.visibility = 'hidden'; 
+        function prepareContextMenu(id, isMyMessage) {
+            const menu = document.getElementById('my-menu');
             const isPinned = pinnedMsgs.has(id);
             
             let html = '';
             if (isMyMessage) html += `<div class="context-menu-item" onclick="prepareEdit('${id}')">✏️ Редактировать</div>`;
             html += `<div class="context-menu-item" onclick="setReply('${id}')">↩️ Ответить</div>`;
-            html += `<div class="context-menu-item" onclick="copyMessageText('${id}')">📋 Скопировать</div>`;
+            html += `<div class="context-menu-item" onclick="copyMessageText('${id}')"><div class="icon-copy" style="margin-right:10px; transform:scale(0.8);"></div> Скопировать</div>`;
             html += `<div class="context-menu-item" onclick="forwardMsg('${id}')">➡️ Переслать</div>`;
             html += `<div class="context-menu-item" onclick="togglePinMsg('${id}', ${isPinned})">${isPinned ? '✖ Открепить' : '📌 Закрепить'}</div>`;
             html += `<div class="context-menu-item has-submenu">🔠 Изменить шрифт 🞂<div class="submenu"><div class="context-menu-item font-default" onclick="changeFont('${id}', 'default')">Обычный</div><div class="context-menu-item font-mono" onclick="changeFont('${id}', 'mono')">Код</div><div class="context-menu-item font-serif" onclick="changeFont('${id}', 'serif')">С засечками</div><div class="context-menu-item font-comic" onclick="changeFont('${id}', 'comic')">Весёлый</div></div></div>`;
@@ -1311,13 +1316,7 @@ callFacingMode = 'user';
             html += `<div class="context-menu-item delete" onclick="deleteMsgLocally('${id}')">🗑 Удалить у меня</div>`;
             if (isMyMessage || myRole === 'admin' || myRole === 'owner') html += `<div class="context-menu-item delete" onclick="deleteSingleMsg('${id}')">🗑 Удалить у всех</div>`;
             
-            menu.innerHTML = html; document.body.appendChild(menu);
-            
-            const rect = menu.getBoundingClientRect(); let newX = x; let newY = y;
-            if (x + rect.width > window.innerWidth) newX = window.innerWidth - rect.width - 10;
-            if (y + rect.height > window.innerHeight) newY = window.innerHeight - rect.height - 10;
-            menu.style.left = newX + 'px'; menu.style.top = newY + 'px'; menu.style.visibility = 'visible';
-            setTimeout(() => document.addEventListener('click', () => { const m = document.querySelector('.context-menu'); if(m) m.remove(); }, {once:true}), 10);
+            menu.innerHTML = html;
         }
 
         // --- УДАЛЕНИЕ ЧАТОВ (ДВА ВАРИАНТА) ---
@@ -1370,7 +1369,6 @@ callFacingMode = 'user';
                 sendBtn.style.display = 'flex';
                 tgBtn.style.display = 'none';
                 sendBtn.disabled = false;
-                sendBtn.innerText = isEditing ? '💾' : '➤';
             } else {
                 sendBtn.style.display = 'none';
                 tgBtn.style.display = 'flex';
