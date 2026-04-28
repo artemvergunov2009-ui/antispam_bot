@@ -291,7 +291,201 @@
             #videoPreviewContainer { width: 130px; height: 130px; bottom: 70px; right: 10px; }
         }
         @media (min-width: 769px) { #sidebar { display: flex !important; } #chat-area { display: flex !important; } .back-btn { display: none !important; } }
-    </style>
+    /* ============================= */
+/* 🔥 FULL MODERN CHAT REDESIGN */
+/* ============================= */
+
+/* ФОН ЧАТА */
+#messages-container {
+    background: linear-gradient(180deg, #f7f8fa, #eef1f5);
+    background-image: none;
+    padding: 20px;
+}
+
+/* ОБЩИЕ СООБЩЕНИЯ */
+.message {
+    border-radius: 18px;
+    padding: 10px 14px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    box-shadow: none;
+    position: relative;
+    max-width: fit-content;
+    animation: msgFade 0.2s ease;
+}
+
+/* АНИМАЦИЯ */
+@keyframes msgFade {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ВХОДЯЩИЕ */
+.message.in-message {
+    background: #ffffff;
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* ИСХОДЯЩИЕ */
+.message.my-message {
+    background: #d9fdd3;
+    border-bottom-right-radius: 6px;
+}
+
+/* ХВОСТИКИ */
+.message::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 10px;
+    height: 10px;
+}
+
+.message.in-message::after {
+    left: -4px;
+    background: #fff;
+    clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+.message.my-message::after {
+    right: -4px;
+    background: #d9fdd3;
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+/* ОБЁРТКА */
+.msg-wrapper {
+    max-width: 70%;
+}
+
+/* ТЕКСТ */
+.msg-text-content {
+    font-size: 14.5px;
+}
+
+/* АВТОР */
+.msg-author {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* ВРЕМЯ */
+.msg-meta {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+/* ХОВЕР */
+.message:hover {
+    filter: brightness(0.98);
+}
+
+/* ============================= */
+/* INPUT REDESIGN */
+/* ============================= */
+
+#input-area {
+    background: #ffffff;
+    border-top: 1px solid #e6e6e6;
+}
+
+#messageInput {
+    border-radius: 20px;
+    background: #f0f2f5;
+    border: none;
+    height: 42px;
+    padding: 0 15px;
+}
+
+#messageInput:focus {
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(209,169,130,0.2);
+}
+
+/* ============================= */
+/* КНОПКИ БЕЗ ЭМОДЗИ */
+/* ============================= */
+
+/* ОБЩИЕ КНОПКИ */
+.attach-btn, #sendBtn, #tgRecordBtn {
+    font-size: 0 !important;
+    position: relative;
+}
+
+/* СКРЕПКА */
+.attach-btn::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 4px;
+    transform: rotate(45deg);
+    display: block;
+}
+
+/* МИКРОФОН */
+#tgRecordBtn::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    background: currentColor;
+    border-radius: 50%;
+    display: block;
+}
+
+/* КНОПКА ОТПРАВКИ */
+#sendBtn {
+    background: var(--main-color);
+}
+
+#sendBtn::before {
+    content: "";
+    border-left: 10px solid white;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    display: block;
+}
+
+/* ============================= */
+/* SIDEBAR REDESIGN */
+/* ============================= */
+
+.list-item {
+    border-radius: 14px;
+}
+
+.list-item.active {
+    background: linear-gradient(135deg, #d1a982, #b8916b);
+    color: white;
+}
+
+.avatar-circle {
+    border-radius: 16px;
+}
+
+/* ============================= */
+/* GLASS EFFECT */
+/* ============================= */
+
+#chat-area {
+    backdrop-filter: blur(10px);
+}
+
+#sidebar {
+    backdrop-filter: blur(10px);
+}
+
+/* ============================= */
+/* ПЛАВНОСТЬ */
+/* ============================= */
+
+* {
+    transition: all 0.2s ease;
+}
+   
+   
+   </style>
 </head>
 <body>
 
@@ -353,7 +547,7 @@
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <input type="file" id="storyFileInput" accept="image/*,video/*" style="display: none;" onchange="handleStoryFileSelect(event)">
                 <button class="modal-btn btn-cancel" onclick="document.getElementById('storyFileInput').click()">📁 Галерея</button>
-                <button class="modal-btn btn-cancel" id="storyCameraBtn" onclick="toggleStoryCamera()">📸 Камера</button>
+                <button class="modal-btn btn-cancel" id="storyCameraBtn" onclick="toggleStoryCamera()"> Камера</button>
             </div>
 
             <input type="text" id="storyTextInput" placeholder="Добавить подпись..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid var(--input-border); outline: none; background: var(--input-bg); color: var(--text-color-dark);">
@@ -444,11 +638,11 @@
         <div class="tg-call-bottom-area">
             <button class="tg-call-swipe-btn" onclick="toggleCallExtraMenu()">︿</button>
             <div class="tg-call-controls">
-    <button id="btnLoudspeaker" class="tg-call-btn" onclick="toggleSpeaker()">🔊</button>
-    <button id="btnCamera" class="tg-call-btn" onclick="toggleCallVideo()">📹</button>
-    <button class="tg-call-btn" id="btnMuteAudio" onclick="toggleAudio()">🎤</button>
-    <button id="btnHand" class="tg-call-btn" onclick="toggleHand()">✋</button>
-    <button class="tg-call-btn end-call" onclick="endCall()">☎</button>
+    <button id="btnLoudspeaker" class="tg-call-btn" onclick="toggleSpeaker()"></button>
+    <button id="btnCamera" class="tg-call-btn" onclick="toggleCallVideo()"></button>
+    <button class="tg-call-btn" id="btnMuteAudio" onclick="toggleAudio()"></button>
+    <button id="btnHand" class="tg-call-btn" onclick="toggleHand()"></button>
+    <button class="tg-call-btn end-call" onclick="endCall()"></button>
 </div>
         </div>
 
@@ -577,11 +771,11 @@
 
             <div class="input-controls" id="inputControls">
                 <input type="file" id="fileInput" accept="*/*" multiple style="display: none;" onchange="handleFileSelect(event)">
-                <button id="attachBtn" class="attach-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+                <button id="attachBtn" class="attach-btn" onclick="document.getElementById('fileInput').click()"></button>
                 <input type="text" id="messageInput" placeholder="Сообщение..." autocomplete="off" oninput="handleTyping(); checkSendButton();">
                 <div id="recordingStatus"></div>
                 
-                <button id="sendBtn" class="attach-btn" style="display:none;" onclick="sendMessage()">➤</button>
+                <button id="sendBtn" class="attach-btn" style="display:none;" onclick="sendMessage()"></button>
                 
                 <button id="tgRecordBtn" class="attach-btn" 
                     onmousedown="startHold(event)" onmouseup="endHold(event)" onmouseleave="cancelHold(event)"
