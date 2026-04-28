@@ -1,6 +1,7 @@
 import os
 import uuid
 import traceback
+import random
 import urllib.parse
 import json
 from flask import Flask, request, jsonify, make_response
@@ -40,25 +41,92 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+def send_sms_code(phone, code):
+    """
+    Функция для отправки SMS. Сейчас это заглушка.
+    Для интеграции с Twilio (pip install twilio) используйте пример ниже.
+    """
+    print(f"--- [SMS] Номер: {phone} | Код: {code} ---")
+    
+    # ПРИМЕР ИНТЕГРАЦИИ TWILIO:
+    # from twilio.rest import Client as TwilioClient
+    # try:
+    #     client = TwilioClient(os.environ.get('TWILIO_SID'), os.environ.get('TWILIO_TOKEN'))
+    #     client.messages.create(
+    #         body=f"Samberrrgram: ваш код подтверждения {code}",
+    #         from_=os.environ.get('TWILIO_PHONE'),
+    #         to=phone
+    #     )
+    #     return True
+    # except Exception as e:
+    #     print(f"Twilio Error: {e}")
+    #     return False
+    return True
+
+@app.route('/request_otp', methods=['POST'])
+def request_otp():
+    phone = request.json.get("phone", "").strip()
+    if not phone:
+        return jsonify({"error": "Введите номер телефона"}), 400
+
+    otp_code = str(random.randint(100000, 999999))
+    
+    try:
+        # Ищем пользователя по телефону
+        user_res = supabase.table('users').select('*').eq('phone', phone).execute()
+        
+        if not user_res.data:
+            # Если пользователя нет, создаем временного (потом он выберет никнейм или никнеймом станет телефон)
+            username = f"user_{phone[-4:]}_{random.randint(100, 999)}"
+            supabase.table('users').insert({
+                'username': username, 
+                'phone': phone, 
+                'otp_code': otp_code,
+                'last_seen': datetime.utcnow().isoformat()
+            }).execute()
+        else:
+            # Если есть, обновляем ему код
+            supabase.table('users').update({'otp_code': otp_code}).eq('phone', phone).execute()
+
+        if send_sms_code(phone, otp_code):
+            return jsonify({"success": True, "message": "Код отправлен"})
+        else:
+            return jsonify({"error": "Ошибка отправки SMS"}), 500
+            
+    except Exception as e:
+        print(f"OTP Error: {e}")
+        return jsonify({"error": "Ошибка базы данных"}), 500
+
+@app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    phone = request.json.get("phone")
+    code = request.json.get("code")
+    
+    try:
+        res = supabase.table('users').select('*').eq('phone', phone).eq('otp_code', code).execute()
+        if res.data:
+            user = res.data[0]
+            # Сбрасываем код после успешного входа
+            supabase.table('users').update({'otp_code': None}).eq('phone', phone).execute()
+            
+            session.permanent = True
+            session['username'] = user['username']
+            
+            response = make_response(jsonify({"success": True, "redirect": url_for('chat')}))
+            response.set_cookie("session", user['username'], httponly=True, secure=True, samesite="None", max_age=60*60*24*7)
+            return response
+        else:
+            return jsonify({"error": "Неверный код"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    
-    username = request.json.get("username")
-    response = make_response(jsonify({"success": True}))
+    if request.method == 'GET':
+        return render_template('login.html')
 
-    response.set_cookie(
-       "session",
-        username,
-        httponly=True,
-     secure=True,          # ОБЯЗАТЕЛЬНО для Render
-     samesite="None",      # ИНАЧЕ не сохранится
-     max_age=60*60*24*7    # 7 дней
-)
-
-    return response
-    
     error = None
-    if request.method == 'POST':
+    if request.method == 'POST' and request.form.get('username'):
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
         if username and password:
