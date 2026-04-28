@@ -571,6 +571,39 @@
 }
    
    
+.icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* микрофон (как Telegram) */
+#tgRecordBtn {
+    background: #2a2a2a;
+}
+
+/* отправка */
+#sendBtn {
+    background: #0088cc;
+}
+
+/* hover */
+.icon-btn:hover {
+    transform: scale(1.05);
+}
+
+/* плавность */
+.icon-btn svg {
+    transition: 0.2s;
+}
+
+
    </style>
 </head>
 <body>
@@ -847,28 +880,40 @@
         <button id="multi-delete-btn" onclick="deleteSelectedMsgs()">Удалить выбранные (0)</button>
 
         <div id="input-area">
-            <div id="channelBlocker" style="display:none; width:100%; text-align:center; color:var(--text-color-light); font-weight:bold; padding: 10px 0;">Только администраторы могут писать</div>
-            <div id="reply-preview-bar">
-                <div><span id="reply-preview-text">Ответ на сообщение...</span></div>
-                <button onclick="cancelReply()" style="background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-color-light);">✖</button>
-            </div>
-            
-            <div id="file-preview-bar"></div>
+        
+            <!-- 📎 -->
+<button class="icon-btn">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+  <path d="M21 15V7a5 5 0 0 0-10 0v10a3 3 0 0 0 6 0V9"/>
+</svg>
+</button>
 
-            <div class="input-controls" id="inputControls">
-                <input type="file" id="fileInput" accept="*/*" multiple style="display: none;" onchange="handleFileSelect(event)">
-                <button id="attachBtn" class="attach-btn" onclick="document.getElementById('fileInput').click()"></button>
-                <input type="text" id="messageInput" placeholder="Сообщение..." autocomplete="off" oninput="handleTyping(); checkSendButton();">
-                <div id="recordingStatus"></div>
-                
-                <button id="sendBtn" class="attach-btn" style="display:none;" onclick="sendMessage()"></button>
-                
-                <button id="tgRecordBtn" class="attach-btn" 
-                    onmousedown="startHold(event)" onmouseup="endHold(event)" onmouseleave="cancelHold(event)"
-                    ontouchstart="startHold(event)" ontouchend="endHold(event)" ontouchmove="moveHold(event)">
-                    🎤
-                </button>
-            </div>
+<!-- 📸 -->
+<button class="icon-btn">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+  <rect x="3" y="7" width="18" height="14" rx="3"/>
+  <circle cx="12" cy="14" r="4"/>
+</svg>
+</button>
+
+<!-- поле ввода -->
+<input id="messageInput" placeholder="Сообщение..." />
+
+<!-- 🎤 -->
+<button id="tgRecordBtn" class="icon-btn">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="2">
+  <rect x="9" y="2" width="6" height="12" rx="3"/>
+  <path d="M5 10a7 7 0 0 0 14 0"/>
+  <line x1="12" y1="19" x2="12" y2="22"/>
+</svg>
+</button>
+
+<!-- ➤ -->
+<button id="sendBtn" class="icon-btn">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+  <path d="M3 12L21 3L12 21L10 14L3 12Z"/>
+</svg>
+</button>
         </div>
     </div>
 
