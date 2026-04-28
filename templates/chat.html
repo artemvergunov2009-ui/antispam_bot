@@ -413,38 +413,9 @@
     position: relative;
 }
 
-/* СКРЕПКА */
-.attach-btn::before {
-    content: "";
-    width: 16px;
-    height: 16px;
-    border: 2px solid currentColor;
-    border-radius: 4px;
-    transform: rotate(45deg);
-    display: block;
-}
-
-/* МИКРОФОН */
-#tgRecordBtn::before {
-    content: "";
-    width: 14px;
-    height: 14px;
-    background: currentColor;
-    border-radius: 50%;
-    display: block;
-}
-
 /* КНОПКА ОТПРАВКИ */
 #sendBtn {
     background: var(--main-color);
-}
-
-#sendBtn::before {
-    content: "";
-    border-left: 10px solid white;
-    border-top: 6px solid transparent;
-    border-bottom: 6px solid transparent;
-    display: block;
 }
 
 /* ============================= */
@@ -482,6 +453,121 @@
 
 * {
     transition: all 0.2s ease;
+}
+   
+  
+   /* ===== ИКОНКИ КНОПОК (CSS DRAW) ===== */
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0; /* убирает эмодзи */
+}
+
+/* 📎 СКРЕПКА */
+.attach-btn::before,
+.attach-btn::after {
+    content: "";
+    position: absolute;
+    border: 2px solid currentColor;
+    border-radius: 6px;
+    transform: rotate(45deg);
+}
+
+.attach-btn::before {
+    width: 12px;
+    height: 20px;
+    top: 8px;
+    left: 13px;
+}
+
+.attach-btn::after {
+    width: 6px;
+    height: 14px;
+    top: 11px;
+    left: 16px;
+}
+
+/* 📸 КАМЕРА */
+.camera-btn::before {
+    content: "";
+    position: absolute;
+    top: 12px;
+    left: 8px;
+    width: 22px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-radius: 4px;
+}
+
+.camera-btn::after {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 6px;
+    height: 6px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+}
+
+/* 🎤 МИКРОФОН */
+#tgRecordBtn::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 6px;
+}
+
+#tgRecordBtn::after {
+    content: "";
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 8px;
+    border: 2px solid currentColor;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+}
+
+/* ➤ ОТПРАВКА */
+#sendBtn {
+    background: var(--main-color);
+    border-radius: 50%;
+}
+
+#sendBtn::before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 12px;
+    border-left: 12px solid white;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+}
+
+/* 📞 СБРОС ВЫЗОВА */
+.call-end-btn::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    left: 10px;
+    width: 20px;
+    height: 6px;
+    border-radius: 10px;
+    background: white;
+    transform: rotate(-25deg);
 }
    
    
