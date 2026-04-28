@@ -4,7 +4,7 @@ import traceback
 import random
 import urllib.parse
 import json
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, jsonify, make_response
 from flask_cors import CORS
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
