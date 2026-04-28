@@ -3,6 +3,8 @@ import uuid
 import traceback
 import urllib.parse
 import json
+from flask import Flask, request, jsonify, make_response
+from flask_cors import CORS
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -15,6 +17,7 @@ except ImportError:
     webpush = None
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 # Секретный ключ тоже берем из среды, а если его нет — используем запасной
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
 # Устанавливаем срок действия сессии (например, 30 дней)
@@ -23,6 +26,7 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Куки только через H
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 socketio = SocketIO(app, cors_allowed_origins="*")
+
 # --- Настройки Supabase (БЕЗОПАСНЫЕ) -
 # Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -38,6 +42,21 @@ if SUPABASE_URL and SUPABASE_KEY:
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    
+    username = request.json.get("username")
+    response = make_response(jsonify({"success": True}))
+
+    response.set_cookie(
+       "session",
+        username,
+        httponly=True,
+     secure=True,          # ОБЯЗАТЕЛЬНО для Render
+     samesite="None",      # ИНАЧЕ не сохранится
+     max_age=60*60*24*7    # 7 дней
+)
+
+    return response
+    
     error = None
     if request.method == 'POST':
         username = request.form.get('username').strip()
@@ -103,6 +122,15 @@ def logout():
 def chat():
     if 'username' not in session: return redirect(url_for('login'))
     return render_template('chat.html', username=session['username'])
+
+@app.route('/me', methods=['GET'])
+def me():
+    user = request.cookies.get("session")
+
+    if not user:
+        return jsonify({"error": "not logged"}), 401
+
+    return jsonify({"user": user})
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
