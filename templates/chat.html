@@ -322,11 +322,13 @@ body.theme-dark .message.my-message {
         }
         @media (min-width: 769px) { #sidebar { display: flex !important; } #chat-area { display: flex !important; } .back-btn { display: none !important; } }
     
-    /* === TELEGRAM STYLE OVERRIDES === */
+    /* === TELEGRAM STYLE OVERRIDES (UPDATED) === */
 
-/* Убираем отступы у основных блоков */
+/* Базовые настройки страницы */
 body {
     background-color: var(--sidebar-bg);
+    margin: 0;
+    overflow-x: hidden; /* Защита от горизонтального скролла */
 }
 
 #sidebar {
@@ -341,9 +343,20 @@ body {
     margin: 0;
     border-radius: 0;
     box-shadow: none;
-    /* Опционально: можно добавить классический паттерн ТГ на фон */
     background-image: radial-gradient(circle, rgba(0,0,0,0.03) 1px, transparent 1px);
     background-size: 20px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Контейнер сообщений */
+#messages {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
 }
 
 /* Строгий хэдер чата */
@@ -352,18 +365,19 @@ body {
     border-bottom: 1px solid var(--input-border);
     padding: 10px 20px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    z-index: 10;
 }
 
-/* Поле ввода в стиле Telegram (парящее внизу) */
+/* Поле ввода (адаптивное) */
 #input-area {
     background: var(--sidebar-bg);
     border: none;
     margin: 0 auto 20px;
     max-width: 800px;
-    width: calc(100% - 40px);
+    width: calc(100% - 30px); /* Отступы по бокам на мобилках */
     border-radius: 16px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    padding-bottom: 0; /* Убираем лишний отступ */
+    padding-bottom: 0;
 }
 
 .input-controls {
@@ -371,46 +385,80 @@ body {
 }
 
 #messageInput {
-    border: none; /* Убираем рамку у самого инпута */
+    border: none;
     background: transparent;
+    width: 100%;
 }
 
-/* Оформление сообщений (хвостики) */
+/* === ИСПРАВЛЕННЫЕ СООБЩЕНИЯ (АДАПТИВНОСТЬ) === */
 .message {
     box-shadow: 0 1px 2px rgba(0,0,0,0.15);
     padding: 6px 12px;
     position: relative;
+    max-width: 85% !important; /* Не дает вылетать за экран */
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    margin-bottom: 8px !important;
+    display: block !important;
 }
 
-/* Делаем "хвостики" у сообщений как в ТГ */
+/* Хвостики и выравнивание */
 .message.my-message {
     border-bottom-right-radius: 0;
-}
-.message.in-message {
-    border-bottom-left-radius: 0;
+    align-self: flex-end !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
 }
 
-/* Строка поиска в сайдбаре */
+.message.in-message {
+    border-bottom-left-radius: 0;
+    align-self: flex-start !important;
+    margin-right: auto !important;
+    margin-left: 0 !important;
+}
+
+/* Исправление для медиа внутри сообщений */
+.message img, 
+.message video, 
+.message .video-note {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 8px;
+}
+
+/* Список чатов */
 .search-box input {
     background-color: #f4f4f5;
     border: none;
     border-radius: 20px;
 }
 
-/* Активный чат в списке (выделяется синим) */
 .list-item.active {
     background-color: var(--main-color);
 }
+
 .list-item.active .chat-list-name,
 .list-item.active .chat-list-time,
 .list-item.active .chat-list-last-msg {
     color: #ffffff !important;
 }
+
 .list-item.active .unread-badge {
     background-color: #ffffff;
     color: var(--main-color);
 }
-    
+
+/* Мобильная версия (экран < 600px) */
+@media (max-width: 600px) {
+    .message {
+        max-width: 90% !important; /* На телефонах даем чуть больше ширины */
+    }
+    #input-area {
+        width: calc(100% - 15px);
+        margin-bottom: 10px;
+    }
+}
     
     </style>
 </head>
