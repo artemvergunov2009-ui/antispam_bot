@@ -10,3 +10,4 @@ eventlet
 requests
 google-generativeai
 pywebpush
+flask-cors
