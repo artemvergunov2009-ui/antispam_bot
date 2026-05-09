@@ -18,6 +18,7 @@ except ImportError:
     webpush = None
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app, supports_credentials=True)
 # Секретный ключ тоже берем из среды, а если его нет — используем запасной
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
