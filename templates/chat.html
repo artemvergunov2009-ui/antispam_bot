@@ -19,23 +19,53 @@
     
     <style>
         :root {
-            --bg-color: #fdfaf5; --sidebar-bg: #ffffff; --chat-area-bg: #f5eee6;
-            --main-color: #d1a982; --main-color-hover: #b8916b;
-            --text-color-dark: #3e2723; --text-color-light: #8d6e63;
-            --msg-in-bg: #ffffff; --msg-out-bg: #e6dabf;
-            --border-radius-large: 25px; --border-radius-small: 15px;
-            --main-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            --online-color: #4CAF50; --typing-color: #d1a982;
-            --input-bg: #fcf9f5; --input-border: rgba(0,0,0,0.08);
-            --modal-bg: #ffffff; --badge-bg: #d1a982; --tick-color: #8d6e63; --tick-read-color: #4CAF50;
-            --call-btn-red: #ff3b30;
-        }
+    --bg-color: #e4eaf0; /* Классический серо-голубой фон чата */
+    --sidebar-bg: #ffffff; 
+    --chat-area-bg: #e4eaf0;
+    --main-color: #3390ec; /* Фирменный синий Telegram */
+    --main-color-hover: #2a7cbd;
+    --text-color-dark: #000000; 
+    --text-color-light: #707579;
+    --msg-in-bg: #ffffff; 
+    --msg-out-bg: #eeffde; /* Классический зеленый для своих сообщений */
+    
+    /* Делаем углы более строгими, как в ТГ */
+    --border-radius-large: 0px; 
+    --border-radius-small: 12px; 
+    
+    --main-shadow: none;
+    --online-color: #00c73e; 
+    --typing-color: #3390ec;
+    --input-bg: #ffffff; 
+    --input-border: #dfe1e5;
+    --modal-bg: #ffffff; 
+    --badge-bg: #caced5; 
+    --tick-color: #4da6ea; 
+    --tick-read-color: #4da6ea;
+    --call-btn-red: #ff3b30;
+}
 
         @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
         @keyframes pulseLava { 0% {box-shadow: inset 0 0 50px #f00;} 50% {box-shadow: inset 0 0 150px #f00;} 100% {box-shadow: inset 0 0 50px #f00;} }
         @keyframes matrixScroll { 0% {background-position: 0% 0%;} 100% {background-position: 0% 100%;} }
 
-        body.theme-dark { --bg-color: #121212; --sidebar-bg: #1e1e1e; --chat-area-bg: #0f0f0f; --main-color: #d1a982; --msg-out-bg: #5c4731; --msg-in-bg: #2c2c2c; --text-color-dark: #e0e0e0; --text-color-light: #aaaaaa; --input-bg: #2a2a2a; --modal-bg: #222222; }
+        body.theme-dark { 
+    --bg-color: #0f0f0f; 
+    --sidebar-bg: #212121; 
+    --chat-area-bg: #0f0f0f; 
+    --main-color: #8774e1; /* Фирменный фиолетово-синий темного ТГ */
+    --msg-out-bg: #8774e1; 
+    --msg-in-bg: #212121; 
+    --text-color-dark: #ffffff; 
+    --text-color-light: #aaaaaa; 
+    --input-bg: #212121; 
+    --modal-bg: #212121;
+    --input-border: #000000;
+}
+/* Чтобы текст на твоих сообщениях в темной теме был белым */
+body.theme-dark .message.my-message {
+    color: #ffffff;
+}
         body.theme-cyberpunk { --bg-color: #0d0221; --sidebar-bg: #15092a; --chat-area-bg: rgba(31,12,56,0.85); --main-color: #00ffcc; --msg-out-bg: #9e004e; --msg-in-bg: #2a114d; --text-color-dark: #fff; --text-color-light: #aaa; --input-bg: #1a0a33; --modal-bg: #15092a; background: linear-gradient(-45deg, #0d0221, #260f4c, #1a0033, #330033); background-size: 400% 400%; animation: gradientBG 10s ease infinite; }
         body.theme-matrix { --bg-color: #000; --sidebar-bg: #050505; --chat-area-bg: rgba(0,15,0,0.85); --main-color: #0f0; --msg-out-bg: #040; --msg-in-bg: #020; --text-color-dark: #0f0; --text-color-light: #070; --input-bg: #000; --modal-bg: #111; background: repeating-linear-gradient(180deg, #000 0%, #020 50%, #000 100%); background-size: 100% 200%; animation: matrixScroll 5s linear infinite; }
         body.theme-ocean { --bg-color: #001f3f; --sidebar-bg: #001a35; --chat-area-bg: rgba(0,40,80,0.85); --main-color: #00a8cc; --msg-out-bg: #00509e; --msg-in-bg: #002b5e; --text-color-dark: #fff; --text-color-light: #8ec; --input-bg: #00152b; --modal-bg: #001f3f; background: linear-gradient(-45deg, #001f3f, #003366, #004080); background-size: 400% 400%; animation: gradientBG 12s ease infinite; }
@@ -291,6 +321,97 @@
             #videoPreviewContainer { width: 130px; height: 130px; bottom: 70px; right: 10px; }
         }
         @media (min-width: 769px) { #sidebar { display: flex !important; } #chat-area { display: flex !important; } .back-btn { display: none !important; } }
+    
+    /* === TELEGRAM STYLE OVERRIDES === */
+
+/* Убираем отступы у основных блоков */
+body {
+    background-color: var(--sidebar-bg);
+}
+
+#sidebar {
+    margin: 0;
+    border-radius: 0;
+    border-right: 1px solid var(--input-border);
+    box-shadow: none;
+    background-color: var(--sidebar-bg);
+}
+
+#chat-area {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    /* Опционально: можно добавить классический паттерн ТГ на фон */
+    background-image: radial-gradient(circle, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Строгий хэдер чата */
+.chat-header {
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid var(--input-border);
+    padding: 10px 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Поле ввода в стиле Telegram (парящее внизу) */
+#input-area {
+    background: var(--sidebar-bg);
+    border: none;
+    margin: 0 auto 20px;
+    max-width: 800px;
+    width: calc(100% - 40px);
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding-bottom: 0; /* Убираем лишний отступ */
+}
+
+.input-controls {
+    padding: 8px 12px;
+}
+
+#messageInput {
+    border: none; /* Убираем рамку у самого инпута */
+    background: transparent;
+}
+
+/* Оформление сообщений (хвостики) */
+.message {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    padding: 6px 12px;
+    position: relative;
+}
+
+/* Делаем "хвостики" у сообщений как в ТГ */
+.message.my-message {
+    border-bottom-right-radius: 0;
+}
+.message.in-message {
+    border-bottom-left-radius: 0;
+}
+
+/* Строка поиска в сайдбаре */
+.search-box input {
+    background-color: #f4f4f5;
+    border: none;
+    border-radius: 20px;
+}
+
+/* Активный чат в списке (выделяется синим) */
+.list-item.active {
+    background-color: var(--main-color);
+}
+.list-item.active .chat-list-name,
+.list-item.active .chat-list-time,
+.list-item.active .chat-list-last-msg {
+    color: #ffffff !important;
+}
+.list-item.active .unread-badge {
+    background-color: #ffffff;
+    color: var(--main-color);
+}
+    
+    
     </style>
 </head>
 <body>
