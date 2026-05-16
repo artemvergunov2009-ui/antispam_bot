@@ -16,6 +16,123 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
+
+        /* Основной фон на весь экран */
+.call-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, #1a1a2e 0%, #0f0f1a 100%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Контейнер аватара с пульсацией */
+.caller-avatar-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin-bottom: 20px;
+}
+
+.caller-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    z-index: 2;
+    position: relative;
+}
+
+.pulse-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation: pulse-avatar 2s infinite;
+    z-index: 1;
+}
+
+/* Стили кнопок */
+.call-actions {
+    display: flex;
+    gap: 60px;
+    margin-bottom: 50px;
+}
+
+.call-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.btn-label {
+    position: absolute;
+    bottom: -30px;
+    font-size: 14px;
+    font-weight: 300;
+}
+
+/* Кнопка ОТКЛОНИТЬ (Красная) */
+.reject-btn {
+    background: #ff3b30;
+    box-shadow: 0 0 20px rgba(255, 59, 48, 0.6);
+    animation: glow-red 1.5s infinite;
+}
+
+/* Кнопка ПРИНЯТЬ (Зеленая) */
+.accept-btn {
+    background: #4cd964;
+    box-shadow: 0 0 20px rgba(76, 217, 100, 0.6);
+    animation: glow-green 1.5s infinite;
+}
+
+/* --- АНИМАЦИИ --- */
+
+@keyframes glow-red {
+    0% { box-shadow: 0 0 10px rgba(255, 59, 48, 0.5); transform: scale(1); }
+    50% { box-shadow: 0 0 40px rgba(255, 59, 48, 0.9); transform: scale(1.1); }
+    100% { box-shadow: 0 0 10px rgba(255, 59, 48, 0.5); transform: scale(1); }
+}
+
+@keyframes glow-green {
+    0% { box-shadow: 0 0 10px rgba(76, 217, 100, 0.5); transform: scale(1); }
+    50% { box-shadow: 0 0 40px rgba(76, 217, 100, 0.9); transform: scale(1.1); }
+    100% { box-shadow: 0 0 10px rgba(76, 217, 100, 0.5); transform: scale(1); }
+}
+
+@keyframes pulse-avatar {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+        
         :root {
             /* === Оранжевые и телесные тона === */
             --bg-color: #FDF4EB; 
@@ -1022,12 +1139,34 @@
             } catch (err) { showToast("Ошибка микрофона!", "error"); }
         }
 
-        socket.on('incoming_call', (data) => {
-            activeCallTarget = data.from;
-            document.getElementById('incomingCallerName').innerHTML = renderVerified(data.from);
-            document.getElementById('incomingCallModal').style.display = 'block';
-            playRingtone();
-        });
+        // Когда приходит вызов:
+socket.on('incoming_call', (data) => {
+    // 1. Показываем оверлей
+    const overlay = document.getElementById('incomingCallOverlay');
+    overlay.style.display = 'flex';
+    
+    // 2. Устанавливаем данные звонящего
+    document.getElementById('callerName').innerText = data.caller_name;
+    if (data.caller_avatar) {
+        document.getElementById('callerAvatar').src = data.caller_avatar;
+    }
+    
+    // (Опционально) Можно запустить звук рингтона здесь
+});
+
+// Функции кнопок
+function declineCall() {
+    const overlay = document.getElementById('incomingCallOverlay');
+    overlay.style.display = 'none';
+    socket.emit('reject_call', { to: current_caller_id });
+}
+
+function acceptCall() {
+    const overlay = document.getElementById('incomingCallOverlay');
+    overlay.style.display = 'none';
+    // Здесь твоя логика открытия WebRTC окна или перехода в видеочат
+    socket.emit('accept_call', { from: current_caller_id });
+}
 
         function rejectCall() { document.getElementById('incomingCallModal').style.display = 'none'; socket.emit('reject_call', {caller: activeCallTarget}); stopRingtone(); playSound('rejectAudio'); endCallLocally(); }
 
@@ -1851,5 +1990,29 @@
             setTimeout(() => { if (container.contains(toast)) container.removeChild(toast); }, 3000);
         }
     </script>
+    <div id="incomingCallOverlay" class="call-overlay" style="display: none;">
+    <div class="call-content">
+        <div class="caller-info">
+            <div class="caller-avatar-container">
+                <img src="path_to_default_avatar.png" id="callerAvatar" class="caller-avatar">
+                <div class="pulse-ring"></div>
+            </div>
+            <h2 id="callerName">Входящий вызов...</h2>
+            <p class="call-status">Samberrrgram Video</p>
+        </div>
+
+        <div class="call-actions">
+            <button class="call-btn reject-btn" onclick="declineCall()">
+                <i class="fas fa-phone-slash"></i>
+                <span class="btn-label">Отклонить</span>
+            </button>
+            
+            <button class="call-btn accept-btn" onclick="acceptCall()">
+                <i class="fas fa-phone"></i>
+                <span class="btn-label">Принять</span>
+            </button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
