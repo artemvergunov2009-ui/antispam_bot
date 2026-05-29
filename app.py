@@ -1,25 +1,14 @@
 import os
 import uuid
 import traceback
-import random
 import urllib.parse
-import json
-from flask import Flask, jsonify, make_response
-from flask_cors import CORS
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
 from werkzeug.security import generate_password_hash, check_password_hash
-# Библиотека для Push-уведомлений (нужно установить: pip install pywebpush)
-try:
-    from pywebpush import webpush, WebPushException
-except ImportError:
-    webpush = None
 
 app = Flask(__name__)
-app.config['TEMPLATES_AUTO_RELOAD'] = True
-CORS(app, supports_credentials=True)
 # Секретный ключ тоже берем из среды, а если его нет — используем запасной
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'samberrrgram-super-secret-key') 
 # Устанавливаем срок действия сессии (например, 30 дней)
@@ -28,13 +17,10 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Куки только через H
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 socketio = SocketIO(app, cors_allowed_origins="*")
-
 # --- Настройки Supabase (БЕЗОПАСНЫЕ) -
 # Теперь ключи не написаны текстом, сервер будет брать их из своих скрытых настроек
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
-VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("ВНИМАНИЕ: Ключи Supabase не найдены! Убедитесь, что добавили их в Environment Variables.")
@@ -42,92 +28,10 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def send_sms_code(phone, code):
-    """
-    Функция для отправки SMS. Сейчас это заглушка.
-    Для интеграции с Twilio (pip install twilio) используйте пример ниже.
-    """
-    print(f"--- [SMS] Номер: {phone} | Код: {code} ---")
-    
-    # ПРИМЕР ИНТЕГРАЦИИ TWILIO:
-    # from twilio.rest import Client as TwilioClient
-    # try:
-    #     client = TwilioClient(os.environ.get('TWILIO_SID'), os.environ.get('TWILIO_TOKEN'))
-    #     client.messages.create(
-    #         body=f"Samberrrgram: ваш код подтверждения {code}",
-    #         from_=os.environ.get('TWILIO_PHONE'),
-    #         to=phone
-    #     )
-    #     return True
-    # except Exception as e:
-    #     print(f"Twilio Error: {e}")
-    #     return False
-    return True
-
-@app.route('/request_otp', methods=['POST'])
-def request_otp():
-    phone = request.json.get("phone", "").strip()
-    if not phone:
-        return jsonify({"error": "Введите номер телефона"}), 400
-
-    otp_code = str(random.randint(100000, 999999))
-    
-    try:
-        # Ищем пользователя по телефону
-        user_res = supabase.table('users').select('*').eq('phone', phone).execute()
-        
-        if not user_res.data:
-            # Если пользователя нет, создаем временного (потом он выберет никнейм или никнеймом станет телефон)
-            username = f"user_{phone[-4:]}_{random.randint(100, 999)}"
-            supabase.table('users').insert({
-                'username': username, 
-                'phone': phone, 
-                'otp_code': otp_code,
-                'last_seen': datetime.utcnow().isoformat()
-            }).execute()
-        else:
-            # Если есть, обновляем ему код
-            supabase.table('users').update({'otp_code': otp_code}).eq('phone', phone).execute()
-
-        if send_sms_code(phone, otp_code):
-            return jsonify({"success": True, "message": "Код отправлен"})
-        else:
-            return jsonify({"error": "Ошибка отправки SMS"}), 500
-            
-    except Exception as e:
-        print(f"OTP Error: {e}")
-        return jsonify({"error": "Ошибка базы данных"}), 500
-
-@app.route('/verify_otp', methods=['POST'])
-def verify_otp():
-    phone = request.json.get("phone")
-    code = request.json.get("code")
-    
-    try:
-        res = supabase.table('users').select('*').eq('phone', phone).eq('otp_code', code).execute()
-        if res.data:
-            user = res.data[0]
-            # Сбрасываем код после успешного входа
-            supabase.table('users').update({'otp_code': None}).eq('phone', phone).execute()
-            
-            session.permanent = True
-            session['username'] = user['username']
-            
-            response = make_response(jsonify({"success": True, "redirect": url_for('chat')}))
-            response.set_cookie("session", user['username'], httponly=True, secure=True, samesite="None", max_age=60*60*24*7)
-            return response
-        else:
-            return jsonify({"error": "Неверный код"}), 401
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    if request.method == 'GET':
-        return render_template('login.html')
-
     error = None
-    if request.method == 'POST' and request.form.get('username'):
+    if request.method == 'POST':
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
         if username and password:
@@ -192,15 +96,6 @@ def chat():
     if 'username' not in session: return redirect(url_for('login'))
     return render_template('chat.html', username=session['username'])
 
-@app.route('/me', methods=['GET'])
-def me():
-    user = request.cookies.get("session")
-
-    if not user:
-        return jsonify({"error": "not logged"}), 401
-
-    return jsonify({"user": user})
-
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'username' not in session: return jsonify({'error': 'Unauthorized'}), 401
@@ -255,44 +150,6 @@ def upload_group_avatar():
         return jsonify({'url': url})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
-@socketio.on('save_push_subscription')
-def save_push_subscription(data):
-    me = session.get('username')
-    if me and data:
-        try:
-            # Сохраняем подписку в колонку push_subscription таблицы users (тип JSONB)
-            supabase.table('users').update({'push_subscription': data}).eq('username', me).execute()
-        except Exception: pass
-
-@socketio.on('get_push_key')
-def get_push_key():
-    if VAPID_PUBLIC_KEY: 
-        emit('push_key_data', {'public_key': VAPID_PUBLIC_KEY})
-
-def send_push_to_user(target_username, title, body, url='/chat', notification_type='message'):
-    """Отправляет Web-Push уведомление пользователю через Service Worker."""
-    if not webpush or not VAPID_PRIVATE_KEY:
-        return
-    try:
-        # Достаем подписку из базы данных
-        res = supabase.table('users').select('push_subscription').eq('username', target_username).execute()
-        if res.data and res.data[0].get('push_subscription'):
-            subscription_info = res.data[0]['push_subscription']
-            payload = json.dumps({
-                'title': title,
-                'body': body,
-                'url': url,
-                'type': notification_type
-            })
-            webpush(
-                subscription_info=subscription_info,
-                data=payload,
-                vapid_private_key=VAPID_PRIVATE_KEY,
-                vapid_claims={"sub": "mailto:admin@sambergram.com"}
-            )
-    except Exception as e:
-        print(f"Ошибка отправки Push-уведомления: {e}")
-
 connected_clients = {}
 active_group_calls = {} 
 
@@ -304,9 +161,7 @@ def user_connected():
             connected_clients[request.sid] = username
             supabase.table('users').update({'last_seen': datetime.utcnow().isoformat()}).eq('username', username).execute()
             join_room(f"user_{username}")
-            
-            # Отправляем статус "в сети" всем КРОМЕ себя, чтобы не слышать звук собственного входа
-            emit('status_update', {'username': username, 'status': 'online'}, broadcast=True, include_self=False)
+            emit('status_update', {'username': username, 'status': 'online'}, broadcast=True)
             
             user_info = supabase.table('users').select('is_verified, role').eq('username', username).execute()
             if user_info.data:
@@ -715,9 +570,7 @@ def handle_message(data):
         members_res = supabase.table('chat_members').select('username').eq('chat_id', room).execute()
         for m in members_res.data:
             target_user = m['username']
-            if target_user != username:
-                emit('new_message_notification', msg_data, to=f"user_{target_user}")
-                send_push_to_user(target_user, f"Новое сообщение от {username}", text or "Файл", notification_type="message")
+            if target_user != username: emit('new_message_notification', msg_data, to=f"user_{target_user}")
     except Exception: pass
 
 @socketio.on('get_profile')
@@ -805,20 +658,45 @@ def get_story_views(data):
     except Exception: pass
 
 # --- ЗВОНКИ (АБСОЛЮТНО ТВОЙ КОД) ---
+# Добавлен контроль блокировки и типа звонка (audio/video)
 @socketio.on('call_user')
 def call_user(data):
+    me = session.get('username')
     target = data.get('target')
-    emit('incoming_call', {'from': session.get('username')}, to=f"user_{target}")
-    send_push_to_user(target, "Входящий звонок", f"Вам звонит {session.get('username')}", notification_type="call") # Передаем тип "call"
+    call_type = data.get('type', 'audio') # 'audio' или 'video'
+    
+    try:
+        # Проверка: не заблокировал ли нас целевой пользователь
+        blocked = supabase.table('blocked_users').select('*').eq('blocker', target).eq('blocked', me).execute()
+        if blocked.data:
+            emit('call_error', {'message': 'Пользователь ограничил доступ'}, to=request.sid)
+            return
+            
+        emit('incoming_call', {
+            'from': me,
+            'type': call_type
+        }, to=f"user_{target}")
+    except Exception:
+        emit('call_error', {'message': 'Ошибка при совершении вызова'}, to=request.sid)
 
 @socketio.on('answer_call')
-def answer_call(data): emit('call_accepted', {'by': session.get('username')}, to=f"user_{data.get('caller')}")
+def answer_call(data):
+    emit('call_accepted', {
+        'by': session.get('username'),
+        'type': data.get('type')
+    }, to=f"user_{data.get('caller')}")
 
 @socketio.on('reject_call')
 def reject_call(data): emit('call_rejected', {'by': session.get('username')}, to=f"user_{data.get('caller')}")
 
 @socketio.on('webrtc_offer')
-def webrtc_offer(data): emit('webrtc_offer', {'offer': data['offer'], 'from': session.get('username')}, to=f"user_{data['target']}")
+def webrtc_offer(data):
+    # Передаем оффер с указанием типа (video/audio) для корректной инициализации на клиенте
+    emit('webrtc_offer', {
+        'offer': data['offer'],
+        'from': session.get('username'),
+        'type': data.get('type') 
+    }, to=f"user_{data['target']}")
 
 @socketio.on('webrtc_answer')
 def webrtc_answer(data): emit('webrtc_answer', {'answer': data['answer'], 'from': session.get('username')}, to=f"user_{data['target']}")
@@ -834,6 +712,26 @@ def call_action(data):
     # Пересылаем действие собеседнику
     emit('call_action', {'state': data.get('state'), 'action': data.get('action')}, to=f"user_{data.get('target')}")
 
+# --- ФУНКЦИИ БЛОКИРОВКИ ---
+@socketio.on('block_user')
+def block_user(data):
+    me = session.get('username')
+    target = data.get('target')
+    if not me or not target: return
+    try:
+        supabase.table('blocked_users').insert({'blocker': me, 'blocked': target}).execute()
+        emit('user_blocked_status', {'username': target, 'blocked': True}, to=request.sid)
+    except Exception: pass
+
+@socketio.on('unblock_user')
+def unblock_user(data):
+    me = session.get('username')
+    target = data.get('target')
+    if not me or not target: return
+    try:
+        supabase.table('blocked_users').delete().eq('blocker', me).eq('blocked', target).execute()
+        emit('user_blocked_status', {'username': target, 'blocked': False}, to=request.sid)
+    except Exception: pass
 
 # ==========================================
 # МАГИЯ QR-АВТОРИЗАЦИИ (БЕЗ БАЗЫ ДАННЫХ!)
