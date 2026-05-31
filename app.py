@@ -283,8 +283,8 @@ def get_my_chats():
                     chat['last_msg_time'] = last_msg.data[0]['created_at']
                 else:
                     chat['last_message'] = None
-                    # Если сообщений нет, берем время создания чата или текущее время, чтобы он был сверху
-                    chat['last_msg_time'] = chat.get('created_at') or datetime.utcnow().isoformat()
+                    # СТАВИМ СТАРУЮ ДАТУ, чтобы пустые чаты падали вниз
+                    chat['last_msg_time'] = chat.get('created_at') or '1970-01-01T00:00:00Z'
             except: 
                 chat['last_message'] = None
                 chat['last_msg_time'] = '1970-01-01T00:00:00Z'
@@ -550,6 +550,16 @@ def handle_message(data):
         reply_to = data.get('reply_to_id')
         font = data.get('font_style', 'default')
         username = session.get('username')
+
+        # Проверка блокировки в личных чатах
+        if room.startswith('dm_'):
+            parts = room.split('_')
+            # Определяем, кто наш собеседник в комнате dm_user1_user2
+            target = parts[2] if parts[1] == username else parts[1]
+            is_blocked = supabase.table('blocked_users').select('*').eq('blocker', target).eq('blocked', username).execute()
+            if is_blocked.data:
+                emit('server_error', {'message': 'Пользователь ограничил вам доступ'}, to=request.sid)
+                return
         
         chat_info = supabase.table('chats').select('type').eq('id', room).execute()
         if chat_info.data and chat_info.data[0].get('type') == 'channel':
