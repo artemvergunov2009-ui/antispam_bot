@@ -21,7 +21,7 @@
         :root {
             --bg-color: #fdfaf5; --sidebar-bg: #ffffff; --chat-area-bg: #f5eee6;
             --main-color: #d1a982; --main-color-hover: #b8916b;
-            --text-color-dark: #3e2723; --text-color-light: #8d6e63;
+            --text-color-dark: #7c6662; --text-color-light: #8d6e63;
             --msg-in-bg: #ffffff; --msg-out-bg: #e6dabf;
             --border-radius-large: 25px; --border-radius-small: 15px;
             --main-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -830,13 +830,22 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
         }
 
         document.body.addEventListener('click', function unlockAudio() {
-            const audios = ['msgSound', 'ringtoneAudio', 'dialingAudio', 'acceptAudio', 'rejectAudio', 'endAudio'];
-            audios.forEach(id => {
-                const a = document.getElementById(id);
-                if(a) a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(e => {});
+    const audios = ['msgSound', 'ringtoneAudio', 'dialingAudio', 'acceptAudio', 'rejectAudio', 'endAudio'];
+    audios.forEach(id => {
+        const a = document.getElementById(id);
+        if(a) {
+            a.muted = true; // Глушим звук перед фейковым запуском
+            a.play().then(() => { 
+                a.pause(); 
+                a.currentTime = 0; 
+                a.muted = false; // Возвращаем звук обратно
+            }).catch(e => {
+                a.muted = false; // Возвращаем звук, даже если браузер заблокировал Promise
             });
-            document.body.removeEventListener('click', unlockAudio);
-        }, { once: true });
+        }
+    });
+    document.body.removeEventListener('click', unlockAudio);
+}, { once: true });
 
         // ==========================================
         // ЗВОНКИ И ИСТОРИЯ (ТВОЙ КОД)
@@ -1666,7 +1675,7 @@ callFacingMode = 'user';
             
             chats.forEach(chat => { if (archived.includes(chat.id)) { archCount++; if (showingArchive) displayChats.push(chat); } else { if (!showingArchive) displayChats.push(chat); } });
             
-            displayChats.sort((a, b) => { const aPin = pinned.includes(a.id) ? 1 : 0; const bPin = pinned.includes(b.id) ? 1 : 0; if (aPin !== bPin) return bPin - aPin; return new Date(b.last_msg_time) - new Date(a.last_msg_time); });
+            displayChats.sort((a, b) => { const aPin = pinned.includes(a.id) ? 1 : 0; const bPin = pinned.includes(b.id) ? 1 : 0; if (aPin !== bPin) return bPin - aPin; return new Date(b.last_msg_time || 0).getTime() - new Date(a.last_msg_time || 0).getTime(); });
 
             if (!showingArchive && archCount > 0) list.innerHTML += `<li class="list-item" onclick="toggleArchiveView()" style="background: rgba(0,0,0,0.03);"><div class="avatar-circle" style="background: #999; color:white; font-size:20px;">🗃</div><div class="chat-list-info"><span class="chat-list-name" style="color:var(--text-color-dark);">Архив</span><span class="chat-list-last-msg">Чатов: ${archCount}</span></div></li>`;
             if (showingArchive) list.innerHTML += `<li class="list-item" onclick="toggleArchiveView()" style="background: rgba(0,0,0,0.03);"><div class="avatar-circle" style="background: var(--main-color); color:white; font-size:20px;">⬅️</div><div class="chat-list-info"><span class="chat-list-name" style="color:var(--main-color);">Назад в чаты</span></div></li>`;
